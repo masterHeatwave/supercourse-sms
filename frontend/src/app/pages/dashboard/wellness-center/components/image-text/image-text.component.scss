@@ -1,0 +1,23 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  user-select: none;
+  cursor: pointer;
+}
+
+.text {
+  font-size: 22px;
+  width: fit-content;
+  user-select: none;
+}
+
+.image img {
+  user-select: none;
+}
+
+.reverse {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}

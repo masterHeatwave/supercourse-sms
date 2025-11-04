@@ -1,0 +1,44 @@
+.calendar-page {
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+
+    .period-dropdown {
+      min-width: 16rem;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+  }
+
+  .calendar-wrapper {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: .75rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  }
+
+  .event-dialog .p-dialog-content {
+    padding-top: 0;
+  }
+
+  .event-form {
+    .field-label { display: block; margin-bottom: .25rem; font-weight: 600; }
+    .color-dot { width: 12px; height: 12px; border-radius: 999px; display: inline-block; }
+  }
+
+  .details-grid {
+    .details-row { display: flex; gap: .75rem; margin-bottom: .75rem; }
+    .details-icon { font-size: 1.25rem; color: #6b7280; margin-top: .25rem; }
+    .label { font-weight: 600; color: #374151; }
+    .value { color: #111827; }
+    .color-dot { width: 12px; height: 12px; border-radius: 999px; display: inline-block; }
+  }
+
+  .dialog-actions { display: flex; gap: .5rem; justify-content: flex-end; margin-top: 1rem; }
+}

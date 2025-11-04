@@ -1,0 +1,9 @@
+::ng-deep {
+    .p-column-filter {
+      width: 100%;
+    }
+    
+    .p-datatable .p-datatable-thead > tr > th {
+      position: relative;
+    }
+  }

@@ -1,0 +1,24 @@
+<div class="classes-students-container mt-4">
+  <div class="flex flex-column gap-4 px-4">
+    <div class="card position-relative">
+      <!-- Add spinner with overlay when loading -->
+      <app-spinner *ngIf="isLoading" [overlay]="true"></app-spinner>
+
+      <app-primary-table
+        [data]="dataStudents"
+        [columns]="tableColumns"
+        [rows]="10"
+        [showActions]="false"
+        [totalRecords]="totalRecords"
+        [viewMode]="(viewMode$ | async) || 'list'"
+        (pageChange)="onPageChange($event)"
+        (rowsPerPageChange)="onRowsPerPageChange($event)"
+        (rowSelect)="onStudentSelect($event)"
+        (editRow)="onEditStudent($event)"
+        (viewRow)="onStudentSelect($event)"
+        [dataKey]="'_id'"
+      >
+      </app-primary-table>
+    </div>
+  </div>
+</div>

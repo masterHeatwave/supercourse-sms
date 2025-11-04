@@ -1,0 +1,97 @@
+//@import "../../../styles/variables";
+@import '../../styles//styles.scss';
+
+.delete-label {
+  font-weight: 500;
+  margin: 0px !important;
+  padding: 0px;
+  color: #e63946; //$primary-red-hover-color !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  user-select: none;
+  text-align: center;
+  cursor: pointer;
+}
+
+input {
+  font-size: 1.5rem;
+  border: none !important;
+  outline: none !important;
+  width: 100%;
+}
+
+.note-class {
+  color: red;
+  font-size: 14px;
+}
+
+label {
+  font-weight: 600;
+  color: var(--primary-color);
+  padding-top: 8px;
+}
+
+:host ::ng-deep {
+  .p-dialog {
+    padding: 10px;
+  }
+  .pi-image {
+    margin: 0 !important;
+    margin-left: 10px !important;
+    padding: 5 !important;
+    min-width: 30px !important;
+    min-height: 30px !important;
+    cursor: pointer;
+  }
+  .p-dialog-header {
+    color: var(--primary-color);
+  }
+  .upload-dialog-content {
+    padding: 10px;
+    padding-top: 5px;
+    width: 100%;
+    align-items: start !important;
+    justify-content: start !important;
+    input {
+      border: 1px solid var(--primary-color) !important;
+      border-radius: 5px !important;
+      padding: 2px;
+    }
+    .p-button {
+      width: 125px !important;
+      height: 35px !important;
+      margin: 0 !important;
+      margin-left: 12px !important;
+      text-align: center !important;
+    }
+  }
+
+  .search-groups {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    span {
+      margin-bottom: 0px !important;
+      padding: 0px !important;
+      user-select: none;
+    }
+
+    input {
+      margin-top: 0px;
+    }
+  }
+}
+
+.image-selected-style {
+  padding: 2px;
+  margin-top: -4px;
+  color: #07924d; //$toggle-check !important;
+  border: 2px solid #07924d; //$toggle-check !important;
+  border-radius: 5px;
+  transform: scale(1) !important;
+}
+
+.image-selected-style:hover {
+  color: #07924d; //$toggle-check !important;
+}

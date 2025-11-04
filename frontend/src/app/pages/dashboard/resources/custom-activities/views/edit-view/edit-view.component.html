@@ -1,0 +1,11 @@
+<app-loading [isLoading]="isLoading"></app-loading>
+<div style="display: flex; flex-direction: column; align-items: center">
+  <label *ngIf="hasData === false">{{ message }}</label>
+  <app-header *ngIf="hasData" [hasData]="hasData" />
+  <app-main-content
+    *ngIf="hasData"
+    [hasData]="hasData"
+    [activityData]="activityData"
+  />
+  <app-footer *ngIf="hasData" [hasData]="hasData" />
+</div>

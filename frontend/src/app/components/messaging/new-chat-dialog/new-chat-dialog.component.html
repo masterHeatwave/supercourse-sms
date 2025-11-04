@@ -1,0 +1,117 @@
+<!-- new-chat-dialog.component.html -->
+<p-dialog 
+  [(visible)]="visible"
+  [modal]="true"
+  [closable]="true"
+  [resizable]="false"
+  [draggable]="false"
+  styleClass="p-fluid"
+  [style]="{'width': '500px'}"
+  header="Start New Conversation"
+  (onHide)="onCancel()">
+  
+  <div class="flex flex-column gap-4 p-2">
+    <!-- ✅ Loading Indicator -->
+    <div *ngIf="isLoadingUsers || isLoadingClasses" class="field">
+      <div class="flex align-items-center gap-2 text-600">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Loading {{ isLoadingUsers ? 'users' : 'classes' }}...</span>
+      </div>
+    </div>
+
+    <!-- User Selection TreeSelect -->
+    <div class="field">
+      <label for="userSelect" class="font-medium text-900 mb-2 block">
+        Select Recipients
+      </label>
+      
+      <!-- ✅ Debug Info -->
+      <div *ngIf="!isLoadingUsers && !isLoadingClasses" class="text-xs text-500 mb-2">
+        {{ recipientTree.length }} categories available
+      </div>
+      
+      <div class="recipient-wrapper">
+        <p-treeSelect
+          [options]="recipientTree"
+          [(ngModel)]="selectedRecipients"
+          class="w-full md:w-40rem" 
+          containerStyleClass="w-full" 
+          display="chip" 
+          [metaKeySelection]="false"
+          placeholder="Select Recipients"
+          [propagateSelectionUp]="false"
+          [propagateSelectionDown]="false"
+          selectionMode="checkbox"
+          [filter]="true"      
+          [filterBy]="'label'"
+          appendTo="body"
+          [scrollHeight]="'400px'"
+          [emptyMessage]="getEmptyMessage()">
+          
+          <ng-template pTemplate="header">
+            <div class="text-sm text-600 p-2">
+              Select one or more users to start a conversation
+            </div>
+          </ng-template>
+        </p-treeSelect>
+      </div>
+    </div>
+
+    <!-- Selected Users Display -->
+    <div *ngIf="getSelectedUserCount() > 0" class="field">
+      <label class="font-medium text-900 mb-2 block">
+        Selected Users ({{ getSelectedUserCount() }})
+      </label>
+      <div class="flex flex-wrap gap-2">
+        <p-tag 
+          *ngFor="let user of getSelectedUsersList()"
+          [value]="user.displayName"
+          [severity]="getRoleSeverity(user.userType)"
+          styleClass="text-sm">
+        </p-tag>
+      </div>
+    </div>
+
+    <!-- Group Name Input (if multiple users selected) -->
+    <div *ngIf="getSelectedUserCount() > 1" class="field">
+      <label for="groupName" class="font-medium text-900 mb-2 block">
+        Group Name (Optional)
+      </label>
+      <input
+        pInputText
+        id="groupName"
+        [(ngModel)]="groupName"
+        placeholder="Enter group name..."
+        class="w-full">
+    </div>
+
+    <!-- Chat Type Info -->
+    <div class="bg-primary-50 border-primary-200 border-1 border-round p-3">
+      <div class="flex align-items-center gap-2">
+        <i class="pi pi-info-circle text-primary-600"></i>
+        <span class="text-primary-700 text-sm font-medium">
+          {{ getChatTypeInfo() }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-content-between align-items-center">
+      <p-button
+        label="Cancel"
+        icon="pi pi-times"
+        styleClass="p-button-text"
+        (onClick)="onCancel()">
+      </p-button>
+      
+      <p-button
+        label="Start Chat"
+        icon="pi pi-check"
+        [disabled]="getSelectedUserCount() === 0 || isLoadingUsers || isLoadingClasses"
+        [loading]="isLoadingUsers || isLoadingClasses"
+        (onClick)="onCreate()">
+      </p-button>
+    </div>
+  </ng-template>
+</p-dialog>

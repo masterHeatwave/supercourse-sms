@@ -1,0 +1,13 @@
+<div class="books-table-container">
+  <app-primary-table 
+    [data]="tableData" 
+    [columns]="columns"
+    [showActions]="false"
+    (editRow)="handleEdit($event)"
+    (deleteRow)="handleDelete($event)">
+    
+    <ng-template #titleTemplate let-item="item">
+      <div>{{ item.title.value }}</div>
+    </ng-template>
+  </app-primary-table>
+</div> 

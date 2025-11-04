@@ -1,0 +1,23 @@
+<div class="chat-item"
+     [class.has-unread]="hasUnread()"
+     (click)="onClick()">
+
+  <div class="chat-details">
+    <div class="chat-header">
+      <h4 [class.font-bold]="hasUnread()">
+        {{ getParticipantsDisplay() }}
+      </h4>
+      <span class="time">{{ formatTime(chat.lastMessageDate) }}</span>
+    </div>
+
+    <div class="chat-preview">
+      <p [class.font-semibold]="hasUnread()">
+        {{ chat.lastMessageContent || 'No messages yet' }}
+      </p>
+
+      <span *ngIf="hasUnread()" class="unread-badge">
+        {{ getUnreadCount() }}
+      </span>
+    </div>
+  </div>
+</div>

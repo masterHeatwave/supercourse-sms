@@ -1,0 +1,51 @@
+//@import '../../../styles/variables';
+
+label {
+  font-weight: 500;
+  font-size: 26px;
+  color: var(--primary-color);
+}
+
+.dropdown-label {
+  font-size: 22px;
+  margin: 10px;
+  width: fit-content;
+}
+
+.message-label {
+  font-size: 20px;
+  color: #ed4337;
+  margin: 10px;
+  width: fit-content;
+}
+
+.slider-label {
+  font-size: 22px;
+  margin: 10px;
+  width: fit-content;
+}
+
+::ng-deep {
+  p-button {
+    margin-top: 15px;
+    margin-bottom: 15px;
+  }
+
+  p-checkbox {
+    margin: 10px;
+    user-select: none;
+    label {
+      margin-left: 5px;
+    }
+  }
+}
+
+.settings {
+  flex-direction: column;
+  display: flex;
+  padding: 10px;
+  align-items: start;
+  justify-content: center;
+  margin: 5px;
+  box-shadow: 2px 1px 8px #cbe0f4; //$primary-shadow-blue-color;
+}

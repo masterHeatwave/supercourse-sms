@@ -1,0 +1,21 @@
+/* src/app/components/attachment/attachment.component.css */
+
+.upload-progress {
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.file-list {
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+/* Optional: Add some animation for the upload progress */
+.upload-progress {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

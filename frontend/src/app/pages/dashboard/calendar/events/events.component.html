@@ -1,0 +1,25 @@
+<div class="events-page">
+  <div class="toolbar">
+    <p-dropdown [options]="academicPeriods" [(ngModel)]="selectedPeriod" optionValue="value">
+      <ng-template pTemplate="selectedItem" let-sel>
+        {{ sel?.label | translate }}
+      </ng-template>
+      <ng-template pTemplate="item" let-item>
+        {{ item.label | translate }}
+      </ng-template>
+    </p-dropdown>
+
+    <div class="toolbar-actions">
+      <p-button [label]="'calendar.toolbar.download' | translate" icon="pi pi-download" styleClass="p-button-text" (onClick)="onDownload()"></p-button>
+      <p-button [label]="'calendar.toolbar.new_event' | translate" icon="pi pi-plus" (onClick)="onCreate()"></p-button>
+    </div>
+  </div>
+
+  <app-primary-table
+    [data]="data"
+    [columns]="columns"
+    [loading]="loading"
+    [rows]="rows"
+    [totalRecords]="totalRecords"
+  ></app-primary-table>
+</div>

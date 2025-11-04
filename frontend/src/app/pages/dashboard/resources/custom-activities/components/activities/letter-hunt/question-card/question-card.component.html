@@ -1,0 +1,32 @@
+<div class="question-card">
+  <div
+    style="
+      display: flex;
+      border: 1px solid #ccc;
+      height: 58px !important;
+      background-color: white;
+      border-radius: 5px;
+      margin-top: 10px;
+      align-items: center;
+    "
+  >
+    <i class="pi pi-ellipsis-v" cdkDragHandle style="cursor: grab; padding-left: 5px"></i>
+    <label>{{ questionNumber }}.</label>
+  </div>
+  <div class="question-card-container">
+    <letter-hunt-question (deleteClicked)="handleQuestionDelete()"></letter-hunt-question>
+
+    <letter-hunt-answer
+      [answerNumber]="answers[0].answerNumber ?? 0"
+      [imageURL]="answers[0].imageURL"
+      [TTSText]="answers[0].TTSText ?? ''"
+      [answerText]="answers[0].answerText"
+      (inputChanged)="handleInputChange($event)"
+      (imageURLChanged)="handleImageURLChange($event)"
+      (TTSTextChanged)="handleTTSTextChange($event)"
+      (deleteClicked)="handleQuestionDelete()"
+    ></letter-hunt-answer>
+  </div>
+
+  <app-warning-dialog [warningMessage]="warningMessage" [isDialogVisible]="isWarningDialogVisible" (onClose)="isWarningDialogVisible = false" />
+</div>

@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>{{ title }} | {{ projectName }}</title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1"
+      crossorigin="anonymous"
+    />
+    <style>
+      form {
+        margin-top: 20px;
+        margin-left: 20px;
+        margin-right: 20px;
+      }
+      #content {
+        padding: 20px;
+      }
+    </style>
+    {% block styles %} {# This block will be replaced by child templates when importing styles #} {% endblock %}
+  </head>
+  <body>
+    <div class="w-100 d-flex justify-content-center align-items-center" style="height: 100vh">
+      <div id="content">
+        <div style="margin-left: 20px">
+          <h1>{{ projectName }}</h1>
+          <h2>Reset your password.</h2>
+        </div>
+
+        {% block content %} {# This block will be replaced by child templates when adding content to the #} {% endblock
+        %}
+      </div>
+    </div>
+
+    {% block scripts %} {# This block will be replaced by child templates when importing scripts #} {% endblock %}
+  </body>
+</html>

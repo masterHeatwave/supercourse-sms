@@ -1,0 +1,74 @@
+.p-fileupload {
+  .p-fileupload-buttonbar {
+    background: none;
+    // padding: $panelHeaderPadding;
+    border: none;
+    color: $panelHeaderTextColor;
+    // border-bottom: 0 none;
+    //border-top-right-radius: $borderRadius;
+    //border-top-left-radius: $borderRadius;
+    border-radius: borderRadius;
+
+    // .p-button {
+    //   margin-right: $inlineSpacing;
+
+    //   &.p-fileupload-choose.p-focus {
+    //     @include focused();
+    //   }
+    // }
+  }
+
+  .p-fileupload-content {
+    display: none;
+    // background: #fff;
+    // padding: $fileUploadContentPadding;
+    // color: $panelContentTextColor;
+    // border-bottom-right-radius: $borderRadius;
+    // border-bottom-left-radius: $borderRadius;
+    // &.p-fileupload-highlight {
+    //   border-color: $fileUploadContentHoverBorder;
+    //   border-style: dashed;
+    //   background-color: $highlightBg;
+    // }
+  }
+
+  .p-progressbar {
+    height: $fileUploadProgressBarHeight;
+  }
+
+  .p-fileupload-row {
+    > div {
+      padding: $tableBodyCellPadding;
+    }
+  }
+
+  &.p-fileupload-advanced {
+    .p-message {
+      margin-top: 0;
+    }
+  }
+}
+
+.p-fileupload-choose {
+
+  &[data-pc-section="choosebutton"] {
+    background: none;
+    border: 1px solid #0071bb;
+    border-radius: 50px;
+    padding: 20px;
+    color: #0071bb;
+    font-size: 15px;
+  }
+
+  &:not(.p-disabled):hover {
+    background: #0071bb;
+    color: white;
+    border-color: #0071bb;
+  }
+
+  &:not(.p-disabled):active {
+    background: $buttonActiveBg;
+    color: $buttonTextActiveColor;
+    border-color: $buttonActiveBorderColor;
+  }
+}

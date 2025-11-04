@@ -1,0 +1,36 @@
+.text-block-container {
+  position: relative; /* Parent container needs to be relative for absolute positioning inside it */
+  display: inline-block; /* Adjust as necessary for your layout */
+}
+
+.text-block {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 5px;
+  margin: 5px;
+  margin-left: 15px;
+  position: relative;
+  display: inline-block;
+  min-width: 120px;
+  min-height: 40px;
+  text-align: center;
+  outline: none;
+  cursor: text;
+}
+
+.close-button {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: red;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer !important;
+  user-select: none !important;
+}

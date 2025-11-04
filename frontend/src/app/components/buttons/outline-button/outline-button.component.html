@@ -1,0 +1,22 @@
+<a class="no-underline" [routerLink]="href ? href : null" [queryParams]="query">
+  <p-button
+    [disabled]="disabled"
+    [loading]="loading"
+    [icon]="icon"
+    [iconPos]="iconPos"
+    [type]="type"
+    styleClass="outline-btn flex justify-content-center"
+    [size]="size === 'medium' ? 'large' : size"
+    [style]="buttonStyle"
+    backgroundColor="backgroundColor"
+    fullWidth="fullWidth"
+  >
+    @if (loading) {
+      <span class="mr-2">{{ 'loading.label' | translate }}</span>
+    } @else {
+      <div class="text-center py-1">
+        <ng-content></ng-content>
+      </div>
+    }
+  </p-button>
+</a> 

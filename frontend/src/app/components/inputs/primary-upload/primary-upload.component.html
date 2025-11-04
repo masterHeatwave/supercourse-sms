@@ -1,0 +1,25 @@
+<div
+  [class]="'relative overflow-hidden cursor-pointer surface-border ' + (getIsRounded() ? 'border-circle' : 'border-round-xl')"
+  style="width: 100%; height: auto; max-width: 100%; aspect-ratio: 1; background: #0071bb"
+  (click)="triggerFileInput()"
+>
+  <input #fileInput type="file" (change)="onFileSelected($event)" accept="image/*" class="hidden" />
+
+  <!-- Image with delete overlay -->
+  <div *ngIf="uploadedFile" class="relative w-full h-full">
+    <img 
+      [src]="getImageAPIPath(getImagePath())" 
+      class="w-full h-full" 
+      style="object-fit: cover" 
+    />
+    <!-- Delete overlay -->
+    <div class="delete-overlay absolute top-0 left-0 w-full h-full flex justify-content-center align-items-center" (click)="deleteImage($event)">
+      <i class="pi pi-trash text-2xl text-white"></i>
+    </div>
+  </div>
+
+  <!-- Upload icon when no image -->
+  <div *ngIf="!uploadedFile" class="absolute top-0 left-0 w-full h-full flex flex-column justify-content-center align-items-center">
+    <i class="pi pi-camera text-6xl text-white"></i>
+  </div>
+</div>

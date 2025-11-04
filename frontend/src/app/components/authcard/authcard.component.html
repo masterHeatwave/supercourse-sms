@@ -1,0 +1,26 @@
+<p-toast></p-toast>
+<p-card [styleClass]="'w-30rem p-5'">
+  <ng-template pTemplate="header">
+    <div class="flex justify-content-center">
+      <p-image src="assets/images/logo.svg" alt="Image" width="200px" />
+    </div>
+  </ng-template>
+
+  <div class="text-center mb-4">
+    <div class="text-900 text-3xl font-medium mb-3">{{ 'login.authcard.welcome' | translate }}</div>
+    <span class="text-600 font-medium">{{ 'login.authcard.subtitle' | translate }}</span>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <formly-form [form]="form" [fields]="fields" [model]="model"></formly-form>
+    <div class="w-full text-right mt-1">
+      <a class="font-medium no-underline cursor-pointer" style="color: var(--primary-color)" [routerLink]="['/forgot-password']">
+        {{ 'login.authcard.forgot-password.label' | translate }}
+      </a>
+    </div>
+
+    <app-primary-button styleClass="mt-5" [fullWidth]="true" [loading]="loading" type="submit">
+      <span>{{ 'login.authcard.button.label' | translate }}</span>
+    </app-primary-button>
+  </form>
+</p-card>

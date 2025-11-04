@@ -1,0 +1,483 @@
+/* chat-window.component.css */
+
+/* ==============================================
+   SCROLLING & SMOOTH BEHAVIOR
+   ============================================== */
+   .p-scrollpanel .p-scrollpanel-content {
+    scroll-behavior: smooth;
+  }
+  
+  .p-scrollpanel .p-scrollpanel-bar {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+  }
+  
+  .p-scrollpanel .p-scrollpanel-bar:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+  
+  /* ==============================================
+     ONLINE STATUS INDICATOR
+     ============================================== */
+  .online-indicator {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    background-color: #22c55e;
+    border: 2px solid white;
+    border-radius: 50%;
+    animation: pulse-online 2s infinite;
+  }
+  
+  /* ==============================================
+     MESSAGE STYLES
+     ============================================== */
+  .message-wrapper {
+    position: relative;
+    transition: all 0.2s ease;
+    padding: 4px 8px;
+    margin: -4px -8px;
+    border-radius: 8px;
+    animation: message-appear 0.3s ease-out;
+  }
+  
+  .message-wrapper:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+  
+  .message-bubble {
+    transition: all 0.2s ease;
+    position: relative;
+  }
+  
+  .word-wrap {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  /* ==============================================
+     REPLY CONTEXT CARD STYLING
+     ============================================== */
+  .reply-context {
+    max-width: 28rem;
+  }
+  
+  :host ::ng-deep .reply-card.p-2,
+  :host ::ng-deep .p-card.reply-card.p-2,
+  :host ::ng-deep .p-card.p-component.reply-card.p-2 {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    border-left: 3px solid #3b82f6 !important;
+    border-radius: 8px !important;
+    height: 70px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+    overflow: hidden !important;
+    padding: 0.5rem !important;
+  }
+  
+  :host ::ng-deep .reply-card.p-2:hover {
+    background: #f1f5f9 !important;
+    border-left-color: #2563eb !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  :host ::ng-deep .reply-card.p-2 .p-card-body {
+    padding: 0.25rem 0.5rem !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    margin: 0 !important;
+  }
+  
+  :host ::ng-deep .reply-card.p-2 .p-card-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+  }
+  
+  :host ::ng-deep .reply-card .flex.align-items-start.gap-2 {
+    align-items: center !important;
+    height: 100% !important;
+    gap: 0.5rem !important;
+  }
+  
+  :host ::ng-deep .reply-card .pi-reply.mt-1 {
+    margin-top: 0 !important;
+    color: #3b82f6 !important;
+    font-size: 0.875rem !important;
+  }
+  
+  :host ::ng-deep .reply-card .text-600.mb-1 {
+    color: #475569 !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.125rem !important;
+    font-size: 0.75rem !important;
+  }
+  
+  :host ::ng-deep .reply-card .text-500.line-height-3 {
+    color: #64748b !important;
+    font-size: 0.75rem !important;
+    line-height: 1.3 !important;
+    max-height: 1.3em !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  
+  .reply-bar {
+    animation: slide-in 0.3s ease-out;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+    border-top: 2px solid #3b82f6 !important;
+    box-shadow: 0 -2px 8px rgba(59, 130, 246, 0.1) !important;
+  }
+  
+  /* ==============================================
+     MESSAGE ACTIONS (HOVER BUTTONS)
+     ============================================== */
+  .message-actions {
+    position: absolute;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: all 0.2s ease;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    z-index: 10;
+    pointer-events: none;
+  }
+  
+  .message-wrapper:hover .message-actions {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  
+  .message-actions-sent {
+    top: -10px;
+    left: 8px;
+  }
+  
+  .message-actions-received {
+    top: -10px;
+    right: 8px;
+  }
+  
+  .action-btn {
+    transition: all 0.15s ease !important;
+  }
+  
+  .action-btn:hover {
+    transform: scale(1.05) !important;
+  }
+  
+  /* ==============================================
+     TYPING INDICATOR
+     ============================================== */
+  .typing-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #64748b;
+    animation: typing 1.4s infinite ease-in-out;
+  }
+  
+  .typing-dot:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+  
+  .typing-dot:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+  
+  .typing-dot:nth-child(3) {
+    animation-delay: 0s;
+  }
+  
+  /* ==============================================
+     MESSAGE INPUT AREA - PROFESSIONAL STYLING
+     ============================================== */
+  .message-input {
+    position: relative;
+    margin-top: -20px; /* ✅ Moves the entire input area up by 20px */
+    padding: 1rem 1.5rem !important;
+    background: #ffffff !important;
+    border-top: 1px solid #e5e7eb !important;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+    z-index: 100;
+  }
+  
+  .message-input .flex.align-items-end.gap-2 {
+    display: flex !important;
+    align-items: flex-end !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+  }
+  
+  /* Attachment Button Wrapper */
+  .message-input app-attachment {
+    flex-shrink: 0;
+  }
+  
+  /* Textarea Container */
+  .message-input .flex-1 {
+    flex: 1 !important;
+    position: relative;
+  }
+  
+  /* Textarea Styling - Industrial Standard */
+  .message-input textarea.p-inputtext {
+    width: 100% !important;
+    min-height: 44px !important;
+    max-height: 120px !important;
+    padding: 0.875rem 1.25rem !important;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 24px !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+    font-size: 15px !important;
+    line-height: 1.5 !important;
+    color: #1e293b !important;
+    background: #f8fafc !important;
+    resize: none !important;
+    transition: all 0.2s ease !important;
+    overflow-y: auto !important;
+    box-sizing: border-box !important;
+  }
+  
+  .message-input textarea.p-inputtext::placeholder {
+    color: #94a3b8 !important;
+    font-weight: 400 !important;
+  }
+  
+  .message-input textarea.p-inputtext:hover {
+    border-color: #cbd5e1 !important;
+    background: #ffffff !important;
+  }
+  
+  .message-input textarea.p-inputtext:focus {
+    outline: none !important;
+    border-color: #3b82f6 !important;
+    background: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+  }
+  
+  .message-input textarea.p-inputtext:disabled {
+    background-color: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
+  }
+  
+  /* Custom Scrollbar for Textarea */
+  .message-input textarea.p-inputtext::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .message-input textarea.p-inputtext::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .message-input textarea.p-inputtext::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+  
+  .message-input textarea.p-inputtext::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+  
+  /* Send Button Styling */
+  .message-input p-button {
+    flex-shrink: 0 !important;
+  }
+  
+  :host ::ng-deep .message-input .p-button.p-button-rounded {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 0 !important;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3) !important;
+    transition: all 0.2s ease !important;
+    position: relative !important;
+    z-index: 10 !important;
+    margin-bottom: 10px !important;
+  }
+  
+  :host ::ng-deep .message-input .p-button.p-button-rounded:not(:disabled):hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
+    transform: translateY(-1px) !important;
+  }
+  
+  :host ::ng-deep .message-input .p-button.p-button-rounded:not(:disabled):active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
+  }
+  
+  :host ::ng-deep .message-input .p-button.p-button-rounded:disabled {
+    background: #e2e8f0 !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+  }
+  
+  :host ::ng-deep .message-input .p-button.p-button-rounded .p-button-icon {
+    font-size: 1.1rem !important;
+    color: white !important;
+  }
+  
+  /* Attachment Button Styling */
+  :host ::ng-deep .message-input app-attachment .p-button {
+    width: 44px !important;
+    height: 44px !important;
+    background: #f1f5f9 !important;
+    border: 2px solid #e2e8f0 !important;
+    color: #64748b !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  :host ::ng-deep .message-input app-attachment .p-button:hover {
+    background: #e2e8f0 !important;
+    border-color: #cbd5e1 !important;
+    color: #475569 !important;
+    transform: translateY(-1px) !important;
+  }
+  
+  /* ==============================================
+     ANIMATIONS
+     ============================================== */
+  @keyframes typing {
+    0%, 80%, 100% {
+      transform: scale(0);
+      opacity: 0.5;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes pulse-online {
+    0% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+  }
+  
+  @keyframes slide-in {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes message-appear {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* ==============================================
+     RESPONSIVE DESIGN
+     ============================================== */
+  @media (max-width: 768px) {
+    .max-w-30rem {
+      max-width: 85% !important;
+    }
+    
+    .p-avatar {
+      width: 2.5rem !important;
+      height: 2.5rem !important;
+    }
+  
+    .message-actions {
+      opacity: 0.7;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    
+    .message-wrapper:hover .message-actions {
+      opacity: 1;
+    }
+    
+    .message-actions-sent,
+    .message-actions-received {
+      top: -6px;
+    }
+  
+    /* Mobile Input Adjustments */
+    .message-input {
+      margin-top: -15px;
+      padding: 0.75rem 1rem !important;
+    }
+  
+    .message-input textarea.p-inputtext {
+      font-size: 16px !important; /* Prevents zoom on iOS */
+      min-height: 40px !important;
+    }
+  
+    :host ::ng-deep .message-input .p-button.p-button-rounded,
+    :host ::ng-deep .message-input app-attachment .p-button {
+      width: 40px !important;
+      height: 40px !important;
+    }
+  }
+  
+  @media (hover: none) and (pointer: coarse) {
+    .message-actions {
+      opacity: 0.6;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    
+    .message-wrapper:active .message-actions {
+      opacity: 1;
+    }
+  }
+  
+  /* ==============================================
+     HIGH CONTRAST & ACCESSIBILITY
+     ============================================== */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  
+  @media (prefers-contrast: high) {
+    .message-input textarea.p-inputtext {
+      border-width: 3px !important;
+    }
+    
+    .message-input textarea.p-inputtext:focus {
+      border-color: #1d4ed8 !important;
+    }
+  }

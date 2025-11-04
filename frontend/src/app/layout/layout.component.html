@@ -1,0 +1,12 @@
+<div class="layout-wrapper">
+  <app-sidebar [visible]="sidebarVisible" (visibleChange)="sidebarVisible = $event"></app-sidebar>
+  
+  <div class="layout-main">
+    <app-navbar (toggleSidebarEvent)="toggleSidebar()"></app-navbar>
+    
+    <main class="main-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
+

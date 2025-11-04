@@ -1,0 +1,27 @@
+<div class="answer-container">
+  <div style="display: flex; align-items: center">
+    <app-image-selector
+      (onErrorMessage)="handleErrorMessage($event)"
+      (onImageURLChanged)="handleImageURLChanged($event)"
+      [imageURL]="imageURL"
+    ></app-image-selector>
+    <label class="separator">|</label>
+    <i
+      #lastSoundElementRef
+      class="pi pi-volume-up"
+      style="font-size: 1.5rem; margin-top: -3px"
+      (click)="soundClick($event)"
+    ></i>
+  </div>
+  <input
+    type="text"
+    placeholder="Insert a sentence"
+    [(ngModel)]="answerText"
+    (ngModelChange)="onInputChange($event)"
+  />
+</div>
+<app-warning-dialog
+  [warningMessage]="warningMessage"
+  [isDialogVisible]="isWarningDialogVisible"
+  (onClose)="isWarningDialogVisible = false"
+/>

@@ -1,0 +1,95 @@
+<div class="contacts-container">
+  <div class="flex justify-content-between align-items-center mb-3">
+    <h3 class="text-primary font-bold text-2xl m-0">Linked Contacts</h3>
+  </div>
+
+  <form [formGroup]="contactsForm">
+    <div formArrayName="contacts">
+      <div *ngFor="let contact of contactsArray.controls; let i = index" [formGroupName]="i" class="flex align-items-center mb-2 gap-2">
+        <div class="flex-1">
+          <input pInputText formControlName="contactName" 
+                 class="w-full" 
+                 [class.ng-invalid]="contact.get('contactName')?.invalid && contact.get('contactName')?.touched"
+                 style="border: 2px solid #ced4da" 
+                 placeholder="Name *">
+          <small *ngIf="contact.get('contactName')?.invalid && contact.get('contactName')?.touched" 
+                 class="text-red-500 text-xs">Name is required when adding contacts</small>
+        </div>
+        <div class="flex-1">
+          <input pInputText formControlName="contactPhone" 
+                 class="w-full" 
+                 [class.ng-invalid]="contact.get('contactPhone')?.invalid && contact.get('contactPhone')?.touched"
+                 style="border: 2px solid #ced4da" 
+                 placeholder="Phone *">
+          <small *ngIf="contact.get('contactPhone')?.invalid && contact.get('contactPhone')?.touched" 
+                 class="text-red-500 text-xs">Valid phone is required when adding contacts</small>
+        </div>
+        <div class="flex-1">
+          <input pInputText formControlName="contactEmail" 
+                 class="w-full" 
+                 [class.ng-invalid]="contact.get('contactEmail')?.invalid && contact.get('contactEmail')?.touched"
+                 style="border: 2px solid #ced4da" 
+                 placeholder="E-mail *">
+          <small *ngIf="contact.get('contactEmail')?.invalid && contact.get('contactEmail')?.touched" 
+                 class="text-red-500 text-xs">Valid email is required when adding contacts</small>
+        </div>
+        <div class="flex-1">
+          <p-dropdown 
+            formControlName="relationship" 
+            [options]="relationships" 
+            optionLabel="label" 
+            optionValue="value" 
+            class="w-full"
+            [class.ng-invalid]="contact.get('relationship')?.invalid && contact.get('relationship')?.touched"
+            placeholder="Parent & Guardian">
+          </p-dropdown>
+          <small *ngIf="contact.get('relationship')?.invalid && contact.get('relationship')?.touched" 
+                 class="text-red-500 text-xs">Relationship is required when adding contacts</small>
+        </div>
+        <div class="flex-1 flex align-items-center">
+          <p-inputSwitch 
+            formControlName="isPrimaryContact" 
+            class="mr-2"
+            [disabled]="contactsArray.length === 1"
+            (onChange)="handlePrimaryContactChange(i, $event.checked)">
+          </p-inputSwitch>
+          <span>Primary contact</span>
+        </div>
+        <button *ngIf="isEditMode || contactsArray.length === 1" pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger" (click)="removeContact(i)"></button>
+      </div>
+    </div>
+    <button type="button" class="p-button p-button-text mt-2" style="color: black;" (click)="addContact()">
+      <i class="pi pi-plus mr-2"></i>
+      Add linked contact
+    </button>
+    
+    <!-- Siblings Attending Dropdown -->
+    <div class="primary-multi-select flex align-items-center gap-3 mt-4">
+      <label for="siblingAttending" class="w-2/5 text-sm font-medium text-gray-700 whitespace-nowrap">
+        Sibling Attending
+      </label>
+      <p-multiSelect 
+        inputId="siblingAttending"
+        [formControl]="siblingAttendingControl"
+        [options]="students" 
+        optionLabel="name" 
+        optionValue="username"
+        placeholder="Select siblings (optional)"
+        [filter]="true"
+        filterBy="name"
+        [showClear]="true"
+        display="chip"
+        class="w-3/5"
+        [loading]="loadingStudents"
+        [maxSelectedLabels]="3"
+        selectedItemsLabel="{0} siblings selected"
+        [class.ng-invalid]="siblingAttendingControl.invalid && siblingAttendingControl.touched">
+        <ng-template let-student pTemplate="item">
+          <div class="flex align-items-center">
+            <div class="font-medium">{{ student.name }}</div>
+          </div>
+        </ng-template>
+      </p-multiSelect>
+    </div>
+  </form>
+</div> 

@@ -1,0 +1,41 @@
+<div class="p-4">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <!-- Class Information Card -->
+      <p-card styleClass="custom-card shadow-none mb-4">
+        <ng-template pTemplate="content">
+          <formly-form [form]="form" [fields]="classInfoFields" [model]="model"></formly-form>
+          
+          <!-- Sessions Component -->
+          <app-session-form
+            [initialData]="model.sessions"
+            [taxiId]="classId || undefined"
+            [academicPeriodId]="model.academicPeriod"
+            [disabled]="isLoading"
+            (sessionsChange)="onSessionsChange($event)"
+            (validationChange)="onSessionValidationChange($event)">
+          </app-session-form>
+        </ng-template>
+      </p-card>
+      
+      <!-- Submit and Cancel Buttons -->
+      <div class="flex justify-content-end mt-3 gap-2">
+        <app-outline-button 
+          [borderColor]="'red'" 
+          [textColor]="'red'" 
+          [hoverBackgroundColor]="'red'" 
+          [hoverTextColor]="'white'"
+          [disabled]="isLoading"
+          (click)="cancel()">
+            Cancel
+        </app-outline-button>
+        <app-outline-button 
+          [borderColor]="'var(--primary-color)'" 
+          [type]="'submit'"
+          [disabled]="isLoading">
+            <span *ngIf="isLoading" class="pi pi-spin pi-spinner mr-2"></span>
+            {{ isLoading ? 'Saving...' : submitButtonLabel }}
+        </app-outline-button>
+      </div>
+    </form>
+
+</div>

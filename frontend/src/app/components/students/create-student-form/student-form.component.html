@@ -1,0 +1,66 @@
+<div class="p-4">
+  <p-toast></p-toast>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <!-- Personal Information Card -->
+    <p-card styleClass="custom-card shadow-none mb-4">
+      <ng-template pTemplate="content">
+        <formly-form [form]="form" [fields]="personalInfoFields" [model]="model"></formly-form>
+      </ng-template>
+    </p-card>
+    
+    <!-- Linked Contact Information Card -->
+    <p-card styleClass="custom-card shadow-none mb-4">
+      <ng-template pTemplate="content">
+        <app-contacts 
+          [contacts]="model.contacts || []"
+          [siblingAttending]="model.siblingAttending || []"
+          [isEditMode]="isEditMode"
+          (contactsChange)="onContactsChange($event)"
+          (siblingAttendingChange)="onSiblingAttendingChange($event)">
+        </app-contacts>
+      </ng-template>
+    </p-card>
+    
+    <!-- Health Information Card -->
+    <p-card styleClass="custom-card shadow-none mb-4">
+      <ng-template pTemplate="content">
+        <formly-form [form]="form" [fields]="healthInfoFields" [model]="model"></formly-form>
+      </ng-template>
+    </p-card>
+
+    <!-- general Information Card -->
+    <p-card styleClass="custom-card shadow-none mb-4">
+      <ng-template pTemplate="content">
+        <formly-form [form]="form" [fields]="generalNotesFields" [model]="model"></formly-form>
+      </ng-template>
+    </p-card>
+    
+    <!-- Documents Card -->
+    <p-card styleClass="custom-card shadow-none mb-4">
+      <ng-template pTemplate="content">
+        <formly-form [form]="form" [fields]="documentUploadFields" [model]="model"></formly-form>
+
+        <!-- Document List - Show only in edit mode -->
+        <div class="mt-4" *ngIf="isEditMode">
+          <h3 class="text-primary font-bold text-xl mb-2">Uploaded Documents:</h3>
+          <app-document-list 
+            [documents]="uploadedFiles" 
+            [showDeleteButton]="true"
+            (download)="onDownloadDocument($event)" 
+            (remove)="removeFile($event)">
+          </app-document-list>
+        </div>
+      </ng-template>
+    </p-card>
+
+    <!-- Submit Button -->
+    <div class="flex justify-content-end gap-2 mt-3">
+      <button 
+        type="button" 
+        class="p-button p-button-outlined"
+        (click)="onSubmit()">
+        {{ submitButtonLabel }}
+      </button>
+    </div>
+  </form>
+</div> 

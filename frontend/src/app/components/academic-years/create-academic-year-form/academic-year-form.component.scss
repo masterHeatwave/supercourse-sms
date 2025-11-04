@@ -1,0 +1,70 @@
+:host {
+  .create-academic-year-container {
+    .form-container {
+      .periods-section {
+        .period-item {
+          border: 1px solid var(--surface-border);
+          border-radius: 8px;
+          padding: 1.5rem;
+          background: var(--surface-section);
+          margin-bottom: 1rem;
+
+          .timeline-container {
+            position: relative;
+            margin-top: 1rem;
+            padding: 0 1rem;
+
+            .timeline-track {
+              position: relative;
+              height: 6px;
+              background-color: var(--primary-100);
+              border-radius: 3px;
+            }
+
+            .timeline-progress {
+              position: absolute;
+              height: 100%;
+              background-color: var(--primary);
+              border-radius: 3px;
+              width: 100%;
+            }
+
+            .timeline-handle {
+              position: absolute;
+              top: -5px;
+              width: 16px;
+              height: 16px;
+              background-color: white;
+              border: 3px solid var(--primary);
+              border-radius: 50%;
+
+              &.timeline-start {
+                left: 0;
+                transform: translateX(-50%);
+              }
+
+              &.timeline-end {
+                right: 0;
+                transform: translateX(50%);
+              }
+
+              .timeline-date {
+                position: absolute;
+                top: -35px;
+                left: 50%;
+                transform: translateX(-50%);
+                white-space: nowrap;
+                font-size: 0.75rem;
+                background-color: var(--surface);
+                padding: 0.25rem 0.5rem;
+                border-radius: 4px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                border: 1px solid var(--surface-border);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

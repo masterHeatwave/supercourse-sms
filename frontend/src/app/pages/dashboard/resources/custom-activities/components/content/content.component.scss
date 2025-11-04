@@ -1,0 +1,134 @@
+@import '../../styles/styles.scss';
+
+.hide {
+  display: none;
+  width: 0px;
+  height: 0px;
+}
+
+.class-div {
+  display: flex;
+  margin-left: 10px;
+  margin-bottom: 15px;
+  text-align: center;
+  align-items: center;
+  label {
+    text-align: center !important;
+    vertical-align: middle;
+    padding-top: 0px !important;
+    margin-right: 5px;
+  }
+}
+
+:host ::ng-deep {
+  .multiselect .p-multiselect-filter-container {
+    //.p-inputtext {
+    margin: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+  }
+}
+
+label {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  padding-top: 8px;
+}
+
+.selected {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  height: 100% !important;
+  font-size: x-large !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+}
+
+.title-and-description {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 98% !important;
+  min-width: 250px;
+  height: 100% !important;
+  font-size: x-large !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  margin-top: 50px;
+  margin-left: 20px;
+  p-floatLabel {
+    margin-bottom: 50px;
+    align-items: flex-start;
+    width: 95%;
+    border: 1px solid #ced4da; //#0071bb;
+    border-radius: 5px;
+  }
+  @media (max-width: 1665px) {
+    width: 90%; //90vw !important;
+  }
+
+  @media (max-width: 1305px) {
+    width: 80%; //80vw !important;
+  }
+
+  @media (max-width: 905px) {
+    width: 600px !important;
+  }
+
+  @media (max-width: 670px) {
+    width: 450px !important;
+  }
+
+  @media (max-width: 510px) {
+    width: 310px !important;
+  }
+
+  @media (max-width: 349px) {
+    width: 280px !important;
+  }
+}
+
+.activity {
+  width: 100% !important;
+}
+
+p-floatLabel label {
+  font-size: 22px !important;
+  color: var(--primary-color) !important;
+  margin-top: -18px !important;
+  margin-left: 0 !important;
+  user-select: none;
+}
+
+input {
+  color: var(--primary-color);
+  font-size: 22px !important;
+  width: 100%;
+}
+
+input:focus + label {
+  font-size: 30px !important;
+  margin-top: -30px !important;
+}
+
+textarea {
+  color: var(--primary-color);
+  font-size: 22px !important;
+  width: 95%;
+  min-width: 250px;
+  resize: none;
+}
+
+textarea:focus + label {
+  font-size: 30px !important;
+  margin-top: -30px !important;
+}
+
+.container-settings {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  width: 100%;
+  user-select: none;
+}

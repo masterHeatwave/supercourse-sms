@@ -1,0 +1,38 @@
+<div *ngIf="selectedView === 'main'">
+  <div class="dropboxes-div">
+    <p-dropdown
+      [options]="uniqueClasses"
+      [(ngModel)]="uniqueClass"
+      (onChange)="classDropdownChange($event)"
+      optionLabel="name"
+      placeholder="Select a class"
+    />
+    <p-dropdown
+      [options]="subperiods"
+      [(ngModel)]="selectedSemester"
+      (onChange)="semesterDropdownChange($event)"
+      optionLabel="name"
+      placeholder="Select a semester"
+    />
+  </div>
+  <div class="main-div">
+    <mood-picker
+      [currentClass]="uniqueClass"
+      [currentSemester]="selectedSemester"
+      [userId]="currentUserID"
+      [moods]="moodData"
+      (moodSaved)="loadMoods()"
+    />
+    <tool-selector (viewChanged)="onViewChange($event)" />
+  </div>
+  <mood-calendar [moods]="moods" />
+</div>
+<div *ngIf="selectedView === 'calm'">
+  <app-calm-time-view (backToMainView)="onBackToMainView()" />
+</div>
+<div *ngIf="selectedView === 'relaxing'">
+  <app-relaxing-music-view (backToMainView)="onBackToMainView()" />
+</div>
+<div *ngIf="selectedView === 'meditation'">
+  <app-meditation-view (backToMainView)="onBackToMainView()" />
+</div>

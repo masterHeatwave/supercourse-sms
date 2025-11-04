@@ -1,0 +1,44 @@
+<div class="primary-textarea flex flex-column gap-2 {{ styleClass }} w-full">
+    <label *ngIf="label" [for]="field.id" class="{{ labelClass }}">
+      {{ label | translate }} <span *ngIf="required" style="color: #ef4444;">*</span>
+      <span class="text-red-500 text-xs" *ngIf="formControl && showError">
+        (
+        <span *ngFor="let error of formControl.errors | keyvalue">
+          {{ error.value.message || ('validation.' + error.key | translate) }}
+        </span>
+        )
+      </span>
+  </label>
+  <!-- Formly-driven usage -->
+  <textarea
+    *ngIf="formControl; else standaloneTextArea"
+    [id]="field.id!"
+    [formControl]="formControl"
+    [formlyAttributes]="field"
+    pInputTextarea
+    class="w-full non-resizable-textarea"
+    [class.ng-invalid]="formControl && showError"
+    [class.ng-dirty]="formControl && showError"
+    [class.disabled-appearance]="isDisabled"
+    [rows]="rows"
+    [placeholder]="placeholder | translate"
+    [autoResize]="autoResize"
+  ></textarea>
+
+  <!-- Standalone usage -->
+  <ng-template #standaloneTextArea>
+    <textarea
+      pInputTextarea
+      class="w-full non-resizable-textarea"
+      [rows]="rows"
+      [placeholder]="placeholder | translate"
+      [autoResize]="autoResize"
+      [(ngModel)]="value"
+      [ngModelOptions]="{standalone: true}"
+      (ngModelChange)="valueChange.emit($event)"
+    ></textarea>
+  </ng-template>
+    <small *ngIf="props.description" [id]="field.id + '-help'">
+      {{ props.description }}
+    </small>
+  </div> 

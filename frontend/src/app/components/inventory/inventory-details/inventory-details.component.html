@@ -1,0 +1,118 @@
+<div class="p-4">
+  <p-card *ngIf="item && !isLoading" [header]="getHeaderTitle()" styleClass="shadow-none mb-4">
+    <ng-template pTemplate="content">
+      <!-- Details Section -->
+      <div class="mb-4">
+        <h3 class="text-primary font-bold text-xl mb-4">Details:</h3>
+        <div class="grid">
+          <div class="col-12 md:col-6">
+            <div class="field mb-3">
+              <label class="block text-900 font-semibold mb-2 text-sm">{{ getFieldLabel('field1') | translate }}</label>
+              <div class="p-3 bg-gray-50 border-1 border-300 border-round text-900 min-h-3rem flex align-items-center">
+                {{ getFieldValue('field1') }}
+              </div>
+            </div>
+          </div>
+          <div class="col-12 md:col-6">
+            <div class="field mb-3">
+              <label class="block text-900 font-semibold mb-2 text-sm">{{ getFieldLabel('field2') | translate }}</label>
+              <div class="p-3 bg-gray-50 border-1 border-300 border-round text-900 min-h-3rem flex align-items-center">
+                {{ getFieldValue('field2') }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="border-top-1 border-primary w-full mt-4 mb-2"></div>
+      </div>
+
+      <!-- Second Section -->
+      <div class="mb-4">
+        <h3 class="text-primary font-bold text-xl mt-4 mb-2">{{ getSectionTitle('section2') }}:</h3>
+        <div class="grid">
+          <div class="col-12 md:col-2">
+            <div class="field mb-3">
+              <label class="block text-900 font-semibold mb-2 text-sm">{{ getFieldLabel('field3') | translate }}</label>
+              <div class="p-3 bg-gray-50 border-1 border-300 border-round text-900 min-h-3rem flex align-items-center">
+                {{ getFieldValue('field3') }}
+              </div>
+            </div>
+          </div>
+          <div class="col-12" [class]="context === 'elibrary' ? 'md:col-10' : 'md:col-2'">
+            <div class="field mb-3">
+              <label class="block text-900 font-semibold mb-2 text-sm">{{ getFieldLabel('field4') | translate }}</label>
+              <div class="p-3 bg-gray-50 border-1 border-300 border-round text-900 min-h-3rem flex align-items-center">
+                {{ getFieldValue('field4') }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="border-top-1 border-primary w-full mt-4 mb-2"></div>
+      </div>
+
+      <!-- Content Section -->
+      <div class="mb-4">
+        <h3 class="text-primary font-bold text-xl mt-4 mb-2">{{ getSectionTitle('section3') }}:</h3>
+        <div class="grid">
+          <div class="col-12">
+            <div class="field mb-3">
+              <label class="block text-900 font-semibold mb-2 text-sm">{{ getFieldLabel('field5') | translate }}</label>
+              <div class="p-3 bg-gray-50 border-1 border-300 border-round text-900 min-h-4rem flex align-items-start pt-3" 
+                   style="white-space: pre-wrap; word-break: break-word;">
+                {{ getFieldValue('field5') }}
+              </div>
+            </div>
+          </div>
+          <div class="col-12 md:col-6" *ngIf="getFieldValue('field6') !== '-'">
+            <div class="field mb-3">
+              <label class="block text-900 font-semibold mb-2 text-sm">{{ getFieldLabel('field6') | translate }}</label>
+              <div class="p-3 bg-gray-50 border-1 border-300 border-round text-900 min-h-3rem flex align-items-center">
+                <span *ngIf="context === 'elibrary' && item?.url; else normalField">
+                  <a [href]="item.url" target="_blank" rel="noopener" class="text-primary no-underline">{{ getFieldValue('field6') }}</a>
+                </span>
+                <ng-template #normalField>{{ getFieldValue('field6') }}</ng-template>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 md:col-6" *ngIf="getFieldValue('field7') !== '-'">
+            <div class="field mb-3">
+              <label class="block text-900 font-semibold mb-2 text-sm">{{ getFieldLabel('field7') | translate }}</label>
+              <div class="p-3 bg-gray-50 border-1 border-300 border-round text-900 min-h-3rem flex align-items-center">
+                {{ getFieldValue('field7') }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </p-card>
+
+  <!-- Action Buttons -->
+  <div *ngIf="showActions && item" class="flex justify-content-end mt-3 gap-2">
+    <app-outline-button
+      [borderColor]="'red'"
+      [textColor]="'red'"
+      [hoverBackgroundColor]="'red'"
+      [hoverTextColor]="'white'"
+      (click)="onBack()">
+        {{ 'common.back' | translate }}
+    </app-outline-button>
+    <app-outline-button
+      [borderColor]="'var(--primary-color)'"
+      (click)="onEdit()">
+        {{ 'common.edit' | translate }}
+    </app-outline-button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-content-center align-items-center" style="min-height: 200px;">
+    <app-spinner></app-spinner>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!item && !isLoading" class="flex justify-content-center align-items-center" style="min-height: 200px;">
+    <div class="text-center">
+      <i class="pi pi-info-circle text-4xl text-gray-400 mb-3"></i>
+      <p class="text-gray-500">{{ noDataMessageKey | translate }}</p>
+    </div>
+  </div>
+</div>

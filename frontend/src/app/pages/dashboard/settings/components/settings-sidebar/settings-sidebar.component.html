@@ -1,0 +1,18 @@
+<div class="flex flex-column w-full max-w-20rem">
+  <h2 class="text-2xl font-bold text-900 mt-2">School Settings</h2>
+  <div class="mb-4 w-full"></div>
+  
+  <nav>
+    <ul class="list-none p-0 m-0 flex flex-column">
+      <li *ngFor="let item of navItems">
+                <a 
+          [routerLink]="['/dashboard/settings', item.route]"
+          routerLinkActive="text-primary font-semibold"
+          class="nav-link flex align-items-center w-full border-none px-2 py-2 text-black cursor-pointer text-left text-lg font-medium hover:text-primary-600 focus:outline-none no-underline">
+            <i [class]="item.icon + ' mr-3 text-lg text-black'"></i>
+            <span class="font-medium text-black">{{ item.label }}</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+</div>

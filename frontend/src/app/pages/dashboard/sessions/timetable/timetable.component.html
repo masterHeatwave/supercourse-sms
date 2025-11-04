@@ -1,0 +1,134 @@
+<div class="timetable-container">
+  <!-- Header with navigation controls -->
+  <div class="timetable-header">
+    <div class="header-left">
+      <h2>{{ 'sessions.timetable.title' | translate }}</h2>
+      <div class="week-navigation">
+        <p-button 
+          icon="pi pi-chevron-left" 
+          styleClass="p-button-outlined p-button-sm" 
+          (onClick)="previousWeek()"
+          [pTooltip]="'sessions.timetable.prev_week' | translate">
+        </p-button>
+        <span class="current-week">
+          {{ selectedWeekStart | date:'MMM d' }} - 
+          {{ getWeekEndDate() | date:'MMM d, y' }}
+        </span>
+        <p-button 
+          icon="pi pi-chevron-right" 
+          styleClass="p-button-outlined p-button-sm" 
+          (onClick)="nextWeek()"
+          [pTooltip]="'sessions.timetable.next_week' | translate">
+        </p-button>
+        <p-button 
+          [label]="'sessions.timetable.today' | translate" 
+          styleClass="p-button-outlined p-button-sm ml-2" 
+          (onClick)="goToToday()">
+        </p-button>
+      </div>
+    </div>
+    
+    <div class="header-right">
+      <p-dropdown 
+        [options]="filterOptions" 
+        [(ngModel)]="selectedFilter" 
+        optionLabel="label" 
+        optionValue="value"
+        [placeholder]="'sessions.timetable.filter_sessions' | translate"
+        styleClass="mr-2">
+        <ng-template pTemplate="item" let-item>
+          <span>{{ item.label | translate }}</span>
+        </ng-template>
+        <ng-template pTemplate="selectedItem" let-selected>
+          <span>{{ selected?.label | translate }}</span>
+        </ng-template>
+      </p-dropdown>
+        <p-button 
+          [label]="'sessions.timetable.back_to_sessions' | translate" 
+        icon="pi pi-arrow-left" 
+        styleClass="p-button-outlined" 
+        (onClick)="navigateToSessions()">
+      </p-button>
+    </div>
+  </div>
+
+  <!-- Loading spinner -->
+  <app-spinner *ngIf="isLoading" [overlay]="true"></app-spinner>
+
+  <!-- Calendar Grid -->
+  <div class="calendar-grid" *ngIf="!isLoading">
+    <div class="calendar-header">
+      <div class="time-column header-cell">{{ 'sessions.timetable.time' | translate }}</div>
+      <div 
+        class="day-column header-cell" 
+        *ngFor="let day of currentWeek">
+        <div class="day-name">{{ day.dayName }}</div>
+        <div class="day-number">{{ day.dayNumber }}</div>
+        <div class="day-events-count" *ngIf="day.events.length > 0">
+          {{ day.events.length }} {{ 'sessions.timetable.events_suffix' | translate }}
+        </div>
+      </div>
+    </div>
+
+    <!-- All-day events row -->
+    <div class="all-day-row" *ngIf="hasAllDayEvents()">
+      <div class="time-column all-day-label">{{ 'sessions.timetable.all_day' | translate }}</div>
+      <div 
+        class="day-column all-day-cell" 
+        *ngFor="let day of currentWeek">
+        <div 
+          class="event all-day-event"
+          *ngFor="let event of getAllDayEvents(day.events)"
+          [style.background-color]="event.color"
+          (click)="onEventClick(event)"
+          [pTooltip]="event.title + ' - ' + event.data.teacher">
+          <div class="event-title">{{ event.title }}</div>
+          <div class="event-details">{{ event.data.classroom }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Time slots -->
+    <div class="time-grid">
+      <div 
+        class="time-row" 
+        *ngFor="let timeSlot of timeSlots">
+        <div class="time-column time-slot">{{ timeSlot }}</div>
+        <div 
+          class="day-column time-cell" 
+          *ngFor="let day of currentWeek">
+          <div 
+            class="event time-event"
+            *ngFor="let event of getEventsForHour(day.events, timeSlot)"
+            [style.background-color]="event.color"
+            (click)="onEventClick(event)"
+            [pTooltip]="event.title + ' - ' + event.data.teacher + ' (' + event.data.classroom + ')'">
+            <div class="event-title">{{ event.title }}</div>
+            <div class="event-time">
+              {{ event.start | date:'HH:mm' }} - {{ event.end | date:'HH:mm' }}
+            </div>
+            <div class="event-details">
+              <p-tag 
+                [value]="(('sessions.status.' + (event.data.status === 'scheduled' ? 'upcoming' : event.data.status)) | translate)" 
+                [severity]="getStatusSeverity(event.data.status)"
+                styleClass="event-status">
+              </p-tag>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div class="empty-state" *ngIf="!isLoading && hasNoEvents()">
+    <i class="pi pi-calendar-times empty-icon"></i>
+    <h3>{{ 'sessions.timetable.no_sessions' | translate }}</h3>
+    <p>{{ 'sessions.timetable.no_sessions_desc' | translate }}</p>
+    <p-button 
+      [label]="'sessions.timetable.go_to_sessions' | translate" 
+      icon="pi pi-plus" 
+      (onClick)="navigateToSessions()">
+    </p-button>
+  </div>
+</div>

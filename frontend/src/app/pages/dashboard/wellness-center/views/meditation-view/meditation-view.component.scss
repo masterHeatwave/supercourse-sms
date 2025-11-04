@@ -1,0 +1,43 @@
+.video-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.video-and-content {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  border: 1px solid #7a7a7a;
+  background-color: white;
+  width: 500px;
+  min-width: 260px;
+  border-radius: 5px;
+  height: auto;
+  margin: 10px;
+  label {
+    margin: 10px;
+    word-wrap: break-word;
+    text-align: center;
+  }
+
+  vg-player {
+    max-width: 500px;
+    min-width: 240px;
+    height: auto;
+    border: 1px solid #7a7a7a;
+    border-radius: 5px;
+  }
+
+  vg-controls {
+    justify-content: center;
+    background-color: rgba($color: #000, $alpha: 0.5);
+  }
+
+  video {
+    width: 100%;
+    //height: 100%;
+    height: auto;
+  }
+}

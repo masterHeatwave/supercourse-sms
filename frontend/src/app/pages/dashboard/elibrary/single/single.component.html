@@ -1,0 +1,10 @@
+<p-toast></p-toast>
+<div class="px-4">
+  <app-inventory-details
+    [item]="item"
+    [isLoading]="isLoading"
+    [context]="'elibrary'"
+    (back)="onBack()"
+    (edit)="onEdit()">
+  </app-inventory-details>
+</div>

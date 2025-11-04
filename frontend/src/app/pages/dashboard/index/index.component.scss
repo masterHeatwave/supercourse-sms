@@ -1,0 +1,98 @@
+.custom-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.bg-gradient-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-600));
+}
+
+.bg-gradient-red {
+  background: linear-gradient(135deg, var(--red-500), var(--red-700));
+}
+
+// Stat cards styling
+.stat-card {
+  min-height: 100px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.stat-label {
+  font-size: 1rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-icon {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  min-width: 50px;
+  flex-shrink: 0;
+  
+  i {
+    font-size: 2rem !important;
+    opacity: 0.8 !important;
+  }
+}
+
+.custom-calendar {
+  padding: 1rem;
+}
+
+.activity-icon {
+  font-size: 1.2rem;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--surface-200);
+}
+
+.activity-time {
+  font-size: 0.85rem;
+  color: var(--text-color-secondary);
+  white-space: nowrap;
+  min-width: 100px;
+  text-align: right;
+}
+
+// Toast notification styles
+:host ::ng-deep .p-toast .p-toast-message {
+  background-color: #ffffff !important;
+  border: 1px solid #e0e0e0 !important;
+  color: #333333 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+:host ::ng-deep .p-toast .p-toast-message.p-toast-message-info {
+  background-color: #e3f2fd !important;
+  border-left: 4px solid #2196f3 !important;
+  color: #1565c0 !important;
+}
+
+:host ::ng-deep .p-toast .p-toast-message .p-toast-message-content {
+  color: inherit !important;
+}
+
+:host ::ng-deep .p-toast .p-toast-message .p-toast-summary {
+  font-weight: bold !important;
+  color: inherit !important;
+}
+
+:host ::ng-deep .p-toast .p-toast-message .p-toast-detail {
+  color: inherit !important;
+  margin-top: 0.5rem !important;
+  white-space: pre-line !important;
+}

@@ -1,0 +1,90 @@
+<div class="p-4">
+  <!-- Header with Search and Actions -->
+  <div class="flex justify-content-between align-items-center mb-4">
+    <h2 class="text-2xl font-semibold text-900 m-0">Roles</h2>
+    
+    <div class="flex align-items-center gap-2">
+      <!-- Search Input -->
+      <app-search-input
+        placeholder="Search in roles"
+        [(ngModel)]="searchValue"
+        [borderColor]="'#000000'"
+        minWidth="250px"
+        (searchChange)="onSearchChange($event)">
+      </app-search-input>
+      
+      <!-- View Mode Toggle -->
+      <div class="flex border-1 border-300 border-round" style="overflow: hidden;">
+        <button 
+          class="p-2 border-none bg-transparent cursor-pointer transition-colors transition-duration-200"
+          [class.bg-primary]="viewMode === 'grid'"
+          [class.text-white]="viewMode === 'grid'"
+          [class.text-600]="viewMode !== 'grid'"
+          (click)="setViewMode('grid')"
+          title="Grid View"
+          style="font-size: 0.875rem;">
+          <i class="pi pi-th-large"></i>
+        </button>
+        <button 
+          class="p-2 border-none bg-transparent cursor-pointer transition-colors transition-duration-200"
+          [class.bg-primary]="viewMode === 'list'"
+          [class.text-white]="viewMode === 'list'"
+          [class.text-600]="viewMode !== 'list'"
+          (click)="setViewMode('list')"
+          title="List View"
+          style="font-size: 0.875rem;">
+          <i class="pi pi-list"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Roles Grid -->
+  <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+    <div 
+      *ngFor="let role of filteredRoles" 
+      class="col-12"
+    >
+      <div class="bg-white p-4 border-1 border-black cursor-pointer" 
+           (click)="onViewRole(role)">
+        <!-- Role Header -->
+        <div class="flex justify-content-between align-items-start mb-3">
+          <h3 class="text-lg font-semibold text-900 m-0" style="line-height: 1.4;">{{ role.name }}</h3>
+        </div>
+
+        <!-- Role Description -->
+        <p class="text-600 line-height-3 mb-4 text-sm">{{ role.description }}</p>
+
+        <!-- Access Permissions -->
+        <div class="mb-4">
+          <div class="flex flex-wrap gap-2 align-items-center">
+            <span class="font-medium text-900 text-sm">Access:</span>
+            <span 
+              *ngFor="let permission of role.permissions.slice(0, 4)"
+              class="bg-gray-100 text-primary text-600 text-xs font-medium px-3 py-1">
+              {{ permission.toLowerCase() }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Role Actions -->
+        <div class="flex justify-content-end">
+          <app-outline-button
+            [borderColor]="'var(--primary-color)'"
+            [textColor]="'var(--primary-color)'"
+            [hoverBackgroundColor]="'var(--primary-color)'"
+            [hoverTextColor]="'white'"
+            (click)="onEditRole(role, $event)">
+            Edit Role
+          </app-outline-button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Results -->
+  <div *ngIf="filteredRoles.length === 0" class="text-center py-8">
+    <i class="pi pi-search text-4xl text-400 mb-3"></i>
+    <p class="text-600 text-lg">No roles found</p>
+  </div>
+</div>

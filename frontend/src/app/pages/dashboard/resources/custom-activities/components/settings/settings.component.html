@@ -1,0 +1,10 @@
+<div class="settings-container">
+  <p-checkbox
+    *ngFor="let key of getOptionKeys(); let i = index"
+    [(ngModel)]="options[key]"
+    binary="true"
+    [label]="settings[i]"
+    (onChange)="onOptionChange()"
+  >
+  </p-checkbox>
+</div>

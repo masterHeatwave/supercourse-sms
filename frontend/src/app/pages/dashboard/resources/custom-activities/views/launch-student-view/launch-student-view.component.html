@@ -1,0 +1,4 @@
+<div style="display: flex; width: 98%; justify-content: center">
+  <label *ngIf="isLoading === true">{{ message }}</label>
+  <app-unity *ngIf="isLoading === false" [data]="activityData"></app-unity>
+</div>

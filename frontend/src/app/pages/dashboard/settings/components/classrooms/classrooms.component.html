@@ -1,0 +1,135 @@
+<div class="classrooms-container">
+  <!-- Header with Search and Actions -->
+  <div class="flex justify-content-between align-items-center mb-4">
+    <h2 class="text-2xl font-semibold text-900 m-0">{{ 'classrooms.title' | translate }}</h2>
+    
+    <div class="flex align-items-center gap-2">
+      <!-- Search Input -->
+      <span class="p-input-icon-left">
+        <i class="pi pi-search"></i>
+        <input 
+          type="text" 
+          pInputText 
+          [placeholder]="'classrooms.search_placeholder' | translate"
+          [(ngModel)]="searchValue"
+          (ngModelChange)="onSearchChange($event)"
+          class="search-input"
+        />
+      </span>
+      
+      <!-- Action Buttons -->
+      <p-button 
+        icon="pi pi-plus" 
+        styleClass="p-button-text border-circle"
+        [pTooltip]="'classrooms.add' | translate"
+        (click)="onAdd()">
+      </p-button>
+      
+      <p-button 
+        icon="pi pi-th-large" 
+        styleClass="p-button-text border-circle"
+        [pTooltip]="'common.grid_view' | translate"
+        (click)="toggleViewMode()">
+      </p-button>
+      
+      <p-button 
+        icon="pi pi-list" 
+        styleClass="p-button-text border-circle"
+        [pTooltip]="'common.list_view' | translate"
+        (click)="toggleViewMode()">
+      </p-button>
+      
+      <p-button 
+        icon="pi pi-upload" 
+        styleClass="p-button-text border-circle"
+        [pTooltip]="'common.export' | translate"
+        (click)="onExport()">
+      </p-button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state p-4 text-center">
+    <i class="pi pi-spin pi-spinner text-2xl text-primary mb-3"></i>
+    <p class="text-600">{{ 'classrooms.loading' | translate }}</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state p-4 text-center">
+    <i class="pi pi-exclamation-triangle text-2xl text-orange-500 mb-3"></i>
+    <p class="text-600 mb-3">{{ 'classrooms.load_error' | translate }}</p>
+    <p-button 
+      [label]="'common.retry' | translate" 
+      icon="pi pi-refresh" 
+      styleClass="p-button-outlined"
+      (click)="onRetry()">
+    </p-button>
+  </div>
+
+  <!-- Classroom Table -->
+  <div *ngIf="!loading && !error" class="table-card">
+    <app-primary-table
+      [data]="filteredData"
+      [columns]="tableColumns"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [useVirtualScroll]="false"
+      [showActions]="true"
+      [selectionEnabled]="false"
+      (pageChange)="onPageChange($event)"
+      (rowsPerPageChange)="onRowsPerPageChange($event)"
+      (editRow)="onEdit($event)"
+      (deleteRow)="onDelete($event)"
+      (viewRow)="onView($event)"
+      [dataKey]="'id'"
+    >
+    </app-primary-table>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && !error && classrooms.length === 0" class="empty-state p-4 text-center">
+    <i class="pi pi-home text-4xl text-400 mb-3"></i>
+    <h3 class="text-900 mb-2">{{ 'classrooms.empty.title' | translate }}</h3>
+    <p class="text-600 mb-4">{{ 'classrooms.empty.subtitle' | translate }}</p>
+    <p-button 
+      [label]="'classrooms.add' | translate" 
+      icon="pi pi-plus" 
+      (click)="onAdd()">
+    </p-button>
+  </div>
+</div>
+
+<!-- Create Classroom Dialog -->
+<p-dialog 
+  [header]="'classrooms.create_header' | translate"
+  [(visible)]="showCreateDialog"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="w-11 md:w-8 lg:w-6">
+  
+  <app-classroom-form
+    [isEditMode]="false"
+    (formSubmitted)="onFormSubmitted($event)"
+    (formCancelled)="onFormCancelled()">
+  </app-classroom-form>
+</p-dialog>
+
+<!-- Edit Classroom Dialog -->
+<p-dialog 
+  [header]="'classrooms.edit_header' | translate"
+  [(visible)]="showEditDialog"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="w-11 md:w-8 lg:w-6">
+  
+  <app-classroom-form
+    [isEditMode]="true"
+    [classroomData]="selectedClassroom"
+    (formSubmitted)="onFormSubmitted($event)"
+    (formCancelled)="onFormCancelled()">
+  </app-classroom-form>
+</p-dialog>

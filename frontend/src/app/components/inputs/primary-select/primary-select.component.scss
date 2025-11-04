@@ -1,0 +1,44 @@
+/* Disabled select appearance */
+.disabled-appearance,
+select:disabled,
+.p-multiselect.p-inputtext:disabled,
+.p-multiselect.disabled-appearance {
+  color: #6b7280; /* gray-500 */
+  background-color: #f3f4f6; /* gray-100 */
+  border-color: #d1d5db; /* gray-300 */
+  cursor: not-allowed;
+}
+
+/* Base control styles */
+.primary-select__control {
+  padding: 0.75rem 2.25rem 0.75rem 0.75rem;
+  border: 2px solid #ced4da;
+  border-radius: 0.5rem; /* rounded-md */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #ffffff;
+}
+
+/* Focus ring */
+.primary-select__control:focus {
+  outline: none;
+  border-color: #3b82f6; /* blue-500 */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Placeholder option subdued */
+option[disabled][selected] {
+  color: #9ca3af; /* gray-400 */
+}
+
+/* Chevron icon */
+.primary-select__chevron {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  color: #6b7280; /* gray-500 */
+  pointer-events: none;
+}
+

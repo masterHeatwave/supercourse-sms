@@ -1,0 +1,22 @@
+.create-student-page {
+  .page-content {
+    padding: 1rem;
+  }
+
+  .custom-card {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-actions {
+    margin-top: 1.5rem;
+  }
+
+  :host ::ng-deep {
+    // Custom styling for form components if needed
+    .p-card {
+      .p-card-content {
+        padding: 1.25rem;
+      }
+    }
+  }
+} 

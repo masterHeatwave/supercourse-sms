@@ -1,0 +1,44 @@
+<!-- src/app/components/attachment/attachment.component.html -->
+<!-- File Input (hidden) -->
+<input #fileInput 
+       type="file" 
+       [accept]="acceptedFileTypes" 
+       [multiple]="true"
+       (change)="onFileSelected($event)"
+       style="display: none;">
+
+<!-- Upload Button -->
+<p-button 
+  [icon]="getButtonIcon()" 
+  [rounded]="true"
+  [text]="true"
+  [disabled]="disabled || isUploading"
+  [pTooltip]="getTooltipText()"
+  tooltipPosition="top"
+  [loading]="isUploading"
+  (onClick)="openFileDialog()">
+</p-button>
+
+<!-- Upload Progress (shown during upload) -->
+<div *ngIf="isUploading" 
+     class="upload-progress mt-2 p-2 border-round-lg surface-100">
+  <div class="flex align-items-center gap-2 mb-2">
+    <i class="pi pi-upload text-primary"></i>
+    <span class="text-sm font-medium">Uploading {{selectedFiles.length}} file(s)...</span>
+  </div>
+  <p-progressBar 
+    [value]="uploadProgress" 
+    [showValue]="true"
+    [style]="{'height': '6px'}">
+  </p-progressBar>
+  
+  <!-- File List -->
+  <div class="file-list mt-2">
+    <div *ngFor="let file of selectedFiles" 
+         class="flex align-items-center gap-2 text-xs text-600">
+      <i [class]="AttachmentUtils.getFileIcon(file.name)"></i>
+      <span class="flex-1 overflow-hidden text-overflow-ellipsis">{{file.name}}</span>
+      <span>{{AttachmentUtils.formatFileSize(file.size)}}</span>
+    </div>
+  </div>
+</div>

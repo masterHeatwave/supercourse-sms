@@ -1,0 +1,16 @@
+.question {
+  margin: 10px 0;
+  width: 100% !important;
+  padding: 5px;
+  background-color: red !important;
+}
+
+.answer-list {
+  display: flex;
+  align-items: flex-start;
+  min-height: 30px;
+  width: 100% !important;
+  border: 1px dashed #ccc;
+
+  padding: 5px;
+}

@@ -1,0 +1,89 @@
+<p-toolbar styleClass="navbar border-left-none border-right-none border-top-none border-bottom-3 border-primary border-noround">
+  <div class="p-toolbar-group-start">
+    <button pButton icon="pi pi-bars" class="p-button-text sidebar-toggle" (click)="toggleSidebar()"></button>
+    <h2 class="page-title">{{ currentPageTitle }}</h2>
+  </div>
+  <div class="p-toolbar-group-end">
+    <div class="flex gap-4 align-items-center">
+      <!-- Language Switcher -->
+      <div class="flex align-items-center gap-2">
+        <button pButton class="p-button-text p-button-sm" [class.font-bold]="translate.currentLang === 'en'" (click)="setLanguage('en')">EN</button>
+        <span class="text-500">|</span>
+        <button pButton class="p-button-text p-button-sm" [class.font-bold]="translate.currentLang === 'el'" (click)="setLanguage('el')">EL</button>
+      </div>
+      <!-- ✅ MESSAGING BUTTON (Updated) -->
+      <div>
+        <button 
+          pButton 
+          icon="pi pi-comment" 
+          class="p-button-text p-button-rounded"
+          pTooltip="Messages"
+          tooltipPosition="bottom"
+          (click)="openMessaging()"
+          style="font-size: 1.5rem">
+        </button>
+      </div>
+      <div>
+        <i class="pi pi-bell" style="font-size: 1.5rem"></i>
+      </div>
+      <div class="text-sm">
+        <span class="font-bold">{{ currentUser?.firstname }} {{ currentUser?.lastname }}</span>
+        <div>{{ selectedRole || currentUser?.role_title || 'No role' }} {{ selectedSchool ? '@ ' + selectedSchool : '' }}</div>
+      </div>
+      <div>
+        <button pButton type="button" class="p-button-text user-menu-button" (click)="menu.toggle($event)">
+          <p-avatar icon="pi pi-user" styleClass="mr-2" shape="circle"></p-avatar>
+          <i class="pi pi-angle-down ml-2"></i>
+        </button>
+
+        <p-menu #menu [popup]="true" [model]="items">
+          <ng-template pTemplate="item" let-item>
+            <div class="p-menuitem-content">
+              <div *ngIf="item.isHeader" class="p-menuitem-header">
+                {{ item.label }}
+              </div>
+
+              <div *ngIf="item.radioGroup === 'role'" class="p-menuitem-radio-group">
+                <div *ngFor="let option of item.options" class="p-menuitem-radio">
+                  <p-radioButton
+                    [name]="item.radioGroup"
+                    [value]="option.value"
+                    [(ngModel)]="selectedRole"
+                    (onClick)="onRoleChange(option)"
+                    [disabled]="userRoles.length <= 1"
+                  >
+                  </p-radioButton>
+                  <label class="p-radiobutton-label">{{ option.label }}</label>
+                </div>
+                <div *ngIf="userRoles.length <= 1" class="mt-2 text-xs text-gray-500">Only one role available</div>
+              </div>
+
+              <div *ngIf="item.radioGroup === 'child'" class="p-menuitem-radio-group">
+                <div *ngFor="let option of item.options" class="p-menuitem-radio">
+                  <p-radioButton
+                    [name]="item.radioGroup"
+                    [value]="option.id"
+                    [(ngModel)]="selectedChildId"
+                    (onClick)="onChildChange(option)"
+                    [disabled]="false"
+                  >
+                  </p-radioButton>
+                  <label class="p-radiobutton-label">{{ option.label }}</label>
+                </div>
+                <div *ngIf="childrenOptions.length === 0" class="mt-2 text-xs text-gray-500">No linked students</div>
+              </div>
+
+              <div *ngIf="!item.isHeader && !item.radioGroup" (click)="item.command ? item.command($event) : null" class="cursor-pointer">
+                <i [ngClass]="item.icon"></i>
+                <span style="margin-left: 10px">{{ item.label }}</span>
+              </div>
+            </div>
+          </ng-template>
+        </p-menu>
+      </div>
+    </div>
+  </div>
+</p-toolbar>
+
+<!-- ✅ MESSAGING CONTAINER (Added at the end) -->
+<app-messaging-container #messagingContainer></app-messaging-container>

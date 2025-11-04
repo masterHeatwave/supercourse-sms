@@ -1,0 +1,56 @@
+<div style="display: flex; width: 100%; justify-content: flex-start">
+  <label *ngIf="isLoading === true">{{ message }}</label>
+  <div *ngIf="isLoading === false">
+    <div class="bevel">
+      <label><u>Title</u>: </label>
+      <i>
+        <label>{{ activityData.title }}</label>
+      </i>
+    </div>
+    <div class="bevel">
+      <label><u>Description</u>: </label>
+      <i>
+        <label>{{ activityData.description }}</label>
+      </i>
+    </div>
+    <div class="bevel">
+      <label><u>CEFR</u>: </label>
+      <i>
+        <label>{{ formatCefr(activityData.cefr) }}</label>
+      </i>
+    </div>
+    <div class="bevel">
+      <label><u>Tags</u>: </label>
+      <i>
+        <label>{{ getFormattedTagValues() }}</label>
+      </i>
+    </div>
+    <div class="bevel">
+      <label><u>Template</u>: </label>
+      <i>
+        <label>{{ activityData.template }}</label>
+      </i>
+    </div>
+    <div class="bevel">
+      <label><u>Activity type</u>: </label>
+      <i>
+        <label>{{ activityTypeText }} </label>
+      </i>
+    </div>
+    <div class="bevel">
+      <label><u>Settings</u></label>
+      <div *ngFor="let setting of activityData.settings | keyvalue">
+        <label>
+          {{ setting.value ? "✓" : "✗" }}
+          {{ getSettingText(setting.key) }}</label
+        >
+      </div>
+    </div>
+    <div *ngIf="isLoading === false" class="bevel">
+      <label><u>Activity</u></label>
+      <div id="activity-container">
+        {{ renderActivity() }}
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,12 @@
+<!-- Show loading spinner/message -->
+<!--  <p *ngIf="loading">Loading users...</p> -->
+
+<!-- Show users when loaded -->
+<ul *ngIf="!loading && users.length > 0" class="p-m-0">
+  <li *ngFor="let user of users" class="p-p-2 p-border-bottom">
+    <strong>{{ user.username }}</strong>
+  </li>
+</ul>
+
+<!-- Show message if no users found -->
+<p *ngIf="!loading && users.length === 0">No users found.</p>

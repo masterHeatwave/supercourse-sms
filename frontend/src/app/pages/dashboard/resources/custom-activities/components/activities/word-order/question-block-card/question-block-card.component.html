@@ -1,0 +1,29 @@
+<div class="question-card">
+  <div
+    style="
+      display: flex;
+      border: 1px solid #ccc;
+      background-color: white;
+      height: 58px;
+      max-width: 60px;
+      border-radius: 5px;
+      margin-top: 10px;
+      align-items: center;
+    "
+  >
+    <i class="pi pi-ellipsis-v" style="color: black; cursor: grab" cdkDragHandle></i>
+    <label>{{ questionNumber }}.</label>
+  </div>
+  <div class="question-card-container">
+    <word-order-question-controller
+      [option]="option"
+      [answers]="answers"
+      [hasData]="hasData"
+      (answersChanged)="handleAnswersChange($event)"
+      (imageURLChanged)="handleImageURLChange($event)"
+      (deleteClicked)="handleQuestionDelete()"
+    ></word-order-question-controller>
+  </div>
+
+  <app-warning-dialog [warningMessage]="warningMessage" [isDialogVisible]="isWarningDialogVisible" (onClose)="isWarningDialogVisible = false" />
+</div>

@@ -1,0 +1,8 @@
+<p-toast></p-toast>
+
+<app-student-form 
+  [submitButtonLabel]="'Save'" 
+  (studentCreated)="onStudentCreated($event)" 
+  (formSubmitError)="onError($event)"
+  (cancelForm)="onCancel()">
+</app-student-form>

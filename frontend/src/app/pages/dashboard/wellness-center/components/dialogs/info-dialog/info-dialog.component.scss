@@ -1,0 +1,31 @@
+//@import "../../../../styles/variables";
+
+:host ::ng-deep {
+  .p-dialog-header {
+    color: var(--primary-color);
+  }
+  .infoDiv {
+    padding-top: 5px !important;
+    padding-bottom: 15px !important;
+    width: 100% !important;
+    .p-button {
+      width: 110px !important;
+      height: 35px !important;
+      margin-left: 12px !important;
+      text-align: center !important;
+    }
+  }
+}
+
+.infoDiv {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.infoMessageLabel {
+  font-size: larger !important;
+  margin-bottom: 20px !important;
+  white-space: pre-line !important;
+}

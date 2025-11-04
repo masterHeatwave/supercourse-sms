@@ -1,0 +1,26 @@
+@import '../../../../styles/styles.scss';
+
+.answer-container {
+  display: flex;
+  margin-left: 0px;
+  width: 100%; //90vw;;
+
+  @media (max-width: 785px) {
+    flex-direction: column;
+  }
+  @media (max-width: 430px) {
+    width: 245px;
+  }
+}
+
+:host ::ng-deep {
+  .pi-image {
+    padding-left: 10px;
+  }
+}
+
+matching-pairs-item {
+  width: 100%;
+  margin-left: 0px;
+  margin-right: 5px;
+}

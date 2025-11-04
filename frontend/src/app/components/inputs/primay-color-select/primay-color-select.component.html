@@ -1,0 +1,28 @@
+<div class="color-select {{ styleClass }} relative w-full" #dropdownRef>
+  <label *ngIf="label" class="mb-1 block">
+    {{ label | translate }} <span *ngIf="required" class="text-red-500">*</span>
+  </label>
+
+  <!-- Dropdown trigger -->
+  <div class="flex align-items-center cursor-pointer colored-input primary-select__control" (click)="toggleDropdown()">
+    <div class="flex align-items-center w-full">
+      <span class="flex-grow-1">{{ placeholder || 'Color' }}</span>
+      <div *ngIf="hasColor" class="color-circle mr-2" [ngStyle]="{ 'background-color': selectedColor }"></div>
+    </div>
+    <i class="pi pi-chevron-down" style="color: #000; pointer-events: none"></i>
+  </div>
+
+  <!-- Overlay color picker -->
+  <div *ngIf="isOpen" class="color-options mt-1 border-1 border-300 border-round overflow-hidden absolute w-full bg-white z-10 shadow-2" style="top: 100%">
+    <div class="p-2" [ngStyle]="scaleStyle">
+      <p-colorPicker
+        [inline]="true"
+        [style]="{ width: '100%' }"
+        [disabled]="disabled || formControl.disabled"
+        [ngModel]="pickerValue"
+        (ngModelChange)="onPickerChange($event)"
+        class="w-full"
+      ></p-colorPicker>
+    </div>
+  </div>
+</div>

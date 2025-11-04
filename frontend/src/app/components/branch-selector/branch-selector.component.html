@@ -1,0 +1,12 @@
+<div class="branch-selector p-2">
+  <p-dropdown
+    [options]="customerOptions"
+    [(ngModel)]="selectedCustomerId"
+    optionLabel="name"
+    optionValue="id"
+    [placeholder]="'branch_selector.select_branch' | translate"
+    (onChange)="onCustomerChange()"
+    [style]="{ width: '100%' }"
+    styleClass="w-full p-1"
+  ></p-dropdown>
+</div>

@@ -1,0 +1,16 @@
+.hide {
+  display: none;
+}
+
+:host ::ng-deep {
+  .p-button {
+    display: block !important;
+    margin: 10px !important;
+    width: 220px !important;
+    font-size: x-large !important;
+    text-align: center;
+  }
+  .footerButton {
+    display: block !important;
+  }
+}

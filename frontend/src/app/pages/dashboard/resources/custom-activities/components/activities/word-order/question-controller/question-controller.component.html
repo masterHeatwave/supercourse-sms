@@ -1,0 +1,20 @@
+<div>
+  <word-order-answer
+    *ngIf="option === 'separateEachWord'"
+    (inputChanged)="handleAnswerChanged($event)"
+    (imageURLChanged)="handleAnswerImageURLChanged($event)"
+    (deleteClicked)="handleAnswersDelete()"
+    [answerText]="answers[0].answerText"
+    [imageURL]="answers[0].imageURL"
+  >
+  </word-order-answer>
+  <blocks-answer
+    *ngIf="option === 'customSeparation'"
+    (blocksChanged)="handleAnswerChanged($event)"
+    (imageURLChanged)="handleAnswerImageURLChanged($event)"
+    (deleteClicked)="handleAnswersDelete()"
+    [strings]="answers[0].answerText.split('#@')"
+    [imageURL]="answers[0].imageURL"
+    [hasData]="hasData"
+  ></blocks-answer>
+</div>

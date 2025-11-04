@@ -1,0 +1,21 @@
+<p-dialog
+  header="Warning"
+  [modal]="true"
+  [(visible)]="isDialogVisible"
+  [style]="{ width: '30rem' }"
+  [closable]="false"
+>
+  <p-divider></p-divider>
+  <div class="warningDiv">
+    <i
+      class="pi pi-exclamation-circle"
+      style="font-size: 4.5rem; color: #ffaa00; margin: 0; margin-bottom: 30px"
+    ></i>
+    <div class="warningMessageLabel">{{ warningMessage }}</div>
+    <p-button
+      [style]="{ width: '100px', height: '38px' }"
+      (click)="isDialogVisible = false; onClose.emit()"
+      label="OK"
+    ></p-button>
+  </div>
+</p-dialog>

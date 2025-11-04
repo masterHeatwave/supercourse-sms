@@ -1,0 +1,22 @@
+.primary-textarea {
+  .non-resizable-textarea {
+    resize: none !important;
+    overflow: hidden !important;
+    min-height: auto !important;
+    max-height: none !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    
+    &:focus {
+      resize: none !important;
+      overflow: hidden !important;
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 1px #3b82f6 !important;
+    }
+    
+    &:hover {
+      resize: none !important;
+      border-color: #9ca3af !important;
+    }
+  }
+} 

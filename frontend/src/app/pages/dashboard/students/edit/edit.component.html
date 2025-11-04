@@ -1,0 +1,16 @@
+<ng-container *ngIf="studentData$ | async as studentData; else loading">
+  <app-student-form
+    [isEditMode]="true"
+    [studentData]="studentData"
+    [submitButtonLabel]="'Update Student'"
+    (studentUpdated)="onStudentUpdated($event)"
+    (formSubmitError)="onError($event)"
+    (cancelForm)="onCancel()">
+  </app-student-form>
+</ng-container>
+
+<ng-template #loading>
+  <div class="flex justify-content-center align-items-center" style="height: 200px;">
+    <p>Loading student data...</p>
+  </div>
+</ng-template> 

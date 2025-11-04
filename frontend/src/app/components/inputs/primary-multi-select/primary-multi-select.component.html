@@ -1,0 +1,24 @@
+<div class="primary-multi-select flex flex-column gap-2 {{ styleClass }}">
+  <p-multiSelect
+    [id]="field.id!"
+    [formControl]="formControl"
+    [options]="selectOptions"
+    [formlyAttributes]="field"
+    [placeholder]="placeholder"
+    optionLabel="label"
+    optionValue="value"
+    display="chip"
+    [showClear]="true"
+    [disabled]="disabled"
+    class="w-full"
+    [class.ng-invalid]="showError"
+    [class.ng-dirty]="showError"
+  >
+  </p-multiSelect>
+
+  <!-- Description and error message -->
+  @if (props.description) {
+    <small [id]="field.id + '-help'">{{ props.description }}</small>
+  }
+  <!-- <p-message *ngIf="showError" severity="error" [text]="errorMessage"></p-message> -->
+</div> 

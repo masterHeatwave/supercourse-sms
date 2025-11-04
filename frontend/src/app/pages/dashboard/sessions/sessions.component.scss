@@ -1,0 +1,32 @@
+:host {
+  width: 100%;
+}
+
+.position-relative {
+  position: relative;
+}
+
+/* Status badges styling */
+:host ::ng-deep {
+  .p-tag {
+    &.p-tag-success {
+      background-color: #c8e6c9;
+      color: #256029;
+    }
+
+    &.p-tag-info {
+      background-color: #b3e5fc;
+      color: #23547b;
+    }
+
+    &.p-tag-warning {
+      background-color: #feedaf;
+      color: #8a5340;
+    }
+
+    &.p-tag-danger {
+      background-color: #ffcdd2;
+      color: #c63737;
+    }
+  }
+}

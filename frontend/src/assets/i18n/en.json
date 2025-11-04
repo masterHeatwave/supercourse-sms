@@ -1,0 +1,773 @@
+{
+  "login": {
+    "authcard": {
+      "welcome": "Welcome!",
+      "subtitle": "Sign in to continue",
+      "username": { "label": "Username" },
+      "password": { "label": "Password" },
+      "button": { "label": "Log in" },
+      "forgot-password": { "label": "Forgot password" }
+    }
+  },
+  "confirm-dialog": {
+    "title": "Confirm",
+    "message": "Are you sure?",
+    "staff": {
+      "delete_header": "Staff Member Delete",
+      "delete_message": "Are you sure you want to delete this staff member?"
+    },
+    "confirm": "Confirm",
+    "cancel": "Cancel"
+  },
+  "loading": {
+    "label": "Loading..."
+  },
+  "pagination": {
+    "current_page_report_template": "Showing {first} to {last} of {totalRecords} entries"
+  },
+  "api_messages": {
+    "success_title": "Success",
+    "error_title": "Error"
+  },
+  "common": {
+    "clear": "Clear",
+    "error_title": "Error",
+    "success_title": "Success",
+    "export": "Export",
+    "unknown": "Unknown",
+    "back": "Back",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "retry": "Retry",
+    "grid_view": "Grid View",
+    "list_view": "List View",
+    "view": "View",
+    "add": "Add",
+    "update": "Update",
+    "create": "Create",
+    "close": "Close"
+  },
+  "validation": {
+    "required": "{{field}} is required",
+    "minlength": "{{field}} must be at least {{min}} characters"
+  },
+  "board": {
+    "title": "Board",
+    "create": {
+      "button": "Create Post",
+      "header": "New post:",
+      "upload_image": "Upload Image",
+      "preview_alt": "Post preview",
+      "fields": {
+        "title": "Title",
+        "content": "Content"
+      },
+      "placeholders": {
+        "title": "Enter post title",
+        "editor": "Write your post content here...",
+        "select_datetime": "Select date and time",
+        "sample_date": "Sep. 01, 2024"
+      },
+      "poll": {
+        "add": "Add New Poll"
+      },
+      "recipients": {
+        "title": "Recipients:",
+        "all": "All",
+        "administrators": "Administrators",
+        "non_academic_users": "Non-academic users",
+        "classes": "Classes",
+        "teachers": "Teachers",
+        "students": "Students",
+        "parents_guardians": "Parents & Guardians"
+      },
+      "options": {
+        "title": "Options:",
+        "priority": "Post priority:",
+        "pin": "Pin post:",
+        "publish": "Publish post:",
+        "expiration": "Expiration Date:",
+        "allow_replies": "Allow replies",
+        "allow_reactions": "Allow reactions"
+      },
+      "priority": {
+        "low": "Low",
+        "normal": "Normal",
+        "high": "High"
+      },
+      "pin": { "yes": "Yes", "no": "No" },
+      "publish": { "now": "Now", "later": "Later", "draft": "Save as draft" },
+      "actions": { "cancel": "Cancel", "save": "Save" },
+      "messages": {
+        "image_uploaded": "Image uploaded successfully",
+        "feature_title": "Feature",
+        "poll_todo": "Poll functionality will be implemented",
+        "created": "Post created successfully",
+        "create_failed": "Failed to create post",
+        "validation_error": "Validation Error",
+        "fill_required": "Please fill in all required fields"
+      }
+    },
+    "filters": {
+      "view": "View:",
+      "priority": "Priority:",
+      "date": "Date (from - to):",
+      "from": "From",
+      "to": "To",
+      "academic_period": "Academic Period:",
+      "creator": "Creator",
+      "all_creators": "All Creators",
+      "administrator": "Administrator",
+      "teacher": "Teacher"
+    },
+    "sort": {
+      "placeholder": "Sort by",
+      "by": { "date": "Date", "title": "Title", "author": "Author" }
+    },
+    "sections": {
+      "pinned": "Pinned Posts",
+      "other": "Other Posts"
+    },
+    "no_posts": "No posts available",
+    "tooltips": {
+      "edit_post": "Edit post"
+    },
+    "messages": {
+      "could_not_load": "Could not load posts",
+      "failed_to_fetch": "Failed to fetch posts",
+      "export_detail": "Export functionality will be implemented"
+    }
+  },
+  "calendar": {
+    "toolbar": {
+      "download": "Download Calendar",
+      "my_events": "My events",
+      "new_event": "New event"
+    },
+    "filters": {
+      "academic_period": "Academic Period",
+      "period_a": "Period A",
+      "period_b": "Period B"
+    },
+    "form": {
+      "title": "Title",
+      "location": "Location",
+      "description": "Event Description",
+      "start_date": "Start Date",
+      "end_date": "End Date",
+      "all_day": "All Day",
+      "select_invitees": "Select Invitees",
+      "color": "Color"
+    },
+    "placeholders": {
+      "title": "Title",
+      "location": "Location",
+      "description": "Description"
+    },
+    "invitees": {
+      "all_students": "All Students",
+      "all_staff": "All Staff",
+      "all": "All"
+    },
+    "categories": {
+      "a": "Category A",
+      "b": "Category B",
+      "c": "Category C",
+      "d": "Category D",
+      "generic": "Category"
+    },
+    "details": {
+      "event": "Event",
+      "location": "Location",
+      "description": "Description",
+      "start": "Start",
+      "end": "End",
+      "invitees": "Invitees",
+      "color": "Color",
+      "creator": "Event creator",
+      "created_updated": "Creation Date / Update",
+      "edit": "Edit",
+      "delete": "Delete"
+    }
+  },
+  "staff": {
+    "overview": {
+      "title": "Overview",
+      "headers": {
+        "title": "Title",
+        "role": "Role",
+        "branches": "Branches",
+        "classes": "Classes",
+        "start_date": "Start Date",
+        "end_date": "End Date"
+      },
+      "empty": "No overview data available"
+    },
+    "roles": {
+      "administrator": "Administrator",
+      "manager": "Manager",
+      "teacher": "Teacher"
+    },
+    "single": {
+      "upload_dialog": {
+        "title": "Upload Document",
+        "select_file": "Select File",
+        "selected_file": "Selected file:",
+        "upload": "Upload"
+      },
+      "active_user": "Active User",
+      "status": { "label": "Status:" },
+      "code": "Code:",
+      "email": "E-mail:",
+      "phone": "Phone:",
+      "mobile": "Mobile:",
+      "address": "Address:",
+      "registered_by": "Registered by:",
+      "registered": "Registered:",
+      "last_updated": "Last updated:",
+      "documents": "Documents",
+      "no_documents": "No documents available",
+      "active_in_branches": "Active in Branches",
+      "permissions": "Permissions",
+      "collapse_all": "Collapse All",
+      "expand_all": "Expand All",
+      "notes": "Notes:",
+      "not_provided": "Not provided",
+      "documents_download_started": "Successfully initiated download for {{name}}",
+      "documents_download_failed": "Failed to download {{name}}",
+      "errors": {
+        "no_id": "No staff ID provided",
+        "fetch_failed": "Failed to fetch staff data",
+        "download_failed": "Failed to download document",
+        "select_file": "Please select a file to upload",
+        "upload_failed": "Failed to upload document",
+        "delete_failed": "Failed to delete staff member"
+      },
+      "document_uploaded": "Document uploaded successfully",
+      "document_uploaded_mock": "Document uploaded successfully (mock)",
+      "deleted": "Staff member has been deleted successfully"
+    },
+    "table": {
+      "code": "Code",
+      "status": "Status",
+      "name": "Name",
+      "role": "Role",
+      "no_role_assigned": "No role assigned",
+      "class": "Class",
+      "address": "Address",
+      "city": "City",
+      "zip": "Zip",
+      "phone": "Phone",
+      "email": "Email",
+      "branches": "Branches",
+      "no_branches_assigned": "No branches assigned"
+    }
+  },
+  "table": {
+    "actions": "Actions",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+
+  "academic_years": {
+    "form": {
+      "header_create": "Create a new academic year",
+      "header_edit": "Edit academic year",
+      "title": "Title",
+      "start_date": "Start date:",
+      "end_date": "End date:",
+      "set_periods": "Set academic periods",
+      "period": "Period",
+      "delete_period": "Delete Period",
+      "period_title": "Title:",
+      "terms": "Terms",
+      "no_terms": "No terms added yet.",
+      "term": "Term",
+      "add_term": "Add term",
+      "add_another_period": "Add another period",
+      "notes": "Notes",
+      "placeholders": {
+        "title_example": "e.g. 2023-2024",
+        "select_start_date": "Select start date",
+        "select_end_date": "Select end date",
+        "period_title_example": "e.g. Winter period, Summer period",
+        "sample_start": "Sept. 01, 2023",
+        "sample_end": "Jun. 30, 2024",
+        "term_title": "e.g. Term",
+        "notes": "Notes"
+      }
+    },
+    "view": {
+      "details": "Academic Year Details",
+      "name": "Academic Year Name",
+      "start_date": "Start Date",
+      "end_date": "End Date",
+      "duration": "Duration",
+      "status": "Status",
+      "current": "Current",
+      "num_periods": "Number of Periods",
+      "notes": "Notes",
+      "periods": "Academic Periods",
+      "add_period": "Add Period",
+      "add_period_tooltip": "Add a new period to this academic year",
+      "loading": "Loading periods...",
+      "load_error": "Unable to load periods",
+      "no_periods": "No Periods Found",
+      "no_periods_desc": "This academic year doesn't have any periods yet.",
+      "add_first_period": "Add First Period"
+    }
+  },
+  "sessions": {
+    "errors": {
+      "id_not_found": "Session ID not found",
+      "load_failed": "Failed to load session details",
+      "delete_failed": "Failed to delete session",
+      "invalid_date": "Invalid date",
+      "invalid_time": "Invalid time"
+    },
+    "messages": { "deleted": "Session deleted successfully" },
+    "confirm_delete": "Are you sure you want to delete this session? This action cannot be undone.",
+    "attendance": { "present": "Present", "absent": "Absent" },
+    "status": { "upcoming": "Upcoming", "completed": "Completed", "in_progress": "In Progress" },
+    "chat": { "title": "Chat", "opening": "Opening session chat..." },
+    "download": { "title": "Download", "downloading": "Downloading session files..." },
+    "launch": { "title": "Launch online", "launching": "Launch online session..." },
+    "timetable": {
+      "title": "Timetable",
+      "prev_week": "Previous week",
+      "next_week": "Next week",
+      "today": "Today",
+      "filter_sessions": "Filter sessions",
+      "filters": {
+        "all_sessions": "All Sessions",
+        "my_sessions": "My Sessions",
+        "scheduled": "Scheduled",
+        "in_progress": "In Progress",
+        "completed": "Completed"
+      },
+      "back_to_sessions": "Back to Sessions",
+      "time": "Time",
+      "events_suffix": "event(s)",
+      "all_day": "All Day",
+      "no_sessions": "No sessions scheduled",
+      "no_sessions_desc": "There are no sessions scheduled for this week.",
+      "go_to_sessions": "Go to Sessions"
+    },
+    "list": {
+      "view_timetable": "View timetable",
+      "ended": "Ended",
+      "no_teachers": "No teachers",
+      "no_subject": "No Subject",
+      "no_class": "No Class",
+      "no_classroom": "No Classroom",
+      "no_location": "No Location",
+      "mode": "Mode",
+      "no_mode": "No Mode",
+      "na": "N/A"
+    },
+    "table": {
+      "code": "Code",
+      "status": "Status",
+      "title": "Title",
+      "class": "Class",
+      "teachers": "Teachers",
+      "students": "Students",
+      "mode": "Mode",
+      "classroom": "Classroom",
+      "location": "Location",
+      "absences": "Absences",
+      "scheduled_timeframe": "Scheduled Timeframe",
+      "start_time": "Started At",
+      "time_left": "Ends In"
+    },
+    "create": {
+      "header_edit": "Edit Session",
+      "header_create": "Create New Session",
+      "fill_fake": "Fill with Fake Data",
+      "class": "Class",
+      "select_class": "Select class",
+      "academic_period": "Academic Period",
+      "select_academic_period": "Select academic period",
+      "academic_subperiod": "Academic Subperiod",
+      "select_academic_subperiod": "Select academic subperiod",
+      "start_time": "Start Time",
+      "select_start_time": "Select start time",
+      "end_time": "End Time",
+      "select_end_time": "Select end time",
+      "teachers": "Teachers",
+      "select_teachers": "Select teachers",
+      "students": "Students",
+      "select_students": "Select students",
+      "classroom": "Classroom",
+      "select_classroom": "Select classroom",
+      "room": "Room/Location",
+      "enter_room": "Enter specific room or location",
+      "color": "Color",
+      "color_placeholder": "#3b82f6",
+      "session_options": "Session Options",
+      "recurring_session": "Recurring Session",
+      "invite_participants": "Send an invitation via e-mail to all participants",
+      "errors": {
+        "class_required": "Class is required",
+        "academic_period_required": "Academic period is required",
+        "start_time_required": "Start time is required",
+        "end_time_required": "End time is required",
+        "teachers_required": "At least one teacher is required",
+        "classroom_required": "Classroom is required"
+      },
+      "load_failed": "Failed to load session data",
+      "updated": "Session updated successfully",
+      "created": "Session created successfully",
+      "generic_error": "An error occurred while creating the session",
+      "validation_errors_prefix": "Validation errors:"
+    }
+  },
+  "settings": {
+    "roles": {
+      "title": "Roles",
+      "search_placeholder": "Search in roles",
+      "grid_view": "Grid View",
+      "list_view": "List View",
+      "access": "Access:",
+      "no_results": "No roles found matching your search.",
+      "view": {
+        "edit_title": "Edit Role:",
+        "description": "Description",
+        "set_permissions": "Set permissions",
+        "modify_text": "Modify what individuals on selected role can do.",
+        "expand_all": "Expand all",
+        "loading": "Loading role details..."
+      },
+      "permissions": {
+        "school": "School Access",
+        "staff": "Staff Access",
+        "student": "Student Access",
+        "class": "Class Access",
+        "assessments": "Assessments Access",
+        "library": "Library Access",
+        "board": "Board Access",
+        "progress": "Progress / Grades Access"
+      }
+    }
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "staff": "Staff",
+    "students": "Students",
+    "classes": "Classes",
+    "sessions": "Sessions",
+    "timetable": "Timetable",
+    "board": "Board",
+    "calendar": "Calendar",
+    "elibrary": "E-library",
+    "assets": "Assets",
+    "assignments": "Assignments",
+    "progress": "Progress",
+    "revision-center": "Revision Center",
+    "wellness-center": "Wellness Center",
+    "resources": "Resources"
+  },
+  "classrooms": {
+    "title": "Classrooms",
+    "search_placeholder": "Search in classrooms",
+    "add": "Add Classroom",
+    "loading": "Loading classrooms...",
+    "load_error": "Unable to load classrooms",
+    "empty": {
+      "title": "No Classrooms Found",
+      "subtitle": "Get started by adding your first classroom."
+    },
+    "create_header": "Create New Classroom",
+    "edit_header": "Edit Classroom",
+    "unknown_branch": "Unknown Branch",
+    "table": {
+      "name": "Name",
+      "branch": "Branch",
+      "capacity": "Capacity",
+      "location": "Location",
+      "equipment": "Equipment",
+      "availability": "Availability"
+    }
+  },
+  "classes": {
+    "table": {
+      "code": "Code",
+      "status": "Status",
+      "current": "Current",
+      "archived": "Archived",
+      "name": "Name",
+      "level": "Level",
+      "subject": "Subject",
+      "teacher": "Teacher",
+      "students": "Students",
+      "sessions_per_week": "Sessions/Week",
+      "total_duration": "Total Duration",
+      "days": "Days"
+    }
+  },
+  "dashboard": {
+    "primary_branch": "Primary Branch",
+    "secondary_branch": "Secondary Branch",
+    "week": "Week",
+    "branch_contact_details": "Branch Contact Details",
+    "website": "Website:",
+    "administrator": "Administrator:",
+    "manager": "Manager:",
+    "address": "Address:",
+    "branch_email": "Branch e-mail:",
+    "administrator_email": "Administrator e-mail:",
+    "manager_email": "Manager e-mail:",
+    "phone": "Phone:",
+    "code": "Code:",
+    "vat": "VAT:",
+    "absences": "Absences",
+    "no_absences": "No absences recorded",
+    "my_finances": "myFinances",
+    "board": "Board",
+    "no_posts": "No posts available",
+    "latest_activity": "Latest Activity",
+    "no_recent_activity": "No recent activity",
+    "students": "Students",
+    "stats": {
+      "enrolled_students": "Enrolled Students",
+      "staff_members": "Staff Members",
+      "classes": "Classes",
+      "ongoing_sessions": "Ongoing Sessions"
+    }
+  },
+  "branch_selector": {
+    "select_branch": "Select Branch"
+  },
+  "students": {
+    "table": {
+      "code": "Code",
+      "status": "Status",
+      "name": "Name",
+      "registration": "Registration",
+      "phone": "Phone",
+      "email": "E-mail",
+      "age_dob": "Age (DoB)",
+      "invalid_date": "Invalid Date",
+      "class": "Class",
+      "class_assigned": "Class assigned",
+      "level": "Level",
+      "subject": "Subject",
+      "health": "Health",
+      "allergies_medication": "Allergies - Medication",
+      "none": "None",
+      "branch": "Branch",
+      "branch_assigned": "Branch assigned",
+      "no_branch_assigned": "No branch assigned"
+    },
+    "errors": {
+      "no_id": "No student ID provided",
+      "fetch_failed": "Failed to fetch student data",
+      "update_failed": "Failed to update student",
+      "delete_failed": "Failed to delete student"
+    },
+    "messages": {
+      "updated": "Student updated successfully",
+      "deleted": "Student has been deleted successfully",
+      "document_deleted": "Document deleted successfully"
+    },
+    "confirm_delete": {
+      "header": "Delete Student",
+      "message": "This will permanently remove {{name}} from the system. All associated data will be lost and this action cannot be undone."
+    },
+    "single": {
+      "student_id": "Student ID",
+      "labels": {
+        "code": "Code",
+        "mobile": "Mobile",
+        "last_updated_by": "Last updated by",
+        "email": "E-mail",
+        "address": "Address",
+        "registered_by": "Registered by",
+        "age_dob": "Age (DoB)",
+        "last_updated": "Last updated",
+        "registered": "Registered",
+        "primary_contact": "Primary contact",
+        "health_info": "Health info",
+        "siblings_attending": "Siblings attending",
+        "general_notes": "General notes"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "books": "Books",
+        "progress": "Progress",
+        "documents": "Documents"
+      }
+    }
+  },
+  "inventory": {
+    "create": {
+      "title": "Create Inventory Record"
+    },
+    "edit": {
+      "title": "Edit Inventory Record"
+    },
+    "fields": {
+      "billingPerson": "Billing Person",
+      "billingDate": "Billing Date",
+      "returnDate": "Return Date",
+      "notes": "Notes",
+      "bookTitle": "Book Title",
+      "assetTitle": "Asset Title"
+    },
+    "messages": {
+      "created": "Inventory record created successfully",
+      "updated": "Inventory record updated successfully"
+    },
+    "errors": {
+      "customer_missing": "Customer not available",
+      "create_failed": "Failed to create inventory record",
+      "update_failed": "Failed to update inventory record"
+    },
+    "table": {
+      "code": "Code",
+      "title": "Title",
+      "billingDate": "Billing Date",
+      "returnDate": "Return Date",
+      "billingPerson": "Billing Person"
+    }
+  },
+  "assets": {
+    "table": {
+      "name": "Name",
+      "category": "Category",
+      "condition": "Condition",
+      "location": "Location",
+      "assignedTo": "Assigned To",
+      "purchaseDate": "Purchase Date"
+    },
+    "confirm_delete": {
+      "header": "Delete Asset",
+      "message": "Are you sure you want to delete \"{{name}}\""
+    },
+    "messages": {
+      "deleted": "Asset has been deleted successfully"
+    },
+    "errors": {
+      "delete_failed": "Failed to delete asset"
+    }
+  },
+  "eLibrary": {
+    "table": {
+      "title": "Title",
+      "type": "Type",
+      "author": "Author",
+      "publishedAt": "Published At"
+    },
+    "confirm_delete": {
+      "header": "Delete E-library Item",
+      "message": "Are you sure you want to delete \"{{name}}\""
+    },
+    "messages": {
+      "deleted": "E-library item has been deleted successfully"
+    },
+    "errors": {
+      "delete_failed": "Failed to delete E-library item"
+    }
+  },
+  "users": {
+    "new-user": {
+      "title": "Create new user",
+      "contacts": "Contacts",
+      "form": {
+        "fields": {
+          "firstname": "First Name",
+          "lastname": "Last Name",
+          "email": "Email",
+          "phone": "Phone",
+          "username": "Username",
+          "password": "Password",
+          "user_type": "User Type",
+          "internal_number": "Internal Number"
+        }
+      }
+    },
+    "edit-user": {
+      "title": "Edit user"
+    },
+    "new": {
+      "permissions": {
+        "title": "Permissions",
+        "roles": {
+          "ADMIN": "Admin",
+          "USER": "User",
+          "CLIENT": "Client",
+          "DISTRIBUTOR": "Distributor",
+          "DASHBOARD": "Dashboard"
+        },
+        "prefix": {
+          "CUSTOMER": "Customer",
+          "DISTRIBUTORS": "Distributor",
+          "PRODUCT": "Product",
+          "PRODUCTASSET": "Product Asset",
+          "USER": "User",
+          "ERROR": "Error",
+          "MEDIA": "Media",
+          "ROLE": "Role",
+          "DASHBOARD": "Dashboard",
+          "NOTIFICATIONS": "Notifications"
+        },
+        "CUSTOMER_TEST": "Customer Test",
+        "CUSTOMER_QUERY_ALL": "Query All Customers",
+        "CUSTOMER_QUERY_SINGLE": "Query Single Customer",
+        "CUSTOMER_CREATE": "Create Customer",
+        "CUSTOMER_UPDATE": "Update Customer",
+        "CUSTOMER_ARCHIVE": "Archive Customer",
+        "CUSTOMER_QUERY_DISTRIBUTORS": "Query Distributors",
+        "DISTRIBUTORS_QUERY_ALL": "Query All Distributors",
+        "DISTRIBUTORS_GET_TAGGEED_PRODUCTS": "Distributor Tagged Products",
+        "DISTRIBUTORS_UPDATE_TAGGEED_PRODUCT": "Update Distributor Tagged Products",
+        "DISTRIBUTORS_GET_ONE": "Query Single Distributor",
+        "DISTRIBUTORS_CREATE": "Create Distributor",
+        "DISTRIBUTORS_UPDATE": "Update Distributor",
+        "DISTRIBUTORS_ARCHIVE": "Archive Distributor",
+        "DISTRIBUTORS_ADD_PRODUCT": "Add Product",
+        "DISTRIBUTORS_REMOVE_PRODUCT": "Remove Product",
+        "ERROR_CREATE": "Create Error",
+        "MEDIA_UPLOAD": "Media Upload",
+        "ROLE_QUERY_ALL": "Query All Roles",
+        "ROLE_CREATE": "Create Role",
+        "USER_TEST": "User Test",
+        "USER_QUERY_ALL": "Query All Users",
+        "USER_QUERY_SINGLE": "Query Single User",
+        "USER_CREATE": "Create User",
+        "USER_UPDATE": "Update User",
+        "USER_ARCHIVE": "Archive User",
+        "USER_MAKE_PRIMARY_CONTACT": "Make Primary Contact",
+        "PRODUCT_QUERY_ALL": "Query All Products",
+        "PRODUCT_GET_ONE": "Query Single Product",
+        "PRODUCT_CREATE": "Create Product",
+        "PRODUCT_UPDATE": "Update Product",
+        "PRODUCT_ARCHIVE": "Archive Product",
+        "PRODUCT_DELETE": "Delete Product",
+        "PRODUCTASSET_QUERY_ALL": "Query All Product Assets",
+        "PRODUCTASSET_GET_ONE": "Query Single Product Asset",
+        "PRODUCTASSET_CREATE": "Create Product Asset",
+        "PRODUCTASSET_UPDATE": "Update Product Asset",
+        "PRODUCTASSET_REMOVE": "Delete Product Asset",
+        "DASHBOARD_VISUAL": "Dashboard Access",
+        "NOTIFICATIONS_QUERY_ALL": "All notifications",
+        "NOTIFICATIONS_UPDATE": "Update Notification"
+      }
+    },
+    "table": {
+      "headers": {
+        "username": "Username",
+        "nickname": "Nickname",
+        "firstname": "First name",
+        "lastname": "Last name",
+        "email": "Email",
+        "phone": "Phone",
+        "internal_number": "Internal number",
+        "user_type": "User type",
+        "registration_date": "Registration date"
+      }
+    }
+  }
+}

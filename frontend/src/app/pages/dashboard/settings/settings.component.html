@@ -1,0 +1,17 @@
+<div class="w-full h-full p-4">
+  <div class="flex gap-6 max-w-75rem mx-auto min-h-screen">
+    <!-- Sidebar -->
+    <aside class="w-1/5 flex-shrink-0 h-full">
+      <app-settings-sidebar 
+        [activeIndex]="activeIndex"
+        (activeIndexChange)="onActiveIndexChange($event)">
+      </app-settings-sidebar>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="w-4/5 h-full w-full">
+      <!-- Router outlet for child routes -->
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

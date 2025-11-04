@@ -1,0 +1,32 @@
+.navbar {
+  padding: 0.5rem 1rem;
+}
+
+.app-title {
+  font-size: 1.25rem;
+  margin: 0 0 0 0.5rem;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+}
+
+.user-name {
+  margin-left: 0.5rem;
+}
+
+.sidebar-toggle {
+  display: none;
+}
+
+@media screen and (max-width: 768px) {
+  .sidebar-toggle {
+    display: inline-flex;
+  }
+
+  .user-name {
+    display: none;
+  }
+}
+

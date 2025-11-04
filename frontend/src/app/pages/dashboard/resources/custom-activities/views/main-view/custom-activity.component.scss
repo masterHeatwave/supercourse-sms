@@ -1,0 +1,36 @@
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.label-title-big {
+  font-size: 22px;
+  color: var(--primary-color);
+}
+
+.label-title-small {
+  font-size: 18px;
+  color: var(--primary-color);
+}
+
+p-button {
+  padding: 10px;
+}
+
+::ng-deep .p-datatable {
+  border-collapse: collapse;
+  th,
+  td {
+    border-bottom: 1px solid var(--primary-color);
+  }
+}
+
+:host ::ng-deep {
+  .pi-trash {
+    color: white;
+  }
+  .pi-trash:hover {
+    color: white;
+  }
+}

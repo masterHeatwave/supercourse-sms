@@ -1,0 +1,35 @@
+.documents-table-container {
+  width: 100%;
+}
+
+:host ::ng-deep {
+  .p-datatable .p-datatable-thead > tr > th {
+    background-color: var(--surface-card);
+    color: var(--primary-color);
+    font-weight: 600;
+  }
+
+  .document-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .document-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .document-link {
+    color: var(--text-color);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+      color: var(--primary-color);
+    }
+  }
+
+} 

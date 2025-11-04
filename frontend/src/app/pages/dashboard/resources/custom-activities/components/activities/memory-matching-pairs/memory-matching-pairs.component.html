@@ -1,0 +1,69 @@
+<div
+  cdkDropList
+  [cdkDropListData]="questions"
+  (cdkDropListDropped)="drop($event)"
+>
+  <div class="container-header">
+    <label class="head-label">Pairs</label>
+
+    <div
+      [style]="{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }"
+    >
+      <p-radioButton
+        name="{{ constants.PAIRS_OF_SAME_ITEM_VALUE }}"
+        value="{{ constants.PAIRS_OF_SAME_ITEM_VALUE }}"
+        [(ngModel)]="option"
+        styleClass="radio-style"
+        inputId="sameItemOption"
+        (click)="radioButtonClick($event)"
+      />
+      <label for="sameItemOption" class="radio-label">{{
+        constants.PAIRS_OF_SAME_ITEM_TEXT
+      }}</label>
+    </div>
+    <div
+      [style]="{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }"
+    >
+      <p-radioButton
+        name="{{ constants.PAIRS_OF_DIFF_ITEM_VALUE }}"
+        value="{{ constants.PAIRS_OF_DIFF_ITEM_VALUE }}"
+        styleClass="radio-style"
+        [(ngModel)]="option"
+        inputId="diffItemOption"
+        (click)="radioButtonClick($event)"
+      />
+      <label for="diffItemOption" class="radio-label">{{
+        constants.PAIRS_OF_DIFF_ITEM_TEXT
+      }}</label>
+    </div>
+  </div>
+
+  <div
+    *ngFor="let question of questions; let i = index; trackBy: trackByIndex"
+    cdkDrag
+  >
+    <memory-matching-pairs-card
+      [option]="option"
+      [questionNumber]="i + 1"
+      [answers]="question.answers"
+      (deleteClicked)="handleQuestionDelete(i)"
+      (onAnswersChanged)="handleAnswersChange($event, i)"
+      (onRemoveClick)="removePair(i)"
+    >
+    </memory-matching-pairs-card>
+  </div>
+  <label (click)="addPair()">+Add pair</label>
+  <app-warning-dialog
+    [warningMessage]="warningMessage"
+    [isDialogVisible]="isWarningDialogVisible"
+    (onClose)="isWarningDialogVisible = false"
+  />
+</div>

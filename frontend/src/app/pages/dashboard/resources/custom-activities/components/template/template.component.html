@@ -1,0 +1,30 @@
+<div
+  [ngClass]="{
+    selected: navigationService.getSelectedButtonId() === id,
+    hide: navigationService.getSelectedButtonId() !== id
+  }"
+>
+  <p-dropdown
+    [options]="dropdownOptions"
+    [(ngModel)]="selectedGame"
+    optionLabel="game"
+    placeholder="Select a game"
+    (onChange)="onGameChange($event)"
+  >
+    <ng-template let-item pTemplate="item">
+      <div class="dropdown-item">
+        <img [src]="item.icon" alt="{{ item.label }}" class="item-icon" />
+        <span>{{ item.game }}</span>
+      </div>
+    </ng-template>
+
+    <!-- Template for the selected item -->
+    <ng-template let-item pTemplate="selectedItem">
+      <div class="selected-item">
+        <img [src]="item?.icon" alt="{{ item?.label }}" class="item-icon" />
+        <span>{{ item?.game }}</span>
+      </div>
+    </ng-template>
+  </p-dropdown>
+  <img src="{{ imageSource }}" class="img-big" />
+</div>

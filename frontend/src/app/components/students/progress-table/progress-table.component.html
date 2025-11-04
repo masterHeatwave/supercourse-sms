@@ -1,0 +1,44 @@
+<div class="progress-table-container">
+  <app-primary-table 
+    [data]="tableData" 
+    [columns]="columns"
+    [showActions]="false">
+    
+    <!-- Grades Template -->
+    <ng-template #gradesTemplate let-item="item">
+      <div class="grade-box">{{ item.grades }}</div>
+    </ng-template>
+    
+    <!-- Achievements Template -->
+    <ng-template #achievementsTemplate let-item="item">
+      <div class="achievements-container">
+        <p-progressBar [value]="item.achievements" [showValue]="true" styleClass="custom-progress-bar"></p-progressBar>
+      </div>
+    </ng-template>
+    
+    <!-- Attendance Template -->
+    <ng-template #attendanceTemplate let-item="item">
+      <div class="attendance-container">
+        <span class="attendance-badge">{{ item.attendance }}</span>
+      </div>
+    </ng-template>
+    
+    <!-- Behaviour Template -->
+    <ng-template #behaviourTemplate let-item="item">
+      <div class="behaviour-container">
+        <span class="behaviour-badge">{{ item.behaviour }}</span>
+      </div>
+    </ng-template>
+    
+    <!-- Rewards Template -->
+    <ng-template #rewardsTemplate let-item="item">
+      <div class="rewards-container">
+        <div class="flex gap-3">
+          <span *ngFor="let reward of item.rewards" class="reward-icon" [ngClass]="reward.class">
+            <i [class]="reward.icon"></i>
+          </span>
+        </div>
+      </div>
+    </ng-template>
+  </app-primary-table>
+</div> 

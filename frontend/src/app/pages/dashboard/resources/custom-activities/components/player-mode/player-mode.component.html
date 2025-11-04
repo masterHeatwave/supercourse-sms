@@ -1,0 +1,20 @@
+<div
+  [ngClass]="{
+    selected: navigationService.getSelectedButtonId() === id,
+    hide: navigationService.getSelectedButtonId() !== id
+  }"
+>
+  <p-card [class.selectedCard]="selectedMode === constants.SINGLE_PLAYER_MODE_VALUE" (click)="onCardClick(constants.SINGLE_PLAYER_MODE_VALUE)">
+    <ng-template pTemplate="header">
+      <img alt="Card" src="/assets/images/custom-activities/single.png" />
+    </ng-template>
+    <label>{{ constants.SINGLE_PLAYER_MODE_TEXT }}</label>
+  </p-card>
+
+  <p-card [class.selectedCard]="selectedMode === constants.MULTI_PLAYER_MODE_VALUE" (click)="onCardClick(constants.MULTI_PLAYER_MODE_VALUE)">
+    <ng-template pTemplate="header">
+      <img alt="Card" src="/assets/images/custom-activities/multi.png" />
+    </ng-template>
+    <label>{{ constants.MULTI_PLAYER_MODE_TEXT }}</label>
+  </p-card>
+</div>

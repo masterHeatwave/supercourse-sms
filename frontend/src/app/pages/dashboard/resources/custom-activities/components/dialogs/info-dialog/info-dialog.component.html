@@ -1,0 +1,21 @@
+<p-dialog
+  header="Info"
+  [modal]="true"
+  [(visible)]="isDialogVisible"
+  [style]="{ width: '30rem' }"
+  [closable]="false"
+>
+  <p-divider></p-divider>
+  <div class="infoDiv">
+    <i
+      class="pi pi-info-circle"
+      style="font-size: 4.5rem; color: #87cefa; margin: 0; margin-bottom: 30px"
+    ></i>
+    <div class="infoMessageLabel">{{ infoMessage }}</div>
+    <p-button
+      [style]="{ width: '100px', height: '38px' }"
+      (click)="isDialogVisible = false; onClose.emit()"
+      label="OK"
+    ></p-button>
+  </div>
+</p-dialog>

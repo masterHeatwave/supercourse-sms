@@ -1,0 +1,14 @@
+<div class="history-table-container">
+  <app-primary-table 
+    [data]="tableData" 
+    [columns]="columns"
+    [showActions]="true"
+    (editRow)="handleEdit($event)"
+    (deleteRow)="handleDelete($event)">
+    
+    <ng-template #titleTemplate let-item="item">
+      <div *ngIf="item.title?.yearTitle" class="year-title">{{ item.title.yearTitle }}</div>
+      <div>{{ item.title.value }}</div>
+    </ng-template>
+  </app-primary-table>
+</div> 

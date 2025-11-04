@@ -1,0 +1,227 @@
+<div class="mt-4">
+    <div class="flex flex-column gap-4">
+        <div class="flex flex-column md:flex-row gap-4">
+            <div class="flex flex-column gap-4 w-full md:w-6">
+                <div class="custom-card p-4">
+                    <div class="flex align-items-center justify-content-between">
+                        <div class="text-xl text-primary font-bold">Class Info</div>
+                        <div>
+                            <app-outline-button [borderColor]="'var(--primary-color)'" (click)="navigateToEdit()">
+                                Edit
+                            </app-outline-button>
+                        </div>
+                    </div>
+                    <div class="pt-2 grid">
+                        <div class="col-6">
+                            <div class="flex flex-column gap-2 p-3 border-round-sm surface-100 text-md">
+                                <div class="flex align-items-center gap-2">
+                                    <div class="text-primary font-bold">
+                                        Class:
+                                    </div>
+                                    <div class="font-regular">
+                                        {{ overviewInfo?.class }}
+                                    </div>
+                                </div>
+                                <div class="flex align-items-center gap-2">
+                                    <div class="text-primary font-bold">
+                                        Level:
+                                    </div>
+                                    <div class="font-regular">
+                                        {{ overviewInfo?.level }}
+                                    </div>
+                                </div>
+                                <div class="flex align-items-center gap-2">
+                                    <div class="text-primary font-bold">
+                                        Cefr:
+                                    </div>
+                                    <div class="font-regular">
+                                        {{ overviewInfo?.cefr }}
+                                    </div>
+                                </div>
+                                <div class="flex align-items-center gap-2">
+                                    <div class="text-primary font-bold">
+                                        Subject:
+                                    </div>
+                                    <div class="font-regular">
+                                        {{ overviewInfo?.subject }}
+                                    </div>
+                                </div>
+                                <div class="flex align-items-center gap-2">
+                                    <div class="text-primary font-bold">
+                                        Class Size:
+                                    </div>
+                                    <div class="font-regular">
+                                        {{ overviewInfo?.classSize }}
+                                    </div>
+                                </div>
+                                <div class="flex align-items-center gap-2">
+                                    <div class="text-primary font-bold">
+                                        Materials:
+                                    </div>
+                                    <div class="font-regular">
+                                        {{ overviewInfo?.materials }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="flex flex-column gap-2 p-3 border-round-sm surface-100 text-md">
+                                <div class="flex align-items-center gap-2">
+                                    <div class="text-primary font-bold">
+                                        Created By:
+                                    </div>
+                                    <div class="font-regular">
+                                        {{ overviewInfo?.createdBy }}
+                                    </div>
+                                </div>
+                                <div class="flex align-items-center gap-2">
+                                    <div class="text-primary font-bold">
+                                        Creation Date:
+                                    </div>
+                                    <div class="font-regular">
+                                        {{ overviewInfo?.creationDate }}
+                                    </div>
+                                </div>
+                                <div class="flex align-items-center gap-2">
+                                    <div class="text-primary font-bold">
+                                        Last Updated:
+                                    </div>
+                                    <div class="font-regular">
+                                        {{ overviewInfo?.lastUpdated }}
+                                    </div>
+                                </div>
+                                <div class="flex align-items-center gap-2">
+                                    <div class="text-primary font-bold">
+                                        Session Duration:
+                                    </div>
+                                    <div class="font-regular">
+                                        {{ overviewInfo?.sessionDuration }}
+                                    </div>
+                                </div>
+                                <div class="flex align-items-center gap-2">
+                                    <div class="text-primary font-bold">
+                                        Sessions Per Week:
+                                    </div>
+                                    <div class="font-regular">
+                                        {{ overviewInfo?.sessionsPerWeek }}
+                                    </div>
+                                </div>
+                                <div class="flex align-items-center gap-2">
+                                    <div class="text-primary font-bold">
+                                        Total Hours Per Week:
+                                    </div>
+                                    <div class="font-regular">
+                                        {{ overviewInfo?.totalHoursPerWeek }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="flex flex-column gap-2 p-3 border-round-sm surface-100 text-md">
+                                <div class="flex align-items-center gap-2">
+                                    <div class="text-primary font-bold">
+                                        Teacher
+                                    </div>
+                                    <div class="font-regular">
+                                        {{ overviewInfo?.teacher }}
+                                    </div>
+                                </div>
+                                <div class="flex align-items-center gap-2">
+                                    <div class="text-primary font-bold">
+                                        Phone:
+                                    </div>
+                                    <div class="font-regular">
+                                        {{ overviewInfo?.phone }}
+                                    </div>
+                                </div>
+                                <div class="flex align-items-center gap-2">
+                                    <div class="text-primary font-bold">
+                                        Email:
+                                    </div>
+                                    <div class="font-regular">
+                                        {{ overviewInfo?.email }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="flex flex-column gap-2 p-3 border-round-sm surface-100 text-md">
+                                <div class="flex align-items-center gap-2">
+                                    <div class="text-primary font-bold">
+                                        Week Timetable:
+                                    </div>
+                                </div>
+                                <div class="flex flex-column gap-2 gap-2">
+                                    <div *ngFor="let day of overviewInfo?.weekTimetable"
+                                        class="flex align-items-center gap-2">
+                                        <div>
+                                            {{ day.day }}
+                                        </div>
+                                        <div class="font-regular">
+                                            {{ day.startTime }} - {{ day.endTime }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex gap-2 justify-content-between px-4">
+                    <div class="w-full">
+                        <app-outline-button [borderColor]="'var(--primary-color)'" [fullWidth]="true">
+                            Coursebook
+                        </app-outline-button>
+                    </div>
+                    <div class="w-full">
+                        <app-outline-button [borderColor]="'var(--primary-color)'" [fullWidth]="true">
+                            Activity Book
+                        </app-outline-button>
+                    </div>
+                </div>
+            </div>
+            <div class="w-full md:w-6">
+                <div class="custom-card p-4">
+                    <div>
+                        <div class="text-xl text-primary font-bold">Notes</div>
+                        <div class="pt-2 flex flex-column gap-2">
+                            <div class="p-3 border-round-sm surface-100">
+                                {{ overviewInfo?.notes || 'No notes available for this class.' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="flex flex-column gap-4 custom-card mt-4 p-4">
+        <div class="text-2xl text-primary font-bold">
+            Board
+        </div>
+        
+        <!-- Loading indicator -->
+        <div *ngIf="loadingPosts" class="flex justify-content-center p-4">
+            <i class="pi pi-spin pi-spinner text-primary text-4xl"></i>
+        </div>
+        
+        <!-- Empty state -->
+        <div *ngIf="!loadingPosts && posts.length === 0" class="p-3 text-center">
+            No posts available
+        </div>
+        
+        <!-- Posts grid -->
+        <div *ngIf="!loadingPosts && posts.length > 0" class="grid h-full">
+            <div class="col-12 md:col-6 lg:col-4 p-2" *ngFor="let post of posts.slice(0, 3)">
+                <app-post-card 
+                    [title]="post.title"
+                    [content]="post.content"
+                    [date]="formatDate(post.published_at || post.createdAt)"
+                    [postImage]="defaultPostImage"
+                    [avatarImage]="'assets/images/avatar.jpg'">
+                </app-post-card>
+            </div>
+        </div>
+    </div>
+    <div class="custom-card mt-4 custom-calendar">
+        <full-calendar [options]="calendarOptions"></full-calendar>
+    </div>
+</div>

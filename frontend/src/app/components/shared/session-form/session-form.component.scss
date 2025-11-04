@@ -1,0 +1,222 @@
+.session-form-container {
+  .frequency-input {
+    ::ng-deep .p-inputnumber-input {
+      text-align: center;
+    }
+
+    ::ng-deep .p-inputnumber-buttons-stacked .p-button {
+      width: 1.5rem;
+      height: 1.25rem;
+      padding: 0.125rem;
+
+      .p-button-icon {
+        font-size: 0.75rem;
+      }
+    }
+  }
+
+  .frequency-input-optimized {
+    ::ng-deep .p-inputnumber {
+      .p-inputnumber-input {
+        text-align: center;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        font-weight: 500;
+        font-size: 0.875rem;
+        height: 2.5rem;
+        transition: all 0.2s ease;
+
+        &:focus {
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+        }
+      }
+
+      .p-inputnumber-buttons-stacked {
+        .p-button {
+          width: 1.25rem;
+          height: 1.1rem;
+          border-radius: 3px;
+          border: 1px solid #e5e7eb;
+          background: #f9fafb;
+          color: #6b7280;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.15s ease;
+          padding: 0;
+
+          &:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: scale(1.05);
+          }
+
+          &:active {
+            transform: scale(0.95);
+          }
+
+          .p-button-icon {
+            font-size: 0.625rem;
+            line-height: 1;
+          }
+        }
+      }
+    }
+  }
+
+  // Preview section styling
+  .session-preview {
+    background: rgba(var(--primary-color-rgb), 0.05);
+    border: 1px solid rgba(var(--primary-color-rgb), 0.2);
+    border-radius: 8px;
+
+    .preview-header {
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    .preview-item {
+      background: white;
+      border: 1px solid #e1e5e9;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
+
+  // Validation message styling
+  ::ng-deep .p-messages {
+    margin-top: 0.5rem;
+
+    .p-message {
+      border-radius: 6px;
+
+      &.p-message-warn {
+        background: #fff3cd;
+        border-color: #ffeaa7;
+        color: #856404;
+      }
+
+      &.p-message-error {
+        background: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+      }
+    }
+  }
+
+  // Form field styling
+  ::ng-deep .p-calendar.w-full .p-inputtext {
+    width: 100%;
+  }
+
+  ::ng-deep .p-dropdown.w-full {
+    width: 100%;
+  }
+
+  // Button styling
+  .p-button-rounded {
+    border-radius: 50%;
+  }
+
+  .p-button-outlined {
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+
+    &:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+  }
+
+  // Remove session button positioning
+  .relative {
+    position: relative;
+
+    .absolute {
+      position: absolute;
+    }
+  }
+
+  // Dialog styling
+  ::ng-deep .p-dialog {
+    .p-dialog-header {
+      background: var(--primary-color);
+      color: white;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .p-dialog-content {
+      padding: 0;
+    }
+  }
+
+  // Grid gap adjustments
+  .grid.gap-2 > * {
+    padding: 0.25rem;
+  }
+
+  // Responsive adjustments
+  @media (max-width: 768px) {
+    .grid {
+      margin: 0;
+
+      [class*="col-"] {
+        padding: 0.5rem 0.25rem;
+      }
+    }
+
+    .frequency-input {
+      width: 5rem !important;
+    }
+
+    .p-button-rounded {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
+  }
+
+  // Animation for preview loading
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .session-preview {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  // Status indicators
+  .status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+
+    &.valid {
+      background-color: #28a745;
+    }
+
+    &.invalid {
+      background-color: #dc3545;
+    }
+
+    &.warning {
+      background-color: #ffc107;
+    }
+  }
+}

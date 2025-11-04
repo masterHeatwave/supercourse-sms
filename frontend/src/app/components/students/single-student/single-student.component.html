@@ -1,0 +1,184 @@
+<div class="px-5 px-md-5">
+    <p-toast></p-toast>
+    <div *ngIf="loading" class="flex justify-content-center align-items-center" style="height: 50vh">
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+    </div>
+    <div *ngIf="!loading && studentProfile" class="pt-6 flex flex-column md:flex-row gap-4">
+        <div class="flex justify-content-center md:justify-content-start">
+            <!-- Avatar with image if available -->
+            <p-avatar *ngIf="studentProfile.avatar && studentProfile.avatarUrl" 
+              [image]="studentProfile.avatarUrl" 
+              size="xlarge" 
+              shape="circle"
+              [style]="{ width: '14rem', height: '14rem', 'min-width': '14rem' }"
+              class="mb-3 md:mb-0"
+            ></p-avatar>
+            
+            <!-- Avatar with initials if no image -->
+            <p-avatar *ngIf="!studentProfile.avatar || !studentProfile.avatarUrl" 
+              [label]="studentProfile.avatarInitials" 
+              size="xlarge"
+              shape="circle"
+              [style]="{ 
+                width: '14rem', 
+                height: '14rem', 
+                'min-width': '14rem', 
+                'background-color': studentProfile.avatarColor, 
+                color: '#ffffff',
+                'font-size': '4rem'
+              }"
+              class="mb-3 md:mb-0"
+            ></p-avatar>
+        </div>
+        <div class="flex flex-1 flex-column gap-2">
+            <div>
+                <div class="flex flex-column md:flex-row justify-content-between gap-2">
+                    <div class="flex flex-column gap-4">
+                        <div class="flex flex-column gap-2 ">
+                            <div class="flex align-items-center gap-2">
+                                <span class="text-black text-4xl text-primary font-bold">{{ studentProfile.name }}</span>
+                                <p-tag [severity]="studentProfile.isActive ? 'success' : 'danger'">
+                                  {{ studentProfile.isActive ? ('table.active' | translate) : ('table.inactive' | translate) }}
+                                </p-tag>
+                            </div>
+                            <span class="text-black text-2xl font-regular">{{ studentProfile.role }}</span>
+                        </div>
+                        <div class="flex gap-8 custom-card p-4">
+                            <div *ngFor="let branch of studentProfile.branchDescription" 
+                                 class="flex gap-2 align-items-center">
+                                <span *ngIf="branch.name"><i class="pi pi-circle-on text-primary"></i></span>
+                                <span *ngIf="branch.name" class="font-bold">{{ branch.name }}</span>
+                                <span *ngIf="branch.name && studentProfile.taxiSubjects && studentProfile.taxiSubjects.length > 0"><i class="pi pi-circle-on text-primary"></i></span>
+                                <span *ngFor="let taxi of studentProfile.taxiSubjects; let first = first">
+                                    <span *ngIf="first && taxi.name" class="font-bold">{{ taxi.name }}</span>
+                                </span>
+                                <span *ngIf="studentProfile.taxiSubjects && studentProfile.taxiSubjects.length > 0"><i class="pi pi-circle-on text-primary"></i></span>
+                                <span *ngFor="let taxi of studentProfile.taxiSubjects; let first = first">
+                                    <span *ngIf="first && taxi.subject" class="font-bold">{{ taxi.subject }}</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-column justify-content-between md:justify-content-end gap-2 mt-2 md:mt-0">
+                        <app-outline-button [borderColor]="'var(--primary-color)'" [fullWidth]="true" (click)="onEditStudent()">
+                          {{ 'common.edit' | translate }}
+                        </app-outline-button>
+                        <div class="flex justify-content-center md:justify-content-end mt-2">
+                            <a class="cursor-pointer p-1 no-underline" [href]="'tel:' + studentProfile.mobile">
+                              <div class="border-circle bg-primary flex align-items-center justify-content-center" style="width: 36px; height: 36px">
+                                <i class="pi pi-phone text-white"></i>
+                              </div>
+                            </a>
+                            <a class="cursor-pointer p-1 no-underline" [href]="'mailto:' + studentProfile.email">
+                              <div class="border-circle bg-primary flex align-items-center justify-content-center" style="width: 36px; height: 36px">
+                                <i class="pi pi-at text-white"></i>
+                              </div>
+                            </a>
+                          </div>
+                        <app-outline-button 
+                          [borderColor]="'var(--primary-color)'"
+                          (click)="onShowStudentId()">
+                          {{ 'students.single.student_id' | translate }}
+                        </app-outline-button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="custom-card p-4 flex flex-column gap-2">
+                <div class="grid">
+                    <div class="flex align-items-center gap-2 col-12 md:col-4">
+                        <div class="text-500 font-bold text-primary">{{ 'students.single.labels.code' | translate }}:</div>
+                        <div class="font-regular">{{ studentProfile.code }}</div>
+                    </div>
+                    <div class="flex align-items-center gap-2 col-12 md:col-4">
+                        <div class="text-500 font-bold text-primary">{{ 'students.single.labels.mobile' | translate }}:</div>
+                        <div class="font-regular">{{ studentProfile.mobile }}</div>
+                    </div>
+                    <div class="flex align-items-center gap-2 col-12 md:col-4">
+                        <div class="text-500 font-bold text-primary">{{ 'students.single.labels.last_updated_by' | translate }}:</div>
+                        <div class="font-regular">{{ studentProfile.lastUpdated.by }}</div>
+                    </div>
+                </div>
+
+                <div class="grid">
+                    <div class="flex align-items-center gap-2 col-12 md:col-4">
+                        <div class="text-500 font-bold text-primary">{{ 'students.single.labels.email' | translate }}:</div>
+                        <div class="font-regular">{{ studentProfile.email }}</div>
+                    </div>
+                    <div class="flex align-items-center gap-2 col-12 md:col-4">
+                        <div class="text-500 font-bold text-primary">{{ 'students.single.labels.address' | translate }}:</div>
+                        <div class="font-regular">{{ studentProfile.address.street }}, {{ studentProfile.address.city
+                            }}, {{ studentProfile.address.postalCode }}, {{ studentProfile.address.country }}</div>
+                    </div>
+                    <div class="flex align-items-center gap-2 col-12 md:col-4">
+                        <div class="text-500 font-bold text-primary">{{ 'students.single.labels.registered_by' | translate }}:</div>
+                        <div class="font-regular">{{ studentProfile.registered.by }}</div>
+                    </div>
+                </div>
+
+                <div class="grid">
+                    <div class="flex align-items-center gap-2 col-12 md:col-4">
+                        <div class="text-500 font-bold text-primary">{{ 'students.single.labels.age_dob' | translate }}:</div>
+                        <div class="font-regular">{{ studentProfile.age.years }} ({{ studentProfile.age.dob }})</div>
+                    </div>
+                    <div class="flex align-items-center gap-2 col-12 md:col-4">
+                        <div class="text-500 font-bold text-primary">{{ 'students.single.labels.last_updated' | translate }}:</div>
+                        <div class="font-regular">{{ studentProfile.lastUpdated.date }}</div>
+                    </div>
+                    <div class="flex align-items-center gap-2 col-12 md:col-4">
+                        <div class="text-500 font-bold text-primary">{{ 'students.single.labels.registered' | translate }}:</div>
+                        <div class="font-regular">{{ studentProfile.registered.date }}</div>
+                    </div>
+                </div>
+                <div class="studentInfo-divider"></div>
+                <div class="grid">
+                    <div class="flex align-items-center gap-2 col-12 md:col-4">
+                        <div class="text-500 font-bold text-primary">{{ 'students.single.labels.primary_contact' | translate }}:</div>
+                        <div class="font-regular">
+                            <div *ngFor="let contact of studentProfile.linkedContacts">
+                                <span *ngIf="contact.isPrimary">{{ contact.name }} ({{ contact.relation }})</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex align-items-center gap-2 col-12 md:col-4">
+                        <div class="text-500 font-bold text-primary">{{ 'students.single.labels.health_info' | translate }}:</div>
+                        <div class="font-regular text-red-500">{{ studentProfile.healthInfo }}</div>
+                    </div>
+                </div>
+
+                <div class="grid">
+                    <div class="flex align-items-center gap-2 col-12 md:col-4">
+                        <div class="text-500 font-bold text-primary">{{ 'students.single.labels.siblings_attending' | translate }}:</div>
+                        <div class="font-regular">{{ getSiblingsDisplay(studentProfile.siblingAttending) }}</div>
+                    </div>
+                    <div class="flex align-items-center gap-2 col-12 md:col-8">
+                        <div class="text-500 font-bold text-primary">{{ 'students.single.labels.general_notes' | translate }}:</div>
+                        <div class="font-regular">{{ studentProfile.generalNotes }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div *ngIf="!loading && studentProfile" class="custom-card mt-4 p-4">
+        <p-tabView>
+            <p-tabPanel [header]="('students.single.tabs.overview' | translate)">
+                <app-history-table [historyData]="studentHistoryData"></app-history-table>
+            </p-tabPanel>
+            <p-tabPanel [header]="('students.single.tabs.books' | translate)">
+                <app-books-table [booksData]="studentBooksData"></app-books-table>
+            </p-tabPanel>
+            <p-tabPanel [header]="('students.single.tabs.progress' | translate)">
+                <app-progress-table [progressData]="studentProgressData"></app-progress-table>
+            </p-tabPanel>
+            <p-tabPanel [header]="('students.single.tabs.documents' | translate)">
+                <app-documents-table [documentsData]="studentDocumentsData" (documentDeleted)="onDocumentDeleted($event)"></app-documents-table>
+            </p-tabPanel>
+        </p-tabView>
+    </div>
+
+    <!-- Student ID Modal -->
+    <app-student-id-modal
+      [(visible)]="showStudentIdModal"
+      [studentProfile]="studentProfile">
+    </app-student-id-modal>
+</div>

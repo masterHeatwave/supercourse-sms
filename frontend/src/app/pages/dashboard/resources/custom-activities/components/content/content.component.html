@@ -1,0 +1,102 @@
+<div
+  [ngClass]="{
+    selected: navigationService.getSelectedButtonId() === id,
+    hide: navigationService.getSelectedButtonId() !== id
+  }"
+>
+  <div class="title-and-description">
+    <div style="display: flex; width: 100%">
+      <p-floatLabel>
+        <input pInputText id="title" [(ngModel)]="activityTitle" (input)="onTitleChange($event)" />
+        <label for="title">Title</label>
+      </p-floatLabel>
+      <activity-type-card></activity-type-card>
+    </div>
+
+    <p-floatLabel>
+      <textarea
+        pInputTextarea
+        id="description"
+        [(ngModel)]="activityDescription"
+        (input)="onDescriptionChange($event)"
+        style="min-height: 150px; text-align: left; vertical-align: top; width: 100%"
+      ></textarea>
+      <label for="description">Description</label>
+    </p-floatLabel>
+  </div>
+
+  <div class="class-div">
+    <label>CEFR: </label>
+    <p-dropdown [options]="cefr" [(ngModel)]="selectedCEFR" optionLabel="value" placeholder="Select CEFR" (onChange)="onCEFRChange($event)" />
+    <div class="multiselect">
+      <p-multiSelect
+        [style]="{ 'margin-left': '10px' }"
+        [options]="hashTags"
+        [(ngModel)]="selectedTags"
+        [maxSelectedLabels]="7"
+        optionLabel="value"
+        placeholder="Select hashtags"
+        (onChange)="onTagsChange($event)"
+      >
+      </p-multiSelect>
+    </div>
+  </div>
+
+  <div class="activity" [ngSwitch]="activityType">
+    <div *ngSwitchCase="constants.FILL_IN_THE_BLANKS_VALUE">
+      <fill-in-the-gaps [questions]="activityQuestions" *ngIf="activityType === constants.FILL_IN_THE_BLANKS_VALUE"></fill-in-the-gaps>
+    </div>
+    <div *ngSwitchCase="constants.CLOZE_VALUE">
+      <cloze-activity
+        [document]="activityQuestions[0]?.document ?? ''"
+        [answers]="activityQuestions[0]?.answers ?? []"
+        [imageURL]="activityQuestions[0]?.imageURL ?? ''"
+        *ngIf="activityType === constants.CLOZE_VALUE"
+      ></cloze-activity>
+    </div>
+    <div *ngSwitchCase="constants.LETTER_HUNT_VALUE">
+      <letter-hunt-activity
+        [hasData]="activityId !== ''"
+        [questions]="activityQuestions"
+        *ngIf="activityType === constants.LETTER_HUNT_VALUE"
+      ></letter-hunt-activity>
+    </div>
+    <div *ngSwitchCase="constants.MATCHING_PAIRS_VALUE">
+      <matching-pairs-activity
+        [hasData]="activityId !== ''"
+        [questions]="activityQuestions"
+        *ngIf="activityType === constants.MATCHING_PAIRS_VALUE"
+      ></matching-pairs-activity>
+    </div>
+    <div *ngSwitchCase="constants.GROUP_SORT_VALUE">
+      <group-sort-activity [groups]="activityQuestions" *ngIf="activityType === constants.GROUP_SORT_VALUE"></group-sort-activity>
+    </div>
+    <div *ngSwitchCase="constants.WORD_ORDER_VALUE">
+      <word-order-activity
+        [hasData]="activityId !== ''"
+        [option]="activityQuestions[0]?.option ?? 'separateEachWord'"
+        [questions]="activityQuestions.length ? activityQuestions : []"
+        *ngIf="activityType === constants.WORD_ORDER_VALUE"
+      ></word-order-activity>
+    </div>
+    <div *ngSwitchCase="constants.MULTIPLE_CHOICE_QUIZ_VALUE">
+      <multiple-choice-activity
+        [hasData]="activityId !== ''"
+        [questions]="activityQuestions"
+        *ngIf="activityType === constants.MULTIPLE_CHOICE_QUIZ_VALUE"
+      ></multiple-choice-activity>
+    </div>
+    <div *ngSwitchCase="constants.MEMORY_MATCHING_PAIRS_VALUE">
+      <memory-matching-pairs-activity
+        [hasData]="activityId !== ''"
+        [option]="activityQuestions[0]?.option ?? ''"
+        [questions]="activityQuestions"
+        *ngIf="activityType === constants.MEMORY_MATCHING_PAIRS_VALUE"
+      ></memory-matching-pairs-activity>
+    </div>
+  </div>
+  <div class="container-settings">
+    <label>Settings</label>
+    <app-settings [hasData]="activityId !== ''" [selectedactivityType]="activityType" [options]="activitySettings"></app-settings>
+  </div>
+</div>

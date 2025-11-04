@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist/src",
+    "strict": true,
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "module": "NodeNext",
+    "moduleResolution": "node16",
+    "downlevelIteration": true,
+    "baseUrl": ".",
+    "paths": {
+      "@config/*": ["src/config/*"],
+      "@controllers/*": ["src/controllers/*"],
+      "@middleware/*": ["src/middleware/*"],
+      "@models/*": ["src/models/*"],
+      "@routes/*": ["src/routes/*"],
+      "@services/*": ["src/services/*"],
+      "@components/*": ["src/components/*"],
+      "@utils/*": ["src/utils/*"],
+      "@views/*": ["views/*"],
+      "@scripts/*": ["scripts/*"],
+      "@docs/*": ["docs/*"],
+      "@assets/*": ["assets/*"],
+      "@generator-cli/*": ["generator-cli/*"],
+      "@constants/*": ["src/constants/*"],
+      "@plugins/*": ["src/plugins/*"],
+      "@interface/*": ["src/interface/*"],
+      "@exts/*": ["src/exts/*"],
+      "@gen-cli/*": ["gen-cli/*"]
+    }
+  },
+  "include": ["./src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "gen-cli", "build"]
+}

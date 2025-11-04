@@ -1,0 +1,23 @@
+ .stat-content {
+   display: flex;
+   flex-direction: column;
+   max-width: 120px;
+ }
+
+ .stat-label {
+   font-size: 1.2rem;
+   font-weight: 700;
+   line-height: 1.2;
+ }
+
+ .stat-icon {
+   position: absolute;
+   right: 1rem;
+   top: 50%;
+   transform: translateY(-50%);
+   opacity: 0.3;
+
+   i {
+     font-size: 3.5rem;
+   }
+ }

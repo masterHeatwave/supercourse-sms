@@ -1,0 +1,32 @@
+//@import "../../../../../styles/variables";
+@import '../../../../styles/styles.scss';
+
+.answer-container {
+  display: flex;
+  width: 98%;
+  align-items: flex-start;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding-top: 10px;
+  justify-content: center;
+  textarea {
+    margin-left: 10px;
+    border: none;
+    outline: none;
+    font-size: 22px;
+    min-height: 150px;
+    resize: none;
+    width: 95% !important;
+  }
+}
+
+.separator {
+  padding: 0 !important;
+  padding-bottom: 10px !important;
+  color: #666 !important;
+  margin-left: 5px !important;
+  margin-right: 5px !important;
+  font-weight: 300 !important;
+  user-select: none;
+}

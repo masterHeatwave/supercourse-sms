@@ -1,0 +1,40 @@
+.month {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  label {
+    margin: 0 !important;
+    margin-right: 50px;
+    font-size: 22px;
+    text-align: center !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+  }
+  padding: 20px;
+  background-color: white;
+  margin: 10px;
+  border: 1px solid #777;
+  gap: 30px;
+}
+
+.days {
+  gap: 10px;
+  image-text {
+    img {
+      gap: 5px !important;
+    }
+  }
+}
+
+label {
+  cursor: pointer;
+  margin-left: 15px;
+  margin-top: 15px;
+  user-select: none;
+  font-size: 1.5rem;
+}
+
+.pi {
+  color: #333;
+  font-size: 1.5rem;
+}

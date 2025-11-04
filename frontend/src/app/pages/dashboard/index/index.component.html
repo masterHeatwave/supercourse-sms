@@ -1,0 +1,257 @@
+<p-toast></p-toast>
+
+<div
+  class="full-width-image relative"
+  style="
+    width: 100%;
+    height: 300px;
+    background-image: url('assets/images/dashboard-background.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin-bottom: 20px;
+  "
+>
+  <div class="text-white text-5xl font-bold m-2 absolute bottom-0 left-0 flex flex-column">
+    {{ currentCustomer?.name }}
+    <span class="text-white text-sm">
+      <i [class]="currentCustomer?.is_primary ? 'pi pi-star-fill' : 'pi pi-star'"></i>
+      {{ currentCustomer?.is_primary ? ('dashboard.primary_branch' | translate) : ('dashboard.secondary_branch' | translate) }}
+    </span>
+  </div>
+</div>
+
+<div class="flex flex-column gap-4 px-4">
+  <div class="custom-card flex p-4 gap-4 align-items-center">
+    <div class="font-bold text-2xl">{{ currentDayName }}</div>
+    <div class="text-primary text-3xl font-bold">{{ currentMonthDay }}</div>
+    <div class="font-bold ml-auto text-lg">{{ 'dashboard.week' | translate }} {{ currentWeekNumber }}</div>
+  </div>
+
+  <div class="grid">
+    <div class="col-12 sm:col-6 lg:col-3" *ngFor="let stat of stats">
+      <div
+        class="stat-card flex align-items-center px-4 py-4 border-round-2xl text-white mb-3"
+        [ngClass]="stat.color === 'teal' ? 'bg-gradient-primary' : 'bg-gradient-red'"
+      >
+        <div class="stat-number text-3xl font-bold pr-3">{{ stat.value }}</div>
+        <div class="stat-content flex-1">
+          <div class="stat-label text-lg font-bold">{{ stat.label | translate }}</div>
+        </div>
+        <div class="stat-icon">
+          <i [class]="stat.icon"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="custom-card p-3">
+    <div class="grid">
+      <div class="col-12">
+        <h2 class="text-2xl font-bold m-0 mb-4 text-primary">{{ 'dashboard.branch_contact_details' | translate }}</h2>
+      </div>
+
+      <div class="col-12 md:col-4 mb-3">
+        <div class="flex flex-column gap-3">
+          <div>
+            <span class="text-primary font-bold">{{ 'dashboard.website' | translate }} </span>
+            <span>{{ branchDetails?.website }}</span>
+          </div>
+          <div>
+            <span class="text-primary font-bold">{{ 'dashboard.administrator' | translate }} </span>
+            <span>{{ branchDetails?.administrator }}</span>
+          </div>
+          <div>
+            <span class="text-primary font-bold">{{ 'dashboard.manager' | translate }} </span>
+            <span>{{ branchDetails?.manager }}</span>
+          </div>
+          <div>
+            <span class="text-primary font-bold">{{ 'dashboard.address' | translate }} </span>
+            <span>{{ branchDetails?.address }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 md:col-4 mb-3">
+        <div class="flex flex-column gap-3">
+          <div>
+            <span class="text-primary font-bold">{{ 'dashboard.branch_email' | translate }} </span>
+            <span>{{ branchDetails?.branchEmail }}</span>
+          </div>
+          <div>
+            <span class="text-primary font-bold">{{ 'dashboard.administrator_email' | translate }} </span>
+            <span>{{ branchDetails?.administratorEmail }}</span>
+          </div>
+          <div>
+            <span class="text-primary font-bold">{{ 'dashboard.manager_email' | translate }} </span>
+            <span>{{ branchDetails?.managerEmail }}</span>
+          </div>
+          <div>
+            <span class="text-primary font-bold">{{ 'dashboard.phone' | translate }} </span>
+            <span>{{ branchDetails?.phone }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 md:col-4 mb-3">
+        <div class="flex flex-column gap-3">
+          <div>
+            <span class="text-primary font-bold">{{ 'dashboard.phone' | translate }} </span>
+            <span>{{ branchDetails?.phone }}</span>
+          </div>
+          <div>
+            <span class="text-primary font-bold">{{ 'dashboard.code' | translate }} </span>
+            <span>{{ branchDetails?.code }}</span>
+          </div>
+          <div>
+            <span class="text-primary font-bold">{{ 'dashboard.vat' | translate }} </span>
+            <span>{{ branchDetails?.vat }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map -->
+      <div class="col-12">
+        <iframe
+          [src]="branchDetails?.mapLocation ?? '' | safeResourceUrl"
+          width="100%"
+          height="200"
+          frameborder="0"
+          style="border: 0"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          class="border-round-sm"
+        >
+        </iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex flex-column md:flex-row gap-2 justify-content-between">
+    <div class="custom-card w-full md:flex-1 px-4 py-2">
+      <div class="flex flex-column">
+        <div class="flex align-items-center gap-2 justify-content-between">
+      <div class="text-2xl font-bold text-primary">{{ 'dashboard.absences' | translate }}</div>
+          <div class="text-red-700">{{ absences.length }} {{ 'dashboard.students' | translate }}</div>
+        </div>
+        <div class="mt-2 flex flex-column">
+          <div *ngIf="absences.length === 0" class="p-3 text-center">{{ 'dashboard.no_absences' | translate }}</div>
+          <div
+            class="flex align-items-center gap-2 justify-content-between border-top-1 border-red-700 p-2"
+            *ngFor="let student of absences; let i = index"
+            [ngClass]="i % 2 === 0 ? 'surface-300' : 'surface-50'"
+          >
+            <div>
+              <i class="pi pi-user text-red-700"></i>
+            </div>
+            <div class="font-bold">
+              {{ student.name }}
+            </div>
+            <div>
+              {{ student.time }}
+            </div>
+            <div>
+              {{ student.phone }}
+            </div>
+            <div>
+              {{ student.date }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="custom-card w-full md:flex-1 px-4 py-2">
+      <!-- Existing code remains unchanged -->
+      <div class="flex flex-column">
+        <div>
+      <div class="text-2xl font-bold text-primary">{{ 'dashboard.my_finances' | translate }}</div>
+        </div>
+        <div class="mt-2 flex flex-column">
+          <div class="flex gap-2 justify-content-between border-bottom-1 border-primary p-2" *ngFor="let financy of finances">
+            <div>
+              {{ financy.code }}
+            </div>
+            <div class="font-bold">
+              {{ financy.name }}
+            </div>
+            <div [ngClass]="{ 'text-red-500': financy.highlight }">
+              {{ financy.amount }}€
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="custom-card flex flex-column p-4 gap-4">
+    <div>
+      <div class="text-2xl font-bold text-primary">{{ 'dashboard.board' | translate }}</div>
+    </div>
+
+    <!-- Loading indicator -->
+    <div *ngIf="loadingPosts" class="flex justify-content-center p-4">
+      <i class="pi pi-spin pi-spinner text-primary text-4xl"></i>
+    </div>
+
+    <!-- Error message if no posts -->
+    <div *ngIf="!loadingPosts && posts.length === 0" class="flex justify-content-center p-4">
+      <p class="text-lg">{{ 'dashboard.no_posts' | translate }}</p>
+    </div>
+
+    <!-- Posts grid -->
+    <div *ngIf="!loadingPosts && posts.length > 0" class="flex flex-column md:flex-row justify-content-between gap-4">
+      <div class="w-full md:flex-1" *ngFor="let post of posts.slice(0, 3)">
+        <app-post-card
+          [title]="post.title"
+          [content]="post.content"
+          [date]="formatDate(post.published_at || post.createdAt)"
+          [postImage]="post.featured_image || defaultPostImage"
+          [avatarImage]="'assets/images/avatar.jpg'"
+        >
+        </app-post-card>
+      </div>
+    </div>
+  </div>
+
+  <div class="custom-card custom-calendar">
+    <full-calendar [options]="calendarOptions"></full-calendar>
+  </div>
+
+  <div class="custom-card w-full md:flex-1 px-4 py-2">
+    <div class="flex flex-column">
+      <div class="flex align-items-center gap-2 justify-content-between">
+      <div class="text-2xl font-bold text-primary">{{ 'dashboard.latest_activity' | translate }}</div>
+        <div>
+          <i class="pi pi-history"></i>
+        </div>
+      </div>
+
+      <!-- Loading indicator -->
+      <div *ngIf="loadingActivities" class="flex justify-content-center p-4">
+        <i class="pi pi-spin pi-spinner text-primary text-4xl"></i>
+      </div>
+
+      <!-- Empty state -->
+        <div *ngIf="!loadingActivities && activities.length === 0" class="p-3 text-center">
+        {{ 'dashboard.no_recent_activity' | translate }}
+      </div>
+
+      <!-- Activity list -->
+      <div class="mt-2 flex flex-column" *ngIf="!loadingActivities && activities.length > 0">
+        <div class="flex gap-2 justify-content-between border-bottom-1 border-black-alpha-20 p-2" *ngFor="let activity of activities">
+          <div>
+            <div class="flex align-items-center gap-2">
+              <i [class]="activity.icon + ' activity-icon'"></i>
+              <div class="font-bold text-primary">{{ activity.title }}</div>
+            </div>
+            <div class="ml-4">{{ activity.description }}</div>
+          </div>
+          <div class="activity-time">
+            {{ activity.datetime }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

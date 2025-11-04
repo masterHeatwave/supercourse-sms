@@ -1,0 +1,51 @@
+<div class="custom-card mt-4 px-4 py-5" *ngIf="overview as data">
+  <ng-container *ngIf="data?.length; else noOverview">
+    <h2 class="text-2xl font-bold text-primary m-0 mb-3">{{ 'staff.overview.title' | translate }}</h2>
+    <div class="grid text-500 font-medium mb-2" style="border-bottom:1px solid var(--primary-color);padding-bottom:.5rem;">
+      <div class="col-12 md:col-3">{{ 'staff.overview.headers.title' | translate }}</div>
+      <div class="col-12 md:col-2">{{ 'staff.overview.headers.role' | translate }}</div>
+      <div class="col-12 md:col-3">{{ 'staff.overview.headers.branches' | translate }}</div>
+      <div class="col-12 md:col-2">{{ 'staff.overview.headers.classes' | translate }}</div>
+      <div class="col-6 md:col-1">{{ 'staff.overview.headers.start_date' | translate }}</div>
+      <div class="col-6 md:col-1">{{ 'staff.overview.headers.end_date' | translate }}</div>
+    </div>
+
+    <ng-container *ngFor="let year of data">
+      <div class="grid">
+        <div class="col-12 md:col-3 text-black font-bold">{{ year.name }}</div>
+        <div class="col-12 md:col-9"></div>
+      </div>
+
+      <ng-container *ngFor="let period of year.periods">
+        <div class="grid" style="border-bottom:1px solid rgba(0,0,0,.08);padding:.75rem 0;">
+          <div class="col-12 md:col-3">
+            <div class="text-900">{{ period.name }}</div>
+          </div>
+          <div class="col-12 md:col-2">
+            <div class="text-900">
+              {{ period.roles.administrators.length ? (period.roles.administrators[0].title || ('staff.roles.administrator' | translate)) : ('staff.roles.administrator' | translate) }}
+            </div>
+            <div class="text-900" *ngIf="period.roles.managers && period.roles.managers.length">
+              {{ period.roles.managers[0].title || ('staff.roles.manager' | translate) }}
+            </div>
+            <div class="text-900" *ngIf="period.roles.teachers && period.roles.teachers.length">
+              {{ period.roles.teachers[0].title || ('staff.roles.teacher' | translate) }}
+            </div>
+          </div>
+          <div class="col-12 md:col-3">
+            <div class="text-900">{{ formatBranches(period) }}</div>
+          </div>
+          <div class="col-12 md:col-2">
+            <div class="text-900">{{ formatClasses(period) }}</div>
+          </div>
+          <div class="col-6 md:col-1">{{ period.start_date | date:'MMM. dd' }}</div>
+          <div class="col-6 md:col-1">{{ period.end_date | date:'MMM. dd' }}</div>
+        </div>
+      </ng-container>
+    </ng-container>
+  </ng-container>
+  <ng-template #noOverview>
+    <div class="text-500">{{ 'staff.overview.empty' | translate }}</div>
+  </ng-template>
+</div>
+

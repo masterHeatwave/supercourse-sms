@@ -1,0 +1,41 @@
+.main-content-center {
+  display: flex;
+  flex-direction: column;
+  width: 100%; //100vw !important; //95vw !important;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  box-sizing: border-box;
+  @media (max-width: 1080px) {
+    display: flex;
+    box-sizing: border-box;
+  }
+}
+
+.main-content-start {
+  display: flex;
+  flex-direction: column;
+  width: 100% !important; //100vw !important;
+  height: 100% !important;
+  //align-items: flex-start;
+  //justify-content: flex-start;
+  overflow-y: auto;
+  overflow-x: hidden;
+  //box-sizing: border-box;
+}
+
+.hide {
+  display: none;
+}
+
+app-template {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+app-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}

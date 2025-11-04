@@ -1,0 +1,38 @@
+<div class="p-4">
+  <p-toast></p-toast>
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <!-- Details, Dates and Notes Card -->
+    <p-card styleClass="custom-card shadow-none mb-4">
+      <ng-template pTemplate="content">
+        <!-- Details Section -->
+        <formly-form [form]="form" [fields]="detailsFields" [model]="model"></formly-form>
+
+        <!-- Dates Section -->
+        <formly-form [form]="form" [fields]="datesFields" [model]="model"></formly-form>
+
+        <!-- Notes Section -->
+        <formly-form [form]="form" [fields]="notesFields" [model]="model"></formly-form>
+      </ng-template>
+    </p-card>
+
+    <!-- Submit and Cancel Buttons -->
+    <div class="flex justify-content-end mt-3 gap-2">
+      <app-outline-button
+        [borderColor]="'red'"
+        [textColor]="'red'"
+        [hoverBackgroundColor]="'red'"
+        [hoverTextColor]="'white'"
+        [disabled]="!submissionGuard.canSubmit()"
+        (click)="onCancel()">
+          {{ 'common.cancel' | translate }}
+      </app-outline-button>
+      <app-outline-button
+        [borderColor]="'var(--primary-color)'"
+        [type]="'submit'"
+        [disabled]="!submissionGuard.canSubmit()">
+          <span *ngIf="!submissionGuard.canSubmit()" class="pi pi-spin pi-spinner mr-2"></span>
+          {{ !submissionGuard.canSubmit() ? 'Saving...' : ('common.save' | translate) }}
+      </app-outline-button>
+    </div>
+  </form>
+</div>

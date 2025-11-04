@@ -1,0 +1,13 @@
+<div class="text-block-container" cdkDragHandle [cdkDragHandleDisabled]="true">
+  <div
+    class="text-block"
+    contenteditable="true"
+    cdkDragHandle
+    [textContent]="text"
+    [cdkDragHandleDisabled]="true"
+    (input)="onChange($event)"
+  ></div>
+  <label contenteditable="false" class="close-button" (click)="onRemove()">
+    X
+  </label>
+</div>

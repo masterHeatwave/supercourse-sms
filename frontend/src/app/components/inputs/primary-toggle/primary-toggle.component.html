@@ -1,0 +1,13 @@
+<div class="primary-toggle flex flex-row align-items-center gap-2 {{ styleClass }}">
+  <div>
+    <label [for]="field.id" class="{{ labelClass }}">
+      {{ label | translate }} <span *ngIf="required" class="text-red-500">*</span>
+    </label>
+  </div>
+  <div>
+    <p-inputSwitch [id]="field.id!" [formControl]="formControl" [formlyAttributes]="field"></p-inputSwitch>
+  </div>
+  @if (props.description) {
+  <small [id]="field.id + '-help'">{{ props.description }}</small>
+  }
+</div>

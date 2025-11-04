@@ -1,0 +1,39 @@
+.color-select {
+    position: relative;
+    width: 100%;
+
+    .color-circle {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .color-options {
+        position: absolute;
+        width: 100%;
+        background-color: white;
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        &.hidden {
+            display: none;
+        }
+    }
+
+    .color-option {
+        &:hover {
+            background-color: #f8f9fa;
+        }
+    }
+
+    input {
+        background: transparent;
+        outline: none;
+        cursor: pointer;
+
+        &::placeholder {
+            color: #6c757d;
+        }
+    }
+}

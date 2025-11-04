@@ -1,0 +1,31 @@
+.p-menuitem-content {
+    padding: 0.5rem 1rem;
+    color: black;
+  }
+
+  .p-menuitem-content:hover {
+    background: transparent;
+  }
+  
+  .p-menuitem-header {
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .p-menuitem-radio-group {
+    padding: 0.5rem 0;
+  }
+  
+  .p-menuitem-radio {
+    display: flex;
+    align-items: center;
+    margin: 0.5rem 0;
+  }
+  
+  .p-radiobutton-label {
+    margin-left: 0.5rem;
+  }
+
+.p-menuitem-header + .p-menuitem-radio-group {
+  margin-top: 0.25rem;
+}

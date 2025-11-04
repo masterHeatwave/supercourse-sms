@@ -1,0 +1,37 @@
+:host {
+  .nav-link {
+    color: #000000 !important;
+    
+    i {
+      color: #000000 !important;
+    }
+    
+    span {
+      color: #000000 !important;
+    }
+    
+    &.text-primary {
+      color: var(--primary-color) !important;
+      
+      i {
+        color: var(--primary-color) !important;
+      }
+      
+      span {
+        color: var(--primary-color) !important;
+      }
+    }
+    
+    &:hover {
+      color: var(--primary-color) !important;
+      
+      i {
+        color: var(--primary-color) !important;
+      }
+      
+      span {
+        color: var(--primary-color) !important;
+      }
+    }
+  }
+}

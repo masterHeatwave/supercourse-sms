@@ -1,0 +1,66 @@
+@import '../../../../styles/styles.scss';
+
+/*p-button {
+  display: flex;
+  margin-left: 62px;
+  margin-top: 7px !important;
+  margin-bottom: 20px !important;
+}*/
+
+div {
+  margin-top: 10px;
+  margin-bottom: 5px;
+  display: flex;
+  flex-direction: row;
+
+  width: 100%;
+}
+
+.cdk-drag-preview {
+  box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
+  background-color: white;
+  border: 1px solid #ccc;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.5;
+}
+
+.cdk-drag-handle {
+  cursor: grab;
+}
+
+.grabber-number {
+  width: 50px;
+  height: 50px;
+  margin-left: 10px;
+  color: var(--primary-color);
+  cursor: grab;
+  border-left: 1px solid #ccc;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  background-color: white;
+  border-radius: 5px;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 50px;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+}
+
+.trash {
+  width: 50px;
+  height: 50px;
+  margin-left: -13px;
+  color: var(--primary-color);
+  //cursor: grab;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 50px;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+}

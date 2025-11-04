@@ -1,0 +1,339 @@
+<!-- chat-list.component.html - Updated with filter functionality -->
+<p-card styleClass="chat-list-card h-full">
+  <!-- Header Section -->
+  <ng-template pTemplate="header">
+    <div class="flex flex-column gap-3 p-3">
+      <!-- Search Input -->
+      <span class="p-input-icon-left w-full">
+        <!-- <i class="pi pi-search"></i> -->
+        <input 
+          pInputText 
+          type="text" 
+          [(ngModel)]="query" 
+          placeholder="Search conversations..."
+          class="w-full border-round-3xl"
+        />
+      </span>
+      
+      <!-- Action Buttons -->
+      <div class="flex justify-content-between align-items-center">
+        <div class="flex align-items-center gap-2">
+          <p-button 
+            #filterButton
+            icon="pi pi-filter"
+            [badge]="getActiveFiltersCount() > 0 ? getActiveFiltersCount().toString() : undefined"
+            badgeClass="p-badge-danger"
+            styleClass="p-button-text p-button-rounded"
+            [class.p-button-info]="getActiveFiltersCount() > 0"
+            [outlined]="getActiveFiltersCount() === 0"
+            pTooltip="Filter chats"
+            tooltipPosition="bottom"
+            (onClick)="filterPanel.toggle($event)">
+          </p-button>
+          
+          <!-- Clear filters button (shown when filters are active) -->
+          <p-button 
+            *ngIf="getActiveFiltersCount() > 0"
+            icon="pi pi-filter-slash"
+            styleClass="p-button-text p-button-rounded p-button-sm"
+            [outlined]="true"
+            pTooltip="Clear all filters"
+            tooltipPosition="bottom"
+            (onClick)="clearAllFilters()">
+          </p-button>
+        </div>
+        
+        <p-button 
+          label="+ New Chat"
+          styleClass="p-button-sm border-round-3xl"
+          (onClick)="onNewChatClick()"
+          pTooltip="Start new conversation">
+        </p-button>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Content Section -->
+  <ng-template pTemplate="content">
+    <p-scrollPanel [style]="{'height': 'calc(100vh - 200px)'}">
+      
+      <!-- Loading Skeletons -->
+      <div *ngIf="isLoading" class="flex flex-column gap-2 p-2">
+        <div *ngFor="let item of [1,2,3,4,5]" class="flex align-items-center gap-3 p-3">
+          <p-skeleton shape="circle" size="3rem"></p-skeleton>
+          <div class="flex-1">
+            <p-skeleton width="60%" height="1.2rem" styleClass="mb-2"></p-skeleton>
+            <p-skeleton width="80%" height="1rem"></p-skeleton>
+          </div>
+          <p-skeleton width="3rem" height="1rem"></p-skeleton>
+        </div>
+      </div>
+
+      <!-- Chat Items -->
+      <div *ngIf="!isLoading" class="chat-items">
+        <div 
+          *ngFor="let chat of getFilteredChats(); trackBy: trackByChatId; let i = index"
+          class="chat-item cursor-pointer border-round-xl p-3 mb-2 transition-all transition-duration-200"
+          [class.chat-selected]="isSelected(chat)"
+          [class.chat-unread]="hasUnreadMessages(chat)"
+          [class.chat-pinned]="chat.isPinned"
+          (click)="onSelectChat(chat)"
+          pRipple>
+          
+          <div class="flex align-items-center gap-3">
+            <!-- Avatar with Online Status -->
+            <div class="relative">
+              <p-avatar
+                [label]="getAvatarInitials(chat)"
+                [style]="{'background-color': getAvatarColor(chat), 'color': 'white'}"
+                size="large"
+                shape="circle">
+              </p-avatar>
+              
+              <!-- Online Indicator -->
+              <div 
+                *ngIf="isOnline(chat)"
+                class="absolute online-dot">
+              </div>
+            </div>
+
+            <!-- Chat Content -->
+            <div class="flex-1 min-w-0">
+              <!-- Name and Role Row -->
+              <div class="flex justify-content-between align-items-center mb-1">
+                <div class="flex align-items-center gap-2 flex-1 min-w-0">
+                  <span class="font-medium text-900 white-space-nowrap overflow-hidden text-overflow-ellipsis">
+                    {{ getChatName(chat) }}
+                  </span>
+                  <p-tag 
+                    [value]="getUserRole(chat)"
+                    [severity]="getRoleSeverity(getUserRole(chat))"
+                    styleClass="text-xs">
+                  </p-tag>
+                </div>
+                
+                <span class="text-xs text-500 white-space-nowrap ml-2">
+                  <!-- {{ formatTime(chat.lastMessageDate) }} -->
+                </span>
+              </div>
+
+              <!-- Message Preview Row -->
+              <div class="flex justify-content-between align-items-center">
+                <span class="text-sm text-600 overflow-hidden text-overflow-ellipsis flex-1 mr-2"
+                      [class.text-900]="hasUnreadMessages(chat)"
+                      [class.font-medium]="hasUnreadMessages(chat)">
+                  {{ getLastMessagePreview(chat) }}
+                </span>
+
+                <!-- Indicators -->
+                <div class="flex align-items-center gap-2">
+                  <!-- Unread Badge -->
+                  <p-badge 
+                    *ngIf="getUnreadCount(chat) > 0"
+                    [value]="getUnreadCount(chat).toString()"
+                    severity="info"
+                    styleClass="p-badge-sm">
+                  </p-badge>
+                  
+                  <!-- Star Icon -->
+                  <i class="pi pi-star-fill text-yellow-500 text-xs" 
+                     *ngIf="chat.isStarred"
+                     pTooltip="Starred chat">
+                  </i>
+                  
+                  <!-- Pin Icon -->
+                  <i class="pi pi-thumbtack text-blue-500 text-xs"
+                     *ngIf="chat.isPinned"
+                     pTooltip="Pinned chat">
+                  </i>
+                  
+                  <!-- Mute Icon -->
+                  <i class="pi pi-volume-off text-400 text-xs"
+                     *ngIf="chat.isMuted"
+                     pTooltip="Muted chat">
+                  </i>
+
+                  <!-- Archive Icon -->
+                  <i class="pi pi-inbox"
+                      *ngIf="chat.isArchived"
+                      pTooltip="Archived chat">
+                  </i>
+                  
+                  <!-- Menu Button -->
+                  <p-button 
+                    icon="pi pi-ellipsis-v"
+                    styleClass="p-button-text p-button-rounded p-button-sm menu-button"
+                    [style]="{'width': '2rem', 'height': '2rem'}"
+                    (onClick)="showChatMenu($event, chat, contextMenu)">
+                  </p-button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoading && getFilteredChats().length === 0" 
+           class="flex flex-column align-items-center justify-content-center p-6 text-center">
+        <i class="pi pi-comments text-6xl text-300 mb-4"></i>
+        <h3 class="text-xl font-medium text-600 mb-2">
+          {{ getActiveFiltersCount() > 0 ? 'No conversations match your filters' : 'No conversations found' }}
+        </h3>
+        <p class="text-500 mb-4 max-w-20rem line-height-3">
+          {{ query ? 'Try a different search term' : (getActiveFiltersCount() > 0 ? 'Try adjusting your filters' : 'Start a new conversation to get started') }}
+        </p>
+        <div class="flex gap-2">
+          <p-button 
+            *ngIf="getActiveFiltersCount() > 0"
+            label="Clear Filters"
+            icon="pi pi-filter-slash"
+            styleClass="p-button-outlined"
+            (onClick)="clearAllFilters()">
+          </p-button>
+          <p-button 
+            *ngIf="!query && getActiveFiltersCount() === 0"
+            label="Start New Chat"
+            icon="pi pi-plus"
+            styleClass="p-button-outlined"
+            (onClick)="onNewChatClick()">
+          </p-button>
+        </div>
+      </div>
+    </p-scrollPanel>
+  </ng-template>
+</p-card>
+
+<!-- Filter Panel -->
+<p-overlayPanel 
+  #filterPanel 
+  [showCloseIcon]="true"
+  styleClass="filter-panel">
+  
+  <div class="flex flex-column gap-4">
+    <div class="flex justify-content-between align-items-center">
+      <h4 class="m-0 text-900">Filter Conversations</h4>
+      <p-button 
+        *ngIf="getActiveFiltersCount() > 0"
+        label="Clear All"
+        styleClass="p-button-text p-button-sm"
+        icon="pi pi-times"
+        (onClick)="clearAllFilters()">
+      </p-button>
+    </div>
+    
+    <p-divider></p-divider>
+    
+    <!-- Filter Options -->
+    <div class="flex flex-column gap-3">
+      
+      <!-- Time Filters -->
+      <div>
+        <h5 class="mb-2 text-700">Time Period</h5>
+        <div class="flex flex-column gap-2">
+          <div class="flex align-items-center">
+            <p-checkbox 
+              [(ngModel)]="filters.recent" 
+              [binary]="true" 
+              inputId="recent"
+              (onChange)="applyFilters()">
+            </p-checkbox>
+            <label for="recent" class="ml-2 cursor-pointer">Recent (last 2 days)</label>
+          </div>
+        </div>
+      </div>
+
+      <p-divider></p-divider>
+
+      <!-- Status Filters -->
+      <div>
+        <h5 class="mb-2 text-700">Read Status</h5>
+        <div class="flex flex-column gap-2">
+          <div class="flex align-items-center">
+            <p-checkbox 
+              [(ngModel)]="filters.unread" 
+              [binary]="true" 
+              inputId="unread"
+              (onChange)="applyFilters()">
+            </p-checkbox>
+            <label for="unread" class="ml-2 cursor-pointer">Unread messages</label>
+          </div>
+          <div class="flex align-items-center">
+            <p-checkbox 
+              [(ngModel)]="filters.read" 
+              [binary]="true" 
+              inputId="read"
+              (onChange)="applyFilters()">
+            </p-checkbox>
+            <label for="read" class="ml-2 cursor-pointer">Read messages</label>
+          </div>
+        </div>
+      </div>
+
+      <p-divider></p-divider>
+
+      <!-- Special Categories -->
+      <div>
+        <h5 class="mb-2 text-700">Categories</h5>
+        <div class="flex flex-column gap-2">
+          <div class="flex align-items-center">
+            <p-checkbox 
+              [(ngModel)]="filters.favorites" 
+              [binary]="true" 
+              inputId="favorites"
+              (onChange)="applyFilters()">
+            </p-checkbox>
+            <label for="favorites" class="ml-2 cursor-pointer">
+              <i class="pi pi-star-fill text-yellow-500 mr-1"></i>
+              Favorites
+            </label>
+          </div>
+          <div class="flex align-items-center">
+            <p-checkbox 
+              [(ngModel)]="filters.archived" 
+              [binary]="true" 
+              inputId="archived"
+              (onChange)="applyFilters()">
+            </p-checkbox>
+            <label for="archived" class="ml-2 cursor-pointer">
+              <i class="pi pi-inbox mr-1"></i>
+              Archived
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <p-divider></p-divider>
+
+      <!-- Sorting -->
+      <div>
+        <h5 class="mb-2 text-700">Sort Order</h5>
+        <div class="flex flex-column gap-2">
+          <div class="flex align-items-center">
+            <p-checkbox 
+              [(ngModel)]="filters.alphabetical" 
+              [binary]="true" 
+              inputId="alphabetical"
+              (onChange)="applyFilters()">
+            </p-checkbox>
+            <label for="alphabetical" class="ml-2 cursor-pointer">
+              <i class="pi pi-sort-alpha-down mr-1"></i>
+              Alphabetical
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</p-overlayPanel>
+
+<!-- Context Menu -->
+<p-menu #contextMenu [model]="menuItems" [popup]="true"></p-menu>
+
+<!-- New Chat Dialog -->
+<app-new-chat-dialog 
+  #newChatDialog
+  [currentUserId]="currentUserId"
+  (chatCreated)="onChatCreated($event)"
+  (dialogClosed)="onDialogClosed()">
+</app-new-chat-dialog>

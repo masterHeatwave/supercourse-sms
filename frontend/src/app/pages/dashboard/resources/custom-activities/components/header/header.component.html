@@ -1,0 +1,9 @@
+<div>
+  <p-breadcrumb class="max-w-full" [model]="items"> </p-breadcrumb>
+
+  <app-warning-dialog
+    [warningMessage]="warningMessage"
+    [isDialogVisible]="isWarningDialogVisible"
+    (onClose)="isWarningDialogVisible = false"
+  />
+</div>

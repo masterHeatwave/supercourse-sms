@@ -1,0 +1,238 @@
+<!-- primary-table.component.html -->
+<div *ngIf="viewMode === 'list'" class="table-container">
+  <p-table
+    [value]="sortedData"
+    [loading]="loading"
+    [paginator]="true"
+    [rows]="rows"
+    [totalRecords]="totalRecords"
+    [first]="first"
+    [globalFilterFields]="globalFilterFields"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="{{ 'pagination.current_page_report_template' | translate }}"
+    [rowsPerPageOptions]="[10, 25, 50]"
+    (onPage)="onPageChange($event)"
+    (onRowsPerPageChange)="onRowsPerPageChange($event)"
+    (onRowSelect)="onRowSelect($event)"
+    (onRowUnselect)="onRowUnselect($event)"
+    (onSort)="onSortChange($event)"
+    [selectionMode]="showActions && selectionEnabled ? 'single' : null"
+    [scrollable]="true"
+    scrollHeight="calc(100vh - 200px)"
+    [virtualScroll]="useVirtualScroll"
+    [virtualScrollItemSize]="46"
+    [lazy]="true"
+    [resizableColumns]="true"
+    [reorderableColumns]="true"
+    [class]="viewMode === 'list' ? '' : 'grid-view'"
+    [dataKey]="dataKey"
+    [(selection)]="selection"
+    (selectionChange)="onSelectionChange($event)"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th *ngFor="let col of columns" [pSortableColumn]="col.field">
+          {{ col.header | translate }}
+          <p-sortIcon *ngIf="col.sortable !== false" [field]="col.field"></p-sortIcon>
+        </th>
+        <th *ngIf="showActions">{{ 'table.actions' | translate }}</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-rowData>
+      <tr [pSelectableRow]="selectionEnabled ? rowData : null">
+        <td *ngFor="let col of columns">
+          <ng-container [ngSwitch]="col.type">
+            <!-- Attendance Dot -->
+            <ng-container *ngSwitchCase="'date-attendance'">
+              <span
+                *ngIf="getAttendanceDot(rowData, col) === 'present'"
+                style="display: inline-block; width: 16px; height: 16px; border-radius: 50%; background: #17998c;"
+                title="Present"
+              ></span>
+              <span
+                *ngIf="getAttendanceDot(rowData, col) === 'absent'"
+                style="display: inline-block; width: 16px; height: 16px; border-radius: 50%; background: #e74c3c;"
+                title="Absent"
+              ></span>
+              <span
+                *ngIf="getAttendanceDot(rowData, col) === null"
+                style="display: inline-block; width: 16px; height: 16px; border-radius: 50%; background: #bdc3c7; border: 1px solid #95a5a6;"
+                title="No session"
+              ></span>
+            </ng-container>
+            <!-- Button -->
+            <ng-container *ngSwitchCase="'button'">
+              <p-button
+                [label]="col.buttonConfig?.label"
+                [icon]="getButtonIcon(col, rowData)"
+                [class]="getButtonClass(col, rowData)"
+                (onClick)="onButtonClick(col, rowData); $event.stopPropagation()"
+                pTooltip
+                [tooltipPosition]="'top'"
+                [showDelay]="col.buttonConfig?.popover?.showDelay || 150"
+                [hideDelay]="col.buttonConfig?.popover?.hideDelay || 150"
+                [pTooltip]="getButtonTooltip(col, rowData)"
+              ></p-button>
+            </ng-container>
+            <!-- Toggle -->
+            <ng-container *ngSwitchCase="'toggle'">
+              <p-inputSwitch
+                [ngModel]="rowData[col.field]"
+                (onChange)="onToggleChange(col, rowData, $event.checked)"
+                (click)="$event.stopPropagation()"
+                [disabled]="isToggleDisabled(col, rowData)"
+              ></p-inputSwitch>
+            </ng-container>
+            <!-- Time -->
+            <ng-container *ngSwitchCase="'time'">
+              <span [style.color]="col.getTextColor ? col.getTextColor(rowData) : 'inherit'">
+                {{ col.getValue ? col.getValue(rowData) : rowData[col.field] }}
+              </span>
+            </ng-container>
+            <!-- Duration -->
+            <ng-container *ngSwitchCase="'duration'">
+              <span [style.color]="col.getTextColor ? col.getTextColor(rowData) : 'inherit'">
+                {{ col.getValue ? col.getValue(rowData) : rowData[col.field] }}
+              </span>
+            </ng-container>
+            <!-- Absence Count -->
+            <ng-container *ngSwitchCase="'absence-count'">
+              <span 
+                class="absence-count"
+                [class.has-absences]="(col.getValue ? col.getValue(rowData) : rowData[col.field]) > 0"
+                [style.color]="(col.getValue ? col.getValue(rowData) : rowData[col.field]) > 0 ? '#e74c3c' : '#27ae60'">
+                {{ col.getValue ? col.getValue(rowData) : rowData[col.field] }}
+              </span>
+            </ng-container>
+            <!-- Date -->
+            <ng-container *ngSwitchCase="'date'">
+              <span [style.color]="col.getTextColor ? col.getTextColor(rowData) : 'inherit'">
+                {{ col.getValue ? col.getValue(rowData) : rowData[col.field] }}
+              </span>
+            </ng-container>
+            <!-- Default -->
+            <ng-container *ngSwitchDefault>
+              <ng-container *ngIf="col.iconConfig">
+                <i [class]="col.iconConfig.icon" [style.color]="col.iconConfig.getColor(rowData)" class="pr-2"></i>
+              </ng-container>
+              <span [style.color]="col.getTextColor ? col.getTextColor(rowData) : 'inherit'">
+                {{ col.getValue ? col.getValue(rowData) : rowData[col.field] }}
+              </span>
+            </ng-container>
+          </ng-container>
+        </td>
+        <td *ngIf="showActions">
+          <div class="flex gap-2">
+            <p-button
+              icon="pi pi-pencil"
+              styleClass="p-button-rounded p-button-text"
+              (onClick)="onEditClick(rowData); $event.stopPropagation()"
+            ></p-button>
+            <p-button
+              icon="pi pi-trash"
+              styleClass="p-button-rounded p-button-text p-button-danger"
+              (onClick)="onDeleteClick(rowData); $event.stopPropagation()"
+            ></p-button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Grid View -->
+<div *ngIf="viewMode === 'grid'" class="grid-container">
+  <div class="grid">
+    <div *ngFor="let item of data" class="grid-item" (click)="onRowSelect({data: item})">
+      <div class="grid-item-content">
+        <!-- Profile Image Section -->
+        <div class="profile-section">
+          <div class="profile-image-container">
+            <img 
+              [src]="getProfileImageSrc(item)" 
+              [alt]="getDisplayName(item)"
+              class="profile-image"
+              (error)="onImageError($event)"
+            />
+          </div>
+        </div>
+
+        <!-- Status Badge -->
+        <div class="status-section">
+          <div class="status-badge" [class.active]="item.is_active" [class.inactive]="!item.is_active">
+            <div class="status-dot"></div>
+            <span class="status-text">{{ item.is_active ? ('table.active' | translate) : ('table.inactive' | translate) }}</span>
+          </div>
+        </div>
+
+        <!-- Key Information -->
+        <div class="info-section">
+          <div class="info-item">
+            <i class="pi pi-user info-icon"></i>
+            <span class="info-label">{{ 'staff.table.name' | translate }}:</span>
+            <span class="info-value">{{ getDisplayName(item) }}</span>
+          </div>
+
+          <div *ngIf="getRoleValue(item)" class="info-item">
+            <i class="pi pi-briefcase info-icon"></i>
+            <span class="info-label">{{ 'staff.table.role' | translate }}:</span>
+            <span class="info-value">{{ getRoleValue(item) }}</span>
+          </div>
+
+          <div *ngIf="item.code" class="info-item">
+            <i class="pi pi-id-card info-icon"></i>
+            <span class="info-label">{{ 'staff.table.code' | translate }}:</span>
+            <span class="info-value">{{ item.code }}</span>
+          </div>
+          
+          <div *ngIf="item.phone" class="info-item">
+            <i class="pi pi-phone info-icon"></i>
+            <span class="info-label">{{ 'staff.table.phone' | translate }}:</span>
+            <span class="info-value">{{ item.phone }}</span>
+          </div>
+          
+          <div *ngIf="item.email" class="info-item">
+            <i class="pi pi-envelope info-icon"></i>
+            <span class="info-label">{{ 'staff.table.email' | translate }}:</span>
+            <span class="info-value">{{ item.email }}</span>
+          </div>
+
+          <div *ngIf="getClassValue(item)" class="info-item">
+            <i class="pi pi-users info-icon"></i>
+            <span class="info-label">{{ 'staff.table.class' | translate }}:</span>
+            <span class="info-value">{{ getClassValue(item) }}</span>
+          </div>
+
+          <div *ngIf="getBranchesValue(item)" class="info-item">
+            <i class="pi pi-building info-icon"></i>
+            <span class="info-label">{{ 'branches' | translate }}:</span>
+            <span class="info-value">{{ getBranchesValue(item) }}</span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div *ngIf="showActions" class="grid-item-actions">
+          <p-button 
+            icon="pi pi-eye" 
+            styleClass="p-button-text p-button-sm" 
+            (onClick)="onViewClick(item); $event.stopPropagation()">
+          </p-button>
+          <p-button 
+            icon="pi pi-pencil" 
+            styleClass="p-button-text p-button-sm" 
+            (onClick)="onEditClick(item); $event.stopPropagation()">
+          </p-button>
+          <p-button
+            icon="pi pi-trash"
+            styleClass="p-button-text p-button-danger p-button-sm"
+            (onClick)="onDeleteClick(item); $event.stopPropagation()">
+          </p-button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #defaultTemplate let-item="item" let-col="col">
+  {{ item[col.field] }}
+</ng-template>

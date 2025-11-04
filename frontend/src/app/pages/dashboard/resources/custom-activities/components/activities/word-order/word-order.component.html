@@ -1,0 +1,54 @@
+<div
+  cdkDropList
+  [cdkDropListData]="questions"
+  (cdkDropListDropped)="drop($event)"
+  class="container"
+>
+  <div class="container-header">
+    <label>Sentences</label>
+    <div class="radio-buttons">
+      <div style="display: flex; align-items: center">
+        <p-radioButton
+          name="option1"
+          value="{{ SEPARATE_EACH_WORD }}"
+          [(ngModel)]="option"
+          inputId="option1"
+          (click)="onOptionCHange($event)"
+        />
+        <label for="option1">Separate each word</label>
+      </div>
+      <div style="display: flex; align-items: center">
+        <p-radioButton
+          name="option2"
+          value="{{ CUSTOM_SEPARATION }}"
+          [(ngModel)]="option"
+          inputId="option2"
+          (click)="onOptionCHange($event)"
+        />
+        <label for="option2">Custom-separated</label>
+      </div>
+    </div>
+  </div>
+  <div
+    *ngFor="let question of questions; let i = index; trackBy: trackByIndex"
+    cdkDrag
+  >
+    <word-order-question-block-card
+      option="{{ option }}"
+      [answers]="question?.answers"
+      [questionNumber]="i + 1"
+      [hasData]="hasData"
+      (deleteClicked)="handleQuestionDelete(i)"
+      (answersChanged)="handleAnswersChange($event, i)"
+    ></word-order-question-block-card>
+  </div>
+  <div class="container-footer">
+    <label (click)="addQuestion()">+Add a sentence</label>
+  </div>
+
+  <app-warning-dialog
+    [warningMessage]="warningMessage"
+    [isDialogVisible]="isWarningDialogVisible"
+    (onClose)="isWarningDialogVisible = false"
+  />
+</div>

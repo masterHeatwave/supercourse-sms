@@ -1,0 +1,55 @@
+<div class="primary-date-range flex flex-column gap-3 {{ styleClass }} w-full">
+  <!-- Date Range Section -->
+  <div class="flex gap-4 align-items-end">
+    <!-- Start Date -->
+    <div class="flex flex-column gap-2 flex-1">
+      <label class="text-sm font-medium text-900">{{ startDateLabel | translate }}</label>
+      <p-calendar
+        [ngModel]="startDate"
+        (ngModelChange)="onStartDateChange($event)"
+        [showIcon]="true"
+        [iconDisplay]="'input'"
+        inputId="start-date"
+        [placeholder]="'Select start date' | translate"
+        dateFormat="M dd, yy"
+        class="w-full"
+        [class.ng-invalid]="showError"
+        [disabled]="isDisabled">
+      </p-calendar>
+    </div>
+
+    <!-- End Date -->
+    <div class="flex flex-column gap-2 flex-1">
+      <label class="text-sm font-medium text-900">{{ endDateLabel | translate }}</label>
+      <p-calendar
+        [ngModel]="endDate"
+        (ngModelChange)="onEndDateChange($event)"
+        [showIcon]="true"
+        [iconDisplay]="'input'"
+        inputId="end-date"
+        [placeholder]="'Select end date' | translate"
+        dateFormat="M, dd, yy"
+        class="w-full"
+        [class.ng-invalid]="showError"
+        [disabled]="isDisabled">
+      </p-calendar>
+    </div>
+  </div>
+
+  <!-- Timeline Visual (if enabled) -->
+  <div *ngIf="showTimeline && startDate && endDate" class="timeline-container">
+    <div class="timeline-track">
+      <div class="timeline-progress"></div>
+      <div class="timeline-handle timeline-start">
+        <span class="timeline-date">{{ startDate | date:'M dd, yyyy' }}</span>
+      </div>
+      <div class="timeline-handle timeline-end">
+        <span class="timeline-date">{{ endDate | date:'M dd, yyyy' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <small *ngIf="props.description" [id]="field.id + '-help'">
+    {{ props.description }}
+  </small>
+</div>

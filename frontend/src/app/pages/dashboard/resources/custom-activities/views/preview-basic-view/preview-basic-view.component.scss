@@ -1,0 +1,29 @@
+@import '../../../styles/variables';
+
+label {
+  font-weight: 500;
+  font-size: 26px;
+  color: var(--primary-color);
+}
+
+::ng-deep label {
+  font-size: 22px;
+  color: var(--primary-color);
+  img {
+    margin: 10px !important;
+  }
+}
+
+::ng-deep img {
+  margin: 5px;
+}
+
+.bevel {
+  padding: 10px;
+  width: 98%;
+  box-shadow: 2px 1px 8px #cbe0f4; //$primary-shadow-blue-color;
+  margin: 5px;
+  img {
+    margin-top: 7px;
+  }
+}

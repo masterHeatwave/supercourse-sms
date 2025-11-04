@@ -1,0 +1,30 @@
+<div
+  cdkDropList
+  [cdkDropListData]="questions"
+  (cdkDropListDropped)="drop($event)"
+  class="container"
+>
+  <div class="container-header">
+    <label>Words</label>
+  </div>
+  <div
+    *ngFor="let question of questions; let i = index; trackBy: trackByIndex"
+    cdkDrag
+  >
+    <letter-hunt-question-card
+      [questionNumber]="i + 1"
+      [answers]="question.answers"
+      (deleteClicked)="handleQuestionDelete(i)"
+      (answersChanged)="handleAnswersChange($event, i)"
+    ></letter-hunt-question-card>
+  </div>
+  <div class="container-footer">
+    <label (click)="addQuestion()">+Add a word</label>
+  </div>
+
+  <app-warning-dialog
+    [warningMessage]="warningMessage"
+    [isDialogVisible]="isWarningDialogVisible"
+    (onClose)="isWarningDialogVisible = false"
+  />
+</div>

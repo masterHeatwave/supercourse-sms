@@ -1,0 +1,63 @@
+label {
+  display: flex;
+  cursor: pointer;
+  color: var(--primary-color);
+  max-width: fit-content;
+  user-select: none;
+  font-weight: 500;
+  font-size: 1.5rem;
+  margin-left: 10px;
+}
+
+.head-label {
+  cursor: default !important;
+  color: var(--primary-color);
+  font-size: 25px;
+  font-weight: 500;
+  max-width: fit-content;
+  user-select: none;
+  margin-left: 10px;
+}
+
+:host ::ng-deep {
+  p-radiobutton {
+    margin-left: 100px;
+    .radio-style {
+      .p-radiobutton-box {
+        border: 1px solid #333;
+      }
+
+      .p-radiobutton-box.p-highlight {
+        border: thin solid #ccc;
+      }
+    }
+  }
+  @media (max-width: 770px) {
+    p-radiobutton {
+      margin-left: 10px;
+    }
+  }
+}
+
+.radio-label {
+  margin: 0px;
+  margin-left: 10px;
+}
+
+.radioGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  user-select: none;
+  justify-content: center !important;
+}
+
+.container-header {
+  display: flex;
+  flex-direction: row;
+  @media (max-width: 770px) {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-left: 0;
+  }
+}

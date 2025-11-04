@@ -1,0 +1,7 @@
+<button
+  class="headerButton"
+  [class.selected]="navigationService.getSelectedButtonId() === id"
+  (click)="handleClick()"
+>
+  {{ text }}
+</button>

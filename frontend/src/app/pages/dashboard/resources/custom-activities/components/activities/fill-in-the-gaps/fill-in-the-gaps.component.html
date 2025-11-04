@@ -1,0 +1,19 @@
+<label>Sentences</label>
+<div class="container" cdkDropList [cdkDropListData]="questions" (cdkDropListDropped)="drop($event)">
+  <div class="sentence-container" *ngFor="let question of questions; let i = index" cdkDrag>
+    <div cdkDragHandle class="grabber-number"><i class="pi pi-ellipsis-v" style="color: black"></i>Sentence {{ i + 1 }}.</div>
+    <fill-in-block-answer
+      [id]="i"
+      [document]="question.document || ''"
+      [imageURL]="question.imageURL || ''"
+      [strings]="question.answers || []"
+      (blocksChanged)="handleBlockChanged($event, i)"
+      (imageURLChanged)="handleImageURLChange($event, i)"
+      (deleteClicked)="handleDeleteClick(i)"
+    ></fill-in-block-answer>
+  </div>
+</div>
+
+<app-warning-dialog [warningMessage]="warningMessage" [isDialogVisible]="isWarningDialogVisible" (onClose)="isWarningDialogVisible = false" />
+
+<div class="text-button" (click)="addSentence()">+Add a sentence</div>

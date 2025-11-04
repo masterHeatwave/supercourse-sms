@@ -1,0 +1,71 @@
+p-inputnumber.ng-dirty.ng-invalid > .p-inputnumber > .p-inputtext {
+  @include invalid-input();
+}
+
+p-inputnumber.p-inputnumber-clearable {
+  .p-inputnumber-input {
+    padding-right: nth($inputPadding, 2) * 2 + $primeIconFontSize;
+  }
+
+  .p-inputnumber-clear-icon {
+    color: $inputIconColor;
+    right: nth($inputPadding, 2);
+  }
+}
+
+p-inputnumber.p-inputnumber-clearable {
+  .p-inputnumber-buttons-stacked {
+    .p-inputnumber-clear-icon {
+      right: $buttonIconOnlyWidth + nth($inputPadding, 2);
+    }
+  }
+
+  .p-inputnumber-buttons-horizontal {
+    .p-inputnumber-clear-icon {
+      right: $buttonIconOnlyWidth + nth($inputPadding, 2);
+    }
+  }
+}
+
+.p-inputnumber-buttons-stacked {
+  width: 60%;
+  border: 2px solid #ced4da;
+  border-radius: 15px;
+  background: white !important;
+
+  input {
+    border: none;
+    border-radius: 15px;
+    text-align: center;
+  }
+
+  .p-inputtext:enabled:focus {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: none !important;
+  }
+
+  .p-inputnumber-button-group button {
+    padding: 0 !important;
+    margin-right: 6px;
+    margin-top: 1px;
+    margin-bottom: 1px;
+    background: white !important;
+    border: none !important;
+    color: rgb(249, 115, 79) !important;
+  }
+}
+
+p-inputnumber.p-inputnumber {
+  &.p-variant-filled > .p-inputnumber-input {
+    background-color: $inputFilledBg;
+
+    &:enabled:hover {
+      background-color: $inputFilledHoverBg;
+    }
+
+    &:enabled:focus {
+      background-color: $inputFilledFocusBg;
+    }
+  }
+}

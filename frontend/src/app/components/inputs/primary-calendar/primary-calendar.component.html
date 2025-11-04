@@ -1,0 +1,24 @@
+<div class="primary-calendar flex flex-column gap-2 {{ styleClass }} w-full">
+  <span class="p-input-icon-right relative w-full">
+    <p-calendar
+      [id]="field.id!"
+      [formControl]="formControl"
+      [formlyAttributes]="field"
+      [placeholder]="placeholder | translate"
+      [dateFormat]="dateFormat"
+      [selectionMode]="selectionMode"
+      [showIcon]="showIcon"
+      [showButtonBar]="showButtonBar"
+      [showClear]="showClear"
+      [minDate]="minDate"
+      [maxDate]="maxDate"
+      [disabled]="disabled"
+      class="w-full"
+      [class.ng-invalid]="showError"
+      [class.ng-dirty]="showError"
+    ></p-calendar>
+  </span>
+  <small *ngIf="props.description" [id]="field.id + '-help'">
+    {{ props.description }}
+  </small>
+</div> 

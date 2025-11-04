@@ -1,0 +1,15 @@
+<span class="relative w-full">
+  <select
+    class="w-full p-inputtext primary-select__control"
+    [ngClass]="{ 'disabled-appearance': disabled }"
+    [ngModel]="value"
+    (ngModelChange)="handleChange($event)"
+    [disabled]="disabled"
+  >
+    <option *ngIf="placeholder" [ngValue]="''" [selected]="value === null || value === ''">{{ placeholder }}</option>
+    <option *ngFor="let option of options" [ngValue]="option.value">{{ option.label }}</option>
+  </select>
+  <i class="pi pi-chevron-down primary-select__chevron"></i>
+</span>
+
+

@@ -1,0 +1,103 @@
+<div class="academic-years-container">
+  <app-confirm-dialog
+    (onConfirmAction)="onConfirmDelete($event)"
+    [customHeaderText]="'Delete Academic Year'"
+    [customMessageText]="pendingDeleteAcademicYear ? 'Are you sure you want to delete \'' + pendingDeleteAcademicYear.name + '\'?' : ''"
+  ></app-confirm-dialog>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state p-4 text-center">
+    <i class="pi pi-spin pi-spinner text-2xl text-primary mb-3"></i>
+    <p class="text-600">Loading academic years...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state p-4 text-center">
+    <i class="pi pi-exclamation-triangle text-2xl text-orange-500 mb-3"></i>
+    <p class="text-600 mb-3">Unable to load academic years</p>
+    <p-button 
+      label="Retry" 
+      icon="pi pi-refresh" 
+      styleClass="p-button-outlined"
+      (click)="onRetry()">
+    </p-button>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!loading && !error">
+    <!-- Header with Search and Actions -->
+    <div class="flex justify-content-between align-items-center mb-4">
+      <h2 class="text-2xl font-semibold text-900 m-0">Academic Years</h2>
+    
+    <div class="flex align-items-center gap-2">
+      <!-- Search Input -->
+      <app-search-input
+        placeholder="Search in academic years"
+        [(ngModel)]="searchValue"
+        [borderColor]="'#000000'"
+        minWidth="250px"
+        (searchChange)="onSearchChange($event)">
+      </app-search-input>
+      
+      <!-- Action Buttons -->
+      <p-button 
+        icon="pi pi-plus" 
+        styleClass="p-button-text border-circle"
+        pTooltip="Add Academic Year"
+        (click)="onAdd()">
+      </p-button>
+      
+      <p-button 
+        icon="pi pi-th-large" 
+        styleClass="p-button-text border-circle"
+        pTooltip="Grid View"
+        (click)="toggleViewMode()">
+      </p-button>
+      
+      <p-button 
+        icon="pi pi-list" 
+        styleClass="p-button-text border-circle"
+        pTooltip="List View"
+        (click)="toggleViewMode()">
+      </p-button>
+      
+      <p-button 
+        icon="pi pi-upload" 
+        styleClass="p-button-text border-circle"
+        pTooltip="Export"
+        (click)="onExport()">
+      </p-button>
+    </div>
+  </div>
+
+    <!-- Data Table -->
+    <div class="table-card">
+      <app-primary-table
+        [data]="filteredData"
+        [columns]="tableColumns"
+        [rows]="10"
+        [totalRecords]="totalRecords"
+        [useVirtualScroll]="false"
+        [showActions]="true"
+        (pageChange)="onPageChange($event)"
+        (rowsPerPageChange)="onRowsPerPageChange($event)"
+        (rowSelect)="onViewAcademicYear($event)"
+        (editRow)="onEdit($event)"
+        (deleteRow)="onDelete($event)"
+        [dataKey]="'id'">
+      </app-primary-table>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && !error && academicYears.length === 0" class="empty-state p-4 text-center">
+    <i class="pi pi-calendar text-4xl text-400 mb-3"></i>
+    <h3 class="text-900 mb-2">No Academic Years Found</h3>
+    <p class="text-600 mb-4">Get started by creating your first academic year.</p>
+    <p-button 
+      label="Create Academic Year" 
+      icon="pi pi-plus" 
+      (click)="onAdd()">
+    </p-button>
+  </div>
+</div>

@@ -1,0 +1,18 @@
+<div class="answer-container">
+  <matching-pairs-item
+    [answerText]="answer.item1?.answerText ?? ''"
+    [imageURL]="answer.item1?.imageURL ?? ''"
+    [TTSText]="answer.item1?.TTSText ?? ''"
+    (inputChanged)="handleInputChanged($event, 1)"
+    (imageURLChanged)="handleImageURLChanged($event, 1)"
+    (TTSTextChanged)="handleTTSTextChanged($event, 1)"
+  ></matching-pairs-item>
+  <matching-pairs-item
+    [answerText]="answer.item2?.answerText ?? ''"
+    [imageURL]="answer.item2?.imageURL ?? ''"
+    [TTSText]="answer.item2?.TTSText ?? ''"
+    (inputChanged)="handleInputChanged($event, 2)"
+    (imageURLChanged)="handleImageURLChanged($event, 2)"
+    (TTSTextChanged)="handleTTSTextChanged($event, 2)"
+  ></matching-pairs-item>
+</div>

@@ -1,0 +1,14 @@
+<div>
+  <label cdkDragHandle class="grabber-number">
+    <i class="pi pi-ellipsis-v" style="color: black"></i
+    >{{ questionNumber }}.</label
+  >
+  <matching-pairs-answer
+    [answer]="answers[0]"
+    (answerChanged)="handleAnswerChanged($event)"
+  ></matching-pairs-answer>
+
+  <label class="trash">
+    <i class="pi pi-trash" style="font-size: 1.5rem" (click)="removePair()"></i
+  ></label>
+</div>

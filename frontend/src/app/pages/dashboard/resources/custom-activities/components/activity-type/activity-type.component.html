@@ -1,0 +1,123 @@
+<div
+  [ngClass]="{
+    selected: navigationService.getSelectedButtonId() === id,
+    hide: navigationService.getSelectedButtonId() !== id
+  }"
+>
+  <p-card>
+    <ng-template pTemplate="header">
+      <label class="header-label">Freetext</label>
+      <img alt="Typing activities" src="/assets/images/custom-activities/typing.png" />
+    </ng-template>
+    <div class="radioGroup">
+      <div [style]="{ display: 'flex', marginBottom: '10px' }">
+        <p-radioButton
+          name="{{ constants.FILL_IN_THE_BLANKS_VALUE }}"
+          value="{{ constants.FILL_IN_THE_BLANKS_VALUE }}"
+          [(ngModel)]="activityType"
+          styleClass="radio-style"
+          inputId="activityType1"
+          (onClick)="radioButtonClick($event)"
+        />
+        <label for="activityType1" class="ml-2">{{ constants.FILL_IN_THE_BLANKS_TEXT }}</label>
+      </div>
+      <div [style]="{ display: 'flex', marginBottom: '10px' }">
+        <p-radioButton
+          name="{{ constants.CLOZE_VALUE }}"
+          value="{{ constants.CLOZE_VALUE }}"
+          styleClass="radio-style"
+          [(ngModel)]="activityType"
+          inputId="activityType2"
+          (onClick)="radioButtonClick($event)"
+        />
+        <label for="activityType2" class="ml-2">{{ constants.CLOZE_TEXT }}</label>
+      </div>
+      <div [style]="{ display: 'flex', marginBottom: '0px' }">
+        <p-radioButton
+          name="{{ constants.LETTER_HUNT_VALUE }}"
+          value="{{ constants.LETTER_HUNT_VALUE }}"
+          styleClass="radio-style"
+          [(ngModel)]="activityType"
+          inputId="activityType3"
+          (onClick)="radioButtonClick($event)"
+        />
+        <label for="activityType3" class="ml-2">{{ constants.LETTER_HUNT_TEXT }}</label>
+      </div>
+    </div>
+  </p-card>
+
+  <p-card>
+    <ng-template pTemplate="header">
+      <label class="header-label">Drag and drop</label>
+      <img alt="Card" src="/assets/images/custom-activities/drag.png" />
+    </ng-template>
+    <div class="radioGroup">
+      <div [style]="{ display: 'flex', marginBottom: '10px' }">
+        <p-radioButton
+          name="{{ constants.MATCHING_PAIRS_VALUE }}"
+          value="{{ constants.MATCHING_PAIRS_VALUE }}"
+          [(ngModel)]="activityType"
+          styleClass="radio-style"
+          inputId="activityType4"
+          (onClick)="radioButtonClick($event)"
+        />
+        <label for="activityType4" class="ml-2">{{ constants.MATCHING_PAIRS_TEXT }}</label>
+      </div>
+
+      <div [style]="{ display: 'flex', marginBottom: '10px' }">
+        <p-radioButton
+          name="{{ constants.GROUP_SORT_VALUE }}"
+          value="{{ constants.GROUP_SORT_VALUE }}"
+          [(ngModel)]="activityType"
+          styleClass="radio-style"
+          inputId="activityType5"
+          (onClick)="radioButtonClick($event)"
+        />
+        <label for="activityType5" class="ml-2">{{ constants.GROUP_SORT_TEXT }}</label>
+      </div>
+
+      <div [style]="{ display: 'flex', marginBottom: '10px' }">
+        <p-radioButton
+          name="{{ constants.WORD_ORDER_VALUE }}"
+          value="{{ constants.WORD_ORDER_VALUE }}"
+          [(ngModel)]="activityType"
+          styleClass="radio-style"
+          inputId="activityType6"
+          (onClick)="radioButtonClick($event)"
+        />
+        <label for="activityType6" class="ml-2">{{ constants.WORD_ORDER_TEXT }}</label>
+      </div>
+    </div>
+  </p-card>
+
+  <p-card>
+    <ng-template pTemplate="header">
+      <label class="header-label">Multiple choice</label>
+      <img alt="Card" src="/assets/images/custom-activities/choose.png" />
+    </ng-template>
+    <div class="radioGroup">
+      <div [style]="{ display: 'flex', marginBottom: '10px' }">
+        <p-radioButton
+          name="{{ constants.MULTIPLE_CHOICE_QUIZ_VALUE }}"
+          value="{{ constants.MULTIPLE_CHOICE_QUIZ_VALUE }}"
+          [(ngModel)]="activityType"
+          styleClass="radio-style"
+          inputId="activityType7"
+          (onClick)="radioButtonClick($event)"
+        />
+        <label for="activityType7" class="ml-2">{{ constants.MULTIPLE_CHOICE_QUIZ_TEXT }}</label>
+      </div>
+      <div [style]="{ display: 'flex', marginBottom: '10px' }">
+        <p-radioButton
+          name="{{ constants.MEMORY_MATCHING_PAIRS_VALUE }}"
+          value="{{ constants.MEMORY_MATCHING_PAIRS_VALUE }}"
+          styleClass="radio-style"
+          [(ngModel)]="activityType"
+          inputId="activityType8"
+          (onClick)="radioButtonClick($event)"
+        />
+        <label for="activityType8" class="ml-2">{{ constants.MEMORY_MATCHING_PAIRS_TEXT }}</label>
+      </div>
+    </div>
+  </p-card>
+</div>

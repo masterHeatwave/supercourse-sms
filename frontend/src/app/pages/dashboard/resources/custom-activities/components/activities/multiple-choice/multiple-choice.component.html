@@ -1,0 +1,37 @@
+<div
+  cdkDropList
+  [cdkDropListData]="questions"
+  (cdkDropListDropped)="drop($event)"
+  class="container"
+>
+  <div class="container-header">
+    <label>Questions</label>
+  </div>
+  <div
+    *ngFor="let question of questions; let i = index; trackBy: trackByIndex"
+    cdkDrag
+  >
+    <multiple-choice-question-card
+      [questionNumber]="i + 1"
+      [questionText]="question.questionText"
+      [imageURL]="question.imageURL"
+      [TTSText]="question.TTSText"
+      [questionText]="question.questionText"
+      [answers]="question.answers"
+      (answersChanged)="handleAnswersChange($event, i)"
+      (questionTextChanged)="onQuestionTextChange($event, i)"
+      (questionTTSTextChanged)="onQuestionTTSTextChange($event, i)"
+      (questionImageURLChanged)="onQuestionImageURLChange($event, i)"
+      (deleteClicked)="handleQuestionDelete(i)"
+    ></multiple-choice-question-card>
+  </div>
+  <div class="container-footer">
+    <label (click)="addQuestion()">+Add a question</label>
+  </div>
+
+  <app-warning-dialog
+    [warningMessage]="warningMessage"
+    [isDialogVisible]="isWarningDialogVisible"
+    (onClose)="isWarningDialogVisible = false"
+  />
+</div>

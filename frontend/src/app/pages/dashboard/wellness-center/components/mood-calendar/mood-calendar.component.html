@@ -1,0 +1,22 @@
+<app-info-dialog [infoMessage]="infoMessage" [isDialogVisible]="isInfoDialogVisible" (onClose)="isInfoDialogVisible = false" />
+<label *ngIf="moods && moods.length > 0" (click)="onClick($event)"
+  >Month
+  <i
+    class="pi"
+    [ngClass]="{
+      'pi-sort-amount-up': order === 'asc',
+      'pi-sort-amount-down': order === 'desc'
+    }"
+  ></i>
+</label>
+<div class="month" *ngFor="let month of monthsMoods | keyvalue : sortByDate; let i = index">
+  <label>{{ month.key }}</label>
+  <div class="days" *ngFor="let entry of month.value; let j = index">
+    <image-text
+      [text]="entry.day.toString()"
+      [textPosition]="'left'"
+      [imageUrl]="'assets/images/wellness-center/' + entry.mood + '.png'"
+      (click)="onImageClick($event, i, j, entry.mood, month.key, entry.note)"
+    ></image-text>
+  </div>
+</div>

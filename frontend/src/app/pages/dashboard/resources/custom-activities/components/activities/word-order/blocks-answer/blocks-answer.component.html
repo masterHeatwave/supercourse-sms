@@ -1,0 +1,28 @@
+<div class="blocks-answer">
+  <app-image-selector
+    (onBusy)="handleImageSelectorBusy($event)"
+    (onErrorMessage)="handleErrorMessage($event)"
+    (onImageURLChanged)="handleImageURLChanged($event)"
+    [imageURL]="imageURL"
+  ></app-image-selector>
+
+  <div style="display: flex; align-items: flex-start">
+    <text-block
+      *ngFor="let block of textBlocks; let i = index"
+      [text]="strings[i]"
+      (remove)="removeTextBlock(i)"
+      (contentChanged)="handleContentChanged($event, i)"
+    ></text-block>
+  </div>
+  <i
+    class="pi pi-trash"
+    style="font-size: 1.5rem; margin-left: 10px"
+    (click)="onDeleteClick()"
+  ></i>
+</div>
+<p-button label="Add block" (click)="addTextBlock()"></p-button>
+<app-warning-dialog
+  [warningMessage]="warningMessage"
+  [isDialogVisible]="isWarningDialogVisible"
+  (onClose)="isWarningDialogVisible = false"
+/>

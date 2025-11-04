@@ -1,0 +1,69 @@
+@import '../../../../styles/styles.scss';
+
+.block-answer {
+  display: flex;
+  border: 1px solid #ccc;
+  background-color: white;
+  border-radius: 5px;
+  padding: 10px;
+  width: 98% !important;
+  min-height: 100px;
+  @media (max-width: 840px) {
+    width: 600px !important;
+  }
+  @media (max-width: 665px) {
+    width: 400px !important;
+  }
+  @media (max-width: 455px) {
+    width: 260px !important;
+  }
+}
+
+.block-answer .div-editable {
+  padding-top: 0px !important;
+}
+
+.div-editable {
+  border: none;
+  outline: none;
+  padding: 0px;
+  width: 98% !important;
+  min-height: 100px;
+  position: relative;
+  display: inline-block;
+  top: 0px;
+  left: 10px;
+}
+
+.div-editable:empty::before {
+  content: 'Insert a sentence';
+  pointer-events: none;
+}
+
+.div-editable:focus::before {
+  content: '';
+}
+
+:host ::ng-deep {
+  .p-button {
+    margin-top: 7px;
+    margin-bottom: 7px;
+    font-size: 18px;
+    width: 132px;
+    height: 50px;
+    cursor: pointer;
+  }
+
+  .pi-dialog {
+    padding: 0px !important;
+  }
+}
+
+.image-selector {
+  position: relative;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding-top: 4px;
+  padding-left: 7px;
+  margin: 0 !important;
+}

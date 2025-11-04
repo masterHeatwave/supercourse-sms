@@ -1,0 +1,10 @@
+<app-primary-table
+  [columns]="attendanceColumns"
+  [data]="attendanceData"
+  [rows]="10"
+  [totalRecords]="attendanceData.length"
+  [loading]="loading"
+  [showActions]="false"
+  [viewMode]="'list'"
+  dataKey="id"
+></app-primary-table>

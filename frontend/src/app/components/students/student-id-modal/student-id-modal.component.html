@@ -1,0 +1,222 @@
+<p-dialog 
+  [(visible)]="visible" 
+  [modal]="true" 
+  [closable]="true" 
+  [draggable]="false" 
+  [resizable]="false"
+  [style]="{ width: '90vw', maxWidth: '600px' }"
+  (onHide)="onHide()"
+  header="Student ID Card"
+  [showHeader]="true"
+  [closeOnEscape]="true"
+  [dismissableMask]="true">
+  
+  <div class="student-id-card" *ngIf="studentProfile">
+    <!-- Top Section - Yellow Background -->
+    <div class="id-card-top">
+      <div class="school-banner">
+        <span class="school-name">{{ getSchoolName() }}</span>
+      </div>
+      <div class="student-address">
+        {{ getStudentAddress() }}
+      </div>
+    </div>
+
+    <!-- Middle Section - White Background -->
+    <div class="id-card-middle">
+      <!-- Left Side -->
+      <div class="id-card-left">
+        <div class="grade-info">
+          <span class="grade">{{ getGrade() }}</span>
+        </div>
+        <div class="contact-info">
+          <span class="contact-label">Contact:</span>
+          <span class="contact-value">{{ studentProfile.mobile }}</span>
+        </div>
+        <div class="qr-code">
+          <!-- Placeholder for QR code - you can replace with actual QR code component -->
+          <div class="qr-placeholder">
+            <div class="qr-grid">
+              <div class="qr-cell" *ngFor="let i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]" 
+                   [class.qr-filled]="i % 3 === 0 || i % 7 === 0 || i % 11 === 0"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center - School Logo -->
+      <div class="id-card-center">
+        <div class="school-logo">
+          <div class="logo-shield">
+            <div class="logo-content">
+              <div class="logo-symbols">
+                <div class="symbol graduation-cap">🎓</div>
+                <div class="symbol beaker">🧪</div>
+                <div class="symbol globe">🌍</div>
+                <div class="symbol arrow">➡️</div>
+              </div>
+              <div class="logo-year">1973</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Side -->
+      <div class="id-card-right">
+        <div class="academic-year">
+          <span class="year-label">{{ getAcademicYear() }}</span>
+        </div>
+        <div class="student-photo">
+          <p-avatar 
+            *ngIf="studentProfile.avatar && studentProfile.avatarUrl" 
+            [image]="studentProfile.avatarUrl" 
+            size="large" 
+            shape="circle"
+            [style]="{ width: '80px', height: '80px' }">
+          </p-avatar>
+          <p-avatar 
+            *ngIf="!studentProfile.avatar || !studentProfile.avatarUrl" 
+            [label]="studentProfile.avatarInitials" 
+            size="large"
+            shape="circle"
+            [style]="{ 
+              width: '80px', 
+              height: '80px', 
+              'background-color': studentProfile.avatarColor, 
+              color: '#ffffff',
+              'font-size': '1.5rem'
+            }">
+          </p-avatar>
+        </div>
+        <div class="dob-info">
+          <span class="dob-label">D.O.B.</span>
+          <span class="dob-value">{{ studentProfile.age.dob }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Section - Purple Background -->
+    <div class="id-card-bottom">
+      <div class="student-name">
+        <span class="name-text">{{ (studentProfile.name || '').toUpperCase() }}</span>
+      </div>
+      <div class="expiry-info">
+        <span class="expiry-label">Exp.date:</span>
+        <span class="expiry-value">{{ getExpiryDate() }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons" *ngIf="studentProfile">
+    <app-outline-button 
+      [borderColor]="'var(--primary-color)'"
+      (click)="onPrintId()">
+      Print ID
+    </app-outline-button>
+    <app-outline-button 
+      [borderColor]="'var(--primary-color)'"
+      (click)="onDownload()">
+      Download
+    </app-outline-button>
+  </div>
+
+  <!-- Hidden print area for card only -->
+  <div #printArea class="print-only" style="display: none;">
+    <div class="student-id-card-print">
+      <!-- Top Section - Yellow Background -->
+      <div class="id-card-top">
+        <div class="school-banner">
+          <span class="school-name">{{ getSchoolName() }}</span>
+        </div>
+        <div class="student-address">
+          {{ getStudentAddress() }}
+        </div>
+      </div>
+
+      <!-- Middle Section - White Background -->
+      <div class="id-card-middle">
+        <!-- Left Side -->
+        <div class="id-card-left">
+          <div class="grade-info">
+            <span class="grade">{{ getGrade() }}</span>
+          </div>
+          <div class="contact-info">
+            <span class="contact-label">Contact:</span>
+            <span class="contact-value">{{ studentProfile?.mobile }}</span>
+          </div>
+          <div class="qr-code">
+            <div class="qr-placeholder">
+              <div class="qr-grid">
+                <div class="qr-cell" *ngFor="let i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]" 
+                     [class.qr-filled]="i % 3 === 0 || i % 7 === 0 || i % 11 === 0"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center - School Logo -->
+        <div class="id-card-center">
+          <div class="school-logo">
+            <div class="logo-shield">
+              <div class="logo-content">
+                <div class="logo-symbols">
+                  <div class="symbol graduation-cap">🎓</div>
+                  <div class="symbol beaker">🧪</div>
+                  <div class="symbol globe">🌍</div>
+                  <div class="symbol arrow">➡️</div>
+                </div>
+                <div class="logo-year">1973</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side -->
+        <div class="id-card-right">
+          <div class="academic-year">
+            <span class="year-label">{{ getAcademicYear() }}</span>
+          </div>
+          <div class="student-photo">
+            <p-avatar 
+              *ngIf="studentProfile?.avatar && studentProfile?.avatarUrl" 
+              [image]="studentProfile?.avatarUrl" 
+              size="large" 
+              shape="circle"
+              [style]="{ width: '80px', height: '80px' }">
+            </p-avatar>
+            <p-avatar 
+              *ngIf="!studentProfile?.avatar || !studentProfile?.avatarUrl" 
+              [label]="studentProfile?.avatarInitials" 
+              size="large"
+              shape="circle"
+              [style]="{ 
+                width: '80px', 
+                height: '80px', 
+                'background-color': studentProfile?.avatarColor, 
+                color: '#ffffff',
+                'font-size': '1.5rem'
+              }">
+            </p-avatar>
+          </div>
+          <div class="dob-info">
+            <span class="dob-label">D.O.B.</span>
+            <span class="dob-value">{{ studentProfile?.age?.dob }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Section - Purple Background -->
+      <div class="id-card-bottom">
+                  <div class="student-name">
+            <span class="name-text">{{ studentProfile?.name?.toUpperCase() || '' }}</span>
+          </div>
+        <div class="expiry-info">
+          <span class="expiry-label">Exp.date:</span>
+          <span class="expiry-value">{{ getExpiryDate() }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</p-dialog>

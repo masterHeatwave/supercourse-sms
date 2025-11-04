@@ -1,0 +1,6 @@
+<div class="container" [ngClass]="{ reverse: textPosition === 'left' }">
+  <div class="image">
+    <img *ngIf="imageUrl !== ''" [src]="imageUrl" alt="Image" name="{{ text }}" [width]="imageSize" [height]="imageSize" />
+  </div>
+  <div class="text" [ngStyle]="textStyle">{{ text }}</div>
+</div>

@@ -1,0 +1,156 @@
+:host {
+  // Only keep styles that can't be easily achieved with PrimeNG utilities
+  
+  .bg-gray-100 {
+    background-color: #f8f9fa;
+  }
+  
+  .text-xs {
+    font-size: 0.75rem;
+  }
+  
+  .text-sm {
+    font-size: 0.875rem;
+  }
+  
+  .text-lg {
+    font-size: 1.125rem;
+  }
+  
+  .px-3 {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  .py-1 {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+  
+  .pr-6 {
+    padding-right: 1.5rem;
+  }
+  
+  .right-2 {
+    right: 0.5rem;
+  }
+  
+  .top-50 {
+    top: 50%;
+  }
+  
+  .mb-2 {
+    margin-bottom: 0.5rem;
+  }
+  
+  .mb-3 {
+    margin-bottom: 0.75rem;
+  }
+  
+  .mb-4 {
+    margin-bottom: 1rem;
+  }
+  
+  .py-8 {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+  
+  .py-1 {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+  
+  .px-3 {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  .gap-2 {
+    gap: 0.5rem;
+  }
+  
+  .gap-1\.5 {
+    gap: 0.375rem;
+  }
+  
+  .transition-colors {
+    transition-property: color, background-color, border-color;
+  }
+  
+  .transition-duration-200 {
+    transition-duration: 200ms;
+  }
+  
+  .transition-all {
+    transition-property: all;
+  }
+  
+  .cursor-pointer {
+    cursor: pointer;
+  }
+  
+  .border-none {
+    border: none;
+  }
+  
+  .border-bottom-1 {
+    border-bottom-width: 1px;
+  }
+  
+  .border-300 {
+    border-color: #e9ecef;
+  }
+  
+  .border-200 {
+    border-color: #dee2e6;
+  }
+  
+  .border-black {
+    border-color: #000000;
+  }
+  
+  .border-2 {
+    border-width: 2px;
+  }
+  
+  .border-white {
+    border-color: white;
+  }
+  
+  .bg-transparent {
+    background-color: transparent;
+  }
+  
+  .overflow-hidden {
+    overflow: hidden;
+  }
+  
+  .object-cover {
+    object-fit: cover;
+  }
+  
+  .w-full {
+    width: 100%;
+  }
+  
+  .h-full {
+    height: 100%;
+  }
+  
+  .block {
+    display: block;
+  }
+  
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  
+  .relative {
+    position: relative;
+  }
+  
+  .absolute {
+    position: absolute;
+  }
+}

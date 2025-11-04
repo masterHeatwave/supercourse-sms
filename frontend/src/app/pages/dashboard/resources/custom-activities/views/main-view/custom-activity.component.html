@@ -1,0 +1,213 @@
+<div class="main p-3" *ngIf="userType !== 'student'">
+  <div style="display: flex; width: fit-content; align-items: center; gap: 35px; user-select: none; cursor: pointer">
+    <div style="display: flex; align-items: center; gap: 5px">
+      <!-- <a routerLink="/resources/custom-activities/create"> -->
+      <i class="pi pi-plus-circle" style="color: var(--primary-color)" (click)="onCreateClick($event, userId)"></i>
+      <label class="label-title-small" style="margin-left: 5px; cursor: pointer" (click)="onCreateClick($event, userId)">
+        <u>Create interactive activity</u></label
+      >
+      <!-- </a> -->
+    </div>
+    <i class="pi pi-th-large" style="color: var(--primary-color)" (click)="onTileClick($event)"></i>
+    <i class="pi pi-list" style="color: var(--primary-color)" (click)="onTableClick($event)"></i>
+  </div>
+  <div>
+    <label class="label-title-big">Private Interactive Activities</label>
+    <p-table [value]="privateCustomActivities" [responsive]="true" *ngIf="view === 'table'">
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="image">Template</th>
+          <th pSortableColumn="title">Title</th>
+          <th pSortableColumn="typeString">Type</th>
+          <th pSortableColumn="playerModeString">Gameplay</th>
+          <th pSortableColumn="createdBy">Created by</th>
+          <th pSortableColumn="createdAt">Created on</th>
+          <th pSortableColumn="public">Public</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-customActivities>
+        <tr>
+          <td>
+            <img
+              [src]="'assets/images/custom-activities/templates/' + customActivities.template + '.png'"
+              style="height: 50px; width: auto; max-width: 100%"
+            />
+          </td>
+          <td>{{ customActivities.title }}</td>
+          <td>{{ customActivities.typeString }}</td>
+          <td>{{ customActivities.playerModeString }}</td>
+          <td>
+            {{ customActivities.userId?.firstname + ' ' + customActivities.userId?.lastname || 'user' }}
+          </td>
+          <td>{{ customActivities.createdAt | date : 'medium' }}</td>
+          <td>
+            <p-inputSwitch [disabled]="true" [(ngModel)]="customActivities.settings.public"></p-inputSwitch>
+          </td>
+          <td style="text-align: center; vertical-align: middle">
+            <p-button (onClick)="duplicateActivity(customActivities.id)" icon="pi pi-copy"></p-button>
+            <p-button (onClick)="editActivity(customActivities.id)" icon="pi pi-pencil"></p-button>
+            <p-button (onClick)="launchActivity(customActivities.id)" icon="pi pi-play"></p-button>
+            <p-button (onClick)="deleteActivity(customActivities.id)" icon="pi pi-trash" styleClass="pi-trash-new"></p-button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+    <div class="p-grid" style="display: flex; gap: 10px; padding: 10px; flex-wrap: wrap" *ngIf="view === 'tiles'">
+      <div *ngFor="let customActivities of privateCustomActivities">
+        <p-card [header]="customActivities.title">
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <img
+              [src]="'assets/images/custom-activities/templates/' + customActivities.template + '.png'"
+              style="height: 50px; width: auto; max-width: 50px"
+              alt="Template Image"
+            />
+            <div><strong>Type:</strong> {{ customActivities.typeString }}</div>
+            <div><strong>Gameplay:</strong> {{ customActivities.playerModeString }}</div>
+            <div>
+              <strong>Created by:</strong>
+              {{ customActivities.userId?.firstname + ' ' + customActivities.userId?.lastname || 'user' }}
+            </div>
+            <div>
+              <strong>Created on:</strong>
+              {{ customActivities.createdAt | date : 'medium' }}
+            </div>
+            <div style="display: flex; align-items: center">
+              <strong style="margin-right: 10px">Public:</strong>
+              <p-inputSwitch [disabled]="true" [(ngModel)]="customActivities.settings.public"></p-inputSwitch>
+            </div>
+            <div class="p-d-flex p-jc-end p-mt-2">
+              <p-button (onClick)="duplicateActivity(customActivities.id)" icon="pi pi-copy" class="p-button-text p-mr-2"></p-button>
+              <p-button (onClick)="editActivity(customActivities.id)" icon="pi pi-pencil" class="p-button-text p-mr-2"></p-button>
+              <p-button (onClick)="launchActivity(customActivities.id)" icon="pi pi-play"></p-button>
+              <p-button (onClick)="deleteActivity(customActivities.id)" icon="pi pi-trash" class="p-button-text"></p-button>
+            </div>
+          </div>
+        </p-card>
+      </div>
+    </div>
+  </div>
+  <div>
+    <label class="label-title-big">Public Interactive Activities</label>
+    <p-table [value]="publicCustomActivities" [responsive]="true" *ngIf="view === 'table'">
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="image">Template</th>
+          <th pSortableColumn="title">Title</th>
+          <th pSortableColumn="typeString">Type</th>
+          <th pSortableColumn="playerModeString">Gameplay</th>
+          <th pSortableColumn="createdBy">Created by</th>
+          <th pSortableColumn="createdAt">Created on</th>
+          <th pSortableColumn="public">Public</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-customActivities>
+        <tr *ngIf="userId !== customActivities.userId">
+          <td>
+            <img
+              [src]="'assets/images/custom-activities/templates/' + customActivities.template + '.png'"
+              style="height: 50px; width: auto; max-width: 100%"
+            />
+          </td>
+          <td>{{ customActivities.title }}</td>
+          <td>{{ customActivities.typeString }}</td>
+          <td>{{ customActivities.playerModeString }}</td>
+          <td>{{ customActivities.userId?.firstname + ' ' + customActivities.userId?.lastname || 'user' }}</td>
+          <td>{{ customActivities.createdAt | date : 'medium' }}</td>
+          <td>
+            <p-inputSwitch [disabled]="true" [(ngModel)]="customActivities.settings.public"></p-inputSwitch>
+          </td>
+          <td style="text-align: center; vertical-align: middle">
+            <p-button (onClick)="duplicatePublicActivity(customActivities.id)" icon="pi pi-copy"></p-button>
+            <p-button (onClick)="launchActivity(customActivities.id)" icon="pi pi-play"></p-button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+    <div class="p-grid" style="display: flex; flex-wrap: wrap; gap: 10px; padding: 10px" *ngIf="view === 'tiles'">
+      <div *ngFor="let customActivities of publicCustomActivities">
+        <p-card [header]="customActivities.title">
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <img
+              [src]="'assets/images/custom-activities/templates/' + customActivities.template + '.png'"
+              style="height: 50px; width: auto; max-width: 50px"
+              alt="Template Image"
+            />
+            <div><strong>Type:</strong> {{ customActivities.typeString }}</div>
+            <div><strong>Gameplay:</strong> {{ customActivities.playerModeString }}</div>
+            <div>
+              <strong>Created by:</strong>
+              {{ customActivities.userInfo?.username || 'user' }}
+            </div>
+            <div>
+              <strong>Created on:</strong>
+              {{ customActivities.createdAt | date : 'medium' }}
+            </div>
+            <div style="display: flex; align-items: center">
+              <strong style="margin-right: 10px">Public:</strong>
+              <p-inputSwitch [disabled]="true" [(ngModel)]="customActivities.settings.public"></p-inputSwitch>
+            </div>
+            <div class="p-d-flex p-jc-end p-mt-2">
+              <p-button (onClick)="duplicatePublicActivity(customActivities.id)" icon="pi pi-copy" class="p-button-text"></p-button>
+            </div>
+          </div>
+        </p-card>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main" *ngIf="userType === 'student'">
+  <div style="display: flex; width: fit-content; align-items: center; gap: 35px; user-select: none; cursor: pointer">
+    <label class="label-title-big">Interactive Activities</label>
+    <i class="pi pi-th-large" style="color: var(--primary-color)" (click)="onTileClick($event)"></i>
+    <i class="pi pi-list" style="color: var(--primary-color)" (click)="onTableClick($event)"></i>
+  </div>
+  <div>
+    <p-table [value]="studentActivities" [responsive]="true" *ngIf="view === 'table'">
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="title">Title</th>
+          <th pSortableColumn="typeString">Type</th>
+          <th pSortableColumn="class">Class</th>
+          <th pSortableColumn="createdBy">Created by</th>
+          <th pSortableColumn="assignedOn">Assigned on</th>
+          <th pSortableColumn="assignmentBundle">Assignment Bundle</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-studentActivities>
+        <tr>
+          <td>{{ studentActivities.tasks[0].notes }}</td>
+          <td>{{ studentActivities.tasks[0].category }}</td>
+          <td>{{ studentActivities.class.name }}</td>
+          <td>{{ studentActivities.createdBy || 'user' }}</td>
+          <td>{{ studentActivities.createdAt | date : 'medium' }}</td>
+          <td>{{ studentActivities.title }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+    <div class="p-grid" style="display: flex; flex-wrap: wrap; gap: 10px; padding: 10px" *ngIf="view === 'tiles'">
+      <div *ngFor="let customActivities of studentActivities">
+        <p-card [header]="customActivities.title">
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <div><strong>Title:</strong> {{ customActivities.tasks[0].notes }}</div>
+            <div><strong>Type:</strong> {{ customActivities.tasks[0].category }}</div>
+
+            <div><strong>Class:</strong> {{ customActivities.class.name }}</div>
+            <div><strong>Created by:</strong> {{ customActivities.createdBy }}</div>
+            <div>
+              <strong>Assigned on:</strong>
+              {{ customActivities.createdAt | date : 'medium' }}
+            </div>
+            <div style="display: flex; align-items: center">
+              <strong style="margin-right: 10px">Assignment Bundle:</strong>
+              {{ customActivities.assignmentBundle }}
+            </div>
+          </div>
+        </p-card>
+      </div>
+    </div>
+  </div>
+</div>

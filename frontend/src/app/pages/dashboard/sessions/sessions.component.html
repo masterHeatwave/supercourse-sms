@@ -1,0 +1,34 @@
+<ng-container *ngIf="sessions$ | async as sessions">
+  <div class="flex flex-column gap-4 px-4">
+    <div class="flex justify-content-end mb-3 mt-3">
+      <p-button icon="pi pi-calendar-clock" [label]="'sessions.list.view_timetable' | translate" styleClass="p-button-outlined mr-2" (onClick)="navigateToTimetable()"> </p-button>
+      <p-button icon="pi pi-plus" styleClass="p-button-text border-circle" (onClick)="navigateToCreate()"> </p-button>
+      <p-button icon="pi pi-download" styleClass="p-button-text border-circle ml-2" (onClick)="downloadExcel()"> </p-button>
+      <p-button
+        [icon]="(viewMode$ | async) === 'list' ? 'pi pi-th-large' : 'pi pi-list'"
+        styleClass="p-button-text border-circle ml-2"
+        (onClick)="toggleViewMode()"
+      >
+      </p-button>
+    </div>
+    <div class="card position-relative">
+      <!-- Add spinner with overlay when loading -->
+      <app-spinner *ngIf="isLoading" [overlay]="true"></app-spinner>
+
+      <app-primary-table
+        [data]="sessions.sessions"
+        [columns]="tableColumns"
+        [rows]="10"
+        [totalRecords]="totalRecords"
+        [viewMode]="(viewMode$ | async) || 'list'"
+        (pageChange)="onPageChange($event)"
+        (rowsPerPageChange)="onRowsPerPageChange($event)"
+        (rowSelect)="onSessionSelect($event)"
+        (viewRow)="onSessionSelect($event)"
+        (editRow)="onEditSession($event)"
+        (deleteRow)="onDeleteSession($event)"
+      >
+      </app-primary-table>
+    </div>
+  </div>
+</ng-container>

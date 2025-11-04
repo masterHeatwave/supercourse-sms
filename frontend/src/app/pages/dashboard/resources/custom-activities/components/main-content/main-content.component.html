@@ -1,0 +1,24 @@
+<div
+  [ngClass]="{
+    'main-content-center': navigationService.getSelectedButtonId() !== 3,
+    'main-content-start': navigationService.getSelectedButtonId() === 3
+  }"
+>
+  <app-activity-type *ngIf="!hasData" [id]="1" />
+  <app-player-mode [hasData]="hasData" [selectedMode]="activityData.playerMode" [id]="2" />
+  <app-content
+    [activityId]="activityData.id"
+    [userId]="activityData.userId"
+    [activityType]="activityData.activityType"
+    [activityPlayerMode]="activityData.playerMode"
+    [activityTitle]="activityData.title"
+    [activityDescription]="activityData.description"
+    [activityTemplate]="activityData.template"
+    [activitySettings]="activityData.settings"
+    [activityQuestions]="activityData.questions"
+    [activityCEFR]="activityData.cefr"
+    [activityTags]="activityData.tags"
+    [id]="3"
+  />
+  <app-template [template]="activityData.template" [selectedPlayerMode]="activityData.playerMode" [id]="4" />
+</div>

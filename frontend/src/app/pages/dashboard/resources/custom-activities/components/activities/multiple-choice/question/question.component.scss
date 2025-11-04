@@ -1,0 +1,38 @@
+@import '../../../../styles/styles.scss';
+
+.question {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border: 1px solid #ccc;
+  background-color: white;
+  border-radius: 5px;
+  min-width: 350px;
+  label {
+    margin: 10px !important;
+    padding: 0;
+  }
+}
+
+input {
+  font-size: 1.5rem;
+  border: none !important;
+  outline: none !important;
+  width: 100%;
+}
+
+.separator {
+  padding: 0 !important;
+  padding-bottom: 3px !important;
+  color: #666 !important;
+  margin-left: 5px !important;
+  margin-right: 5px !important;
+  font-weight: 300 !important;
+  user-select: none;
+}
+
+label {
+  font-weight: 600;
+  color: var(--primary-color);
+  padding-top: 8px;
+}

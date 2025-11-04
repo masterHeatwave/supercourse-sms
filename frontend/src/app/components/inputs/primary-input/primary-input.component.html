@@ -1,0 +1,49 @@
+<div class="primary-input flex flex-column gap-2 {{ styleClass }} w-full">
+    <label *ngIf="!isSearch && label" [for]="field.id" class="{{ labelClass }}">
+      {{ label | translate }} <span *ngIf="required" style="color: #ef4444;">*</span>
+      <span class="text-red-500 text-xs" *ngIf="showError">
+        (
+        <span *ngFor="let error of formControl.errors | keyvalue">
+          {{ error.value.message || ('validation.' + error.key | translate) }}
+        </span>
+        )
+      </span>
+    </label>
+    <span class="p-input-icon-right relative w-full">
+      <i
+        *ngIf="type === 'password'"
+        [ngClass]="showPassword ? 'pi pi-eye-slash absolute right-2' : 'pi pi-eye absolute right-2'"
+        (click)="togglePasswordVisibility()"
+        style="cursor: pointer; color: #000"
+      ></i>
+      <ng-container *ngIf="type === 'textArea'; else inputField">
+        <textarea
+          [id]="field.id!"
+          [formControl]="formControl"
+          [formlyAttributes]="field"
+          class="w-full p-inputtext"
+          [class.ng-invalid]="showError"
+          [class.ng-dirty]="showError"
+          [class.disabled-appearance]="isDisabled"
+          rows="3"
+          [placeholder]="placeholder | translate"
+        ></textarea>
+      </ng-container>
+      <ng-template #inputField>
+        <input
+          [type]="type === 'password' ? (showPassword ? 'text' : 'password') : type"
+          [id]="field.id!"
+          [formControl]="formControl"
+          [formlyAttributes]="field"
+          pInputText
+          class="w-full"
+          [class.disabled-appearance]="isDisabled"
+          [placeholder]="placeholder | translate"
+        />
+      </ng-template>
+    </span>
+    <small *ngIf="props.description" [id]="field.id + '-help'">
+      {{ props.description }}
+    </small>
+  </div>
+  

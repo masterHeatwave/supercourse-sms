@@ -1,0 +1,204 @@
+::ng-deep .p-treeselect-panel {
+  min-width: 100% !important;
+}
+
+::ng-deep .p-tree .p-tree-container .p-treenode .p-treenode-content {
+  padding: 0.5rem;
+}
+
+::ng-deep .p-tree .p-tree-container .p-treenode .p-treenode-label {
+  font-size: 0.9rem;
+}
+
+::ng-deep .p-treeselect-panel .p-tree .p-treenode .p-treenode-content .p-checkbox {
+  margin-right: 0.5rem;
+}
+
+::ng-deep .p-treeselect-panel .p-tree .p-treenode .p-treenode-content .p-treenode-icon {
+  margin-right: 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* ========== FIXED: Only target tree select wrapper and its tree ========== */
+
+/* Remove blue background from the wrapper itself */
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper {
+  background: #ffffff !important; /* Force white background */
+}
+
+/* Remove all blue from tree nodes inside the wrapper - be specific */
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content {
+  background: transparent !important;
+  color: #495057 !important;
+}
+
+/* Remove focus states - only for tree select content */
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content.p-focus {
+  background: transparent !important;
+  color: #495057 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content:focus {
+  background: transparent !important;
+  color: #495057 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Remove highlight/selection blue */
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content.p-highlight {
+  background: #e9ecef !important; /* Light gray instead of blue */
+  color: #495057 !important; /* Dark text */
+}
+
+/* Hover state */
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content:hover {
+  background: #f8f9fa !important; /* Light gray on hover */
+  color: #495057 !important;
+}
+
+/* Remove focus from interactive elements within tree select */
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content .p-tree-toggler.p-focus,
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content .p-tree-toggler:focus {
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content .p-checkbox .p-checkbox-box.p-focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Remove ripple effects within tree select */
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content .p-ripple {
+  background: transparent !important;
+}
+
+/* Remove focus from TreeSelect input */
+::ng-deep .p-treeselect:not(.p-disabled).p-focus {
+  box-shadow: none !important;
+  border-color: #ced4da !important;
+}
+
+/* ========== Safe nuclear option - only for tree select ========== */
+/* Add this if the blue persists in tree select */
+
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper,
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree,
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode,
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content {
+  background: transparent !important;
+}
+
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content * {
+  background: transparent !important;
+  color: #495057 !important;
+}
+
+/* Force remove any blue backgrounds only in tree select */
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper [class*="p-focus"],
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper [class*="p-highlight"],
+::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper [class*="p-ripple"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* ========== Rest of your existing styles ========== */
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+.text-green-500 {
+  color: #22c55e !important;
+}
+
+.text-400 {
+  color: #9ca3af !important;
+}
+
+.bg-primary-50 {
+  background-color: #eff6ff !important;
+}
+
+.border-primary-200 {
+  border-color: #bfdbfe !important;
+}
+
+.text-primary-600 {
+  color: #2563eb !important;
+}
+
+.text-primary-700 {
+  color: #1d4ed8 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  ::ng-deep .p-dialog {
+    width: 95% !important;
+    max-width: 95% !important;
+    margin: 1rem auto;
+  }
+  
+  ::ng-deep .p-treeselect-panel {
+    width: 100% !important;
+    left: 0 !important;
+  }
+}
+
+/* Animation for dialog */
+::ng-deep .p-dialog-mask.p-component-overlay {
+  animation: p-dialog-fadein 0.15s linear;
+}
+
+::ng-deep .p-dialog {
+  animation: p-dialog-scale 0.15s linear;
+}
+
+@keyframes p-dialog-fadein {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes p-dialog-scale {
+  from { 
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to { 
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Custom scrollbar for tree select */
+::ng-deep .p-treeselect-panel .p-tree-container {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+::ng-deep .p-treeselect-panel .p-tree-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+::ng-deep .p-treeselect-panel .p-tree-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+::ng-deep .p-treeselect-panel .p-tree-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::ng-deep .p-treeselect-panel .p-tree-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

@@ -1,0 +1,32 @@
+<div class="answer">
+  <app-loading [isLoading]="isLoading"></app-loading>
+
+  <app-image-selector
+    (onBusy)="handleImageSelectorBusy($event)"
+    (onErrorMessage)="handleErrorMessage($event)"
+    (onImageURLChanged)="handleImageURLChanged($event)"
+    [imageURL]="imageURL"
+  ></app-image-selector>
+
+  <label class="separator">|</label>
+  <input
+    type="text"
+    placeholder="Insert up to 7 words."
+    [(ngModel)]="answerText"
+    cdkDragHandle
+    [cdkDragHandleDisabled]="true"
+    (input)="onInputChange($event)"
+  />
+  <!-- ^ (ngModelChange)="onInputChange($event)" -->
+  <i
+    class="pi pi-trash"
+    style="font-size: 1.5rem; margin-left: 10px"
+    (click)="onDeleteClick()"
+  ></i>
+
+  <app-warning-dialog
+    [warningMessage]="warningMessage"
+    [isDialogVisible]="isWarningDialogVisible"
+    (onClose)="isWarningDialogVisible = false"
+  />
+</div>

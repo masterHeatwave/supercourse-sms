@@ -1,0 +1,44 @@
+<div class="full-width-image flex justify-content-between align-items-end px-4 py-6" style="
+    width: 100%;
+    height: 500px;
+    background-image: url('assets/images/class-background.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  ">
+    <div class="flex flex-column gap-2 text-white font-bold" style="text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);">
+        <div class="text-6xl">{{ taxi?.name || 'Loading...' }}</div>
+        <div class="text-3xl">{{ taxi?.subject || 'Loading...' }}</div>
+    </div>
+    <div>
+        <app-outline-button [borderColor]="'var(--primary-color)'" [backgroundColor]="'white'">
+            Go to upcoming session
+        </app-outline-button>
+    </div>
+</div>
+
+<div class="flex flex-column p-4">
+    <p-tabView>
+        <p-tabPanel header="Overview">
+            <div *ngIf="loading" class="flex justify-content-center p-4">
+                <p-progressSpinner></p-progressSpinner>
+            </div>
+            <app-overview *ngIf="!loading && overviewInfo" [overviewInfo]="overviewInfo" [classId]="classId"></app-overview>
+        </p-tabPanel>
+        <p-tabPanel header="Students">
+            <div *ngIf="loadingStudents" class="flex justify-content-center p-4">
+                <p-progressSpinner></p-progressSpinner>
+            </div>
+            <app-classes-students *ngIf="!loadingStudents" [studentsData]="students"></app-classes-students>
+        </p-tabPanel>
+        <p-tabPanel header="Attendance">
+            <app-attendance></app-attendance>
+        </p-tabPanel>
+        <p-tabPanel header="Sessions">
+            <div *ngIf="loadingSessions" class="flex justify-content-center p-4">
+                <p-progressSpinner></p-progressSpinner>
+            </div>
+            <app-sessions *ngIf="!loadingSessions" [sessionsData]="sessions"></app-sessions>
+        </p-tabPanel>
+    </p-tabView>
+</div>

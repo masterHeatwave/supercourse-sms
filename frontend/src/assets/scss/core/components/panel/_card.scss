@@ -1,0 +1,52 @@
+.p-card {
+  color: $panelContentTextColor;
+  box-shadow: none;
+  border-radius: 1rem;
+
+  .p-card-header {
+    img {
+      width: 100%;
+    }
+  }
+
+  .p-card-body {
+    padding: $cardBodyPadding;
+  }
+
+  .p-card-title {
+    font-size: $cardTitleFontSize;
+    font-weight: $cardTitleFontWeight;
+    margin-bottom: $inlineSpacing;
+    color: #000;
+    font-weight: bold;
+  }
+
+  .p-card-subtitle {
+    font-weight: $cardSubTitleFontWeight;
+    margin-bottom: $inlineSpacing;
+    color: $cardSubTitleColor;
+  }
+
+  .p-card-content {
+    padding: $cardContentPadding;
+    color: #000;
+  }
+
+  .p-card-footer {
+    padding: $cardFooterPadding;
+  }
+}
+
+.p-home-card {
+  max-height: 500px;
+
+  .p-home-chart {
+    height: 350px;
+  }
+
+  @media (max-width: 768px) {
+    .p-home-chart {
+      height: 100%;
+    }
+  }
+}

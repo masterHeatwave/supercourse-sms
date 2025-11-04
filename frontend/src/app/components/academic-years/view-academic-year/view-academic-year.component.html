@@ -1,0 +1,128 @@
+<div class="view-academic-year-container">
+  <!-- Title -->
+  <div class="flex justify-content-between align-items-center mb-4">
+    <h2 class="text-2xl font-semibold text-900 m-0">{{ academicYear.name }}</h2>
+    <div class="flex gap-2">
+      <app-outline-button
+        [borderColor]="'var(--primary-color)'"
+        [textColor]="'var(--primary-color)'"
+        [hoverBackgroundColor]="'var(--primary-color)'"
+        [hoverTextColor]="'white'"
+        (click)="edit()">
+        Edit
+      </app-outline-button>
+      <app-outline-button
+        [borderColor]="'#dc3545'"
+        [textColor]="'#dc3545'"
+        [hoverBackgroundColor]="'#dc3545'"
+        [hoverTextColor]="'white'"
+        (click)="delete()">
+        Delete
+      </app-outline-button>
+    </div>
+  </div>
+
+  <!-- Dates + Notes section (transparent) -->
+  <div class="mb-5">
+    <div class="flex flex-column gap-4">
+      <div class="flex align-items-center gap-3">
+        <div class="flex flex-column">
+          <span class="text-600 text-sm text-900 font-semibold label-cell">
+            <i class="pi pi-calendar"></i>
+            Start date:
+          </span>
+          <span class="text-primary text-xl font-semibold date-value">{{ formatDate(academicYear.start_date || '') }}</span>
+        </div>
+        <i class="pi pi-arrow-right text-2xl text-400"></i>
+        <div class="flex flex-column">
+          <span class="text-600 text-sm text-900 font-semibold label-cell">
+            <i class="pi pi-calendar"></i>
+            End date:
+          </span>
+          <span class="text-pink-400 text-xl font-semibold date-value">{{ formatDate(academicYear.end_date || '') }}</span>
+        </div>
+      </div>
+
+      <div class="flex flex-column">
+        <span class="text-black text-sm font-semibold text-900 mb-2">Notes:</span>
+        <div class="notes-box">
+          {{ academicYear.notes || '-' }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Academic Periods Section -->
+  <div class="periods-section">
+    <div class="flex justify-content-between align-items-center mb-3">
+      <h3 class="text-xl font-semibold text-900 m-0">Academic Periods</h3>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state p-4 text-center">
+      <i class="pi pi-spin pi-spinner text-2xl text-primary mb-3"></i>
+      <p class="text-600">{{ 'academic_years.view.loading' | translate }}</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="error-state p-4 text-center">
+      <i class="pi pi-exclamation-triangle text-2xl text-orange-500 mb-3"></i>
+      <p class="text-600 mb-3">{{ 'academic_years.view.load_error' | translate }}</p>
+      <app-outline-button
+        [borderColor]="'var(--primary-color)'"
+        [textColor]="'var(--primary-color)'"
+        [hoverBackgroundColor]="'var(--primary-color)'"
+        [hoverTextColor]="'white'"
+        (click)="onRetry()">
+        {{ 'common.retry' | translate }}
+      </app-outline-button>
+    </div>
+
+    <!-- Periods Table -->
+    <div *ngIf="!loading && !error">
+      <div *ngIf="periods.length > 0; else noPeriods">
+        <p-card>
+          <app-primary-table
+            [data]="periods"
+            [columns]="periodsTableColumns"
+            [totalRecords]="periods.length"
+            [showActions]="false"
+            (editRow)="onEditPeriod($event)"
+            (deleteRow)="onDeletePeriod($event)"
+            (viewRow)="onViewPeriod($event)"
+            [dataKey]="'id'">
+          </app-primary-table>
+        </p-card>
+      </div>
+
+      <ng-template #noPeriods>
+        <p-card>
+          <div class="empty-state p-4 text-center">
+            <i class="pi pi-calendar text-4xl text-400 mb-3"></i>
+            <h4 class="text-900 mb-2">{{ 'academic_years.view.no_periods' | translate }}</h4>
+            <p class="text-600 mb-4">{{ 'academic_years.view.no_periods_desc' | translate }}</p>
+            <app-outline-button
+              [borderColor]="'var(--primary-color)'"
+              [textColor]="'var(--primary-color)'"
+              [hoverBackgroundColor]="'var(--primary-color)'"
+              [hoverTextColor]="'white'">
+              {{ 'academic_years.view.add_first_period' | translate }}
+            </app-outline-button>
+          </div>
+        </p-card>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Done button below academic periods -->
+  <div class="flex justify-content-end mt-4">
+    <app-outline-button
+      [borderColor]="'var(--primary-color)'"
+      [textColor]="'var(--primary-color)'"
+      [hoverBackgroundColor]="'var(--primary-color)'"
+      [hoverTextColor]="'white'"
+      (click)="close()">
+      Done
+    </app-outline-button>
+  </div>
+</div> 

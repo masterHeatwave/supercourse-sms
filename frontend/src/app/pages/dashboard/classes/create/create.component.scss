@@ -1,0 +1,25 @@
+.create-class-container {
+  width: 100%;
+
+  .card {
+    background: var(--surface-card);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 2rem;
+  }
+
+  .field {
+    margin-bottom: 1.5rem;
+  }
+
+  label {
+    font-weight: 500;
+  }
+
+  .p-inputtext,
+  .p-dropdown,
+  .p-inputnumber {
+    width: 100%;
+  }
+}

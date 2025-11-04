@@ -1,0 +1,75 @@
+.block-answer {
+  display: flex;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  min-width: 90% !important;
+  min-height: 100px;
+  background-color: white;
+  width: 90%;
+  @media (max-width: 385px) {
+    width: 280px !important;
+  }
+}
+
+.div-editable {
+  padding-top: 0px !important;
+  border: none;
+  outline: none; //1px solid rgb(0, 0, 0, 0);
+  padding: 0px;
+  min-width: 92% !important;
+  max-width: 95% !important;
+  min-height: 100px;
+  position: relative;
+  display: inline-block;
+  visibility: visible;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  top: 0px;
+  left: 10px;
+  user-select: text !important;
+  cursor: text !important;
+  @media (max-width: 660px) {
+    max-width: 90% !important;
+  }
+}
+
+.div-editable:empty::before {
+  content: 'Insert a text';
+  pointer-events: none;
+}
+
+.div-editable:focus::before {
+  content: '';
+}
+
+:host ::ng-deep {
+  .p-button {
+    margin-top: 7px;
+    margin-bottom: 7px;
+    font-size: 18px;
+    width: 132px;
+    height: 50px;
+    cursor: pointer;
+  }
+
+  .pi-image {
+    margin: 0 !important;
+    padding: 5 !important;
+    min-width: 30px !important;
+    min-height: 30px !important;
+  }
+
+  .pi-dialog {
+    padding: 0px !important;
+  }
+}
+
+.image-selector {
+  position: relative;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding-top: 4px;
+  padding-left: 7px;
+  margin: 0 !important;
+}

@@ -1,0 +1,10 @@
+<div class="container">
+  <label>Text</label>
+  <cloze-block-answer
+    (blocksChanged)="handleBlockChanged($event)"
+    (imageURLChanged)="handleImageURLChange($event)"
+    [document]="document || ''"
+    [strings]="answers || []"
+    [imageURL]="imageURL || ''"
+  ></cloze-block-answer>
+</div>

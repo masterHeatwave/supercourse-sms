@@ -1,0 +1,13 @@
+#!/bin/sh
+# npx eslint --max-warnings=1000 src || {
+#   echo "ESLint check failed. Commit aborted."
+#   exit 1
+# }
+
+# npx jest || {
+#   echo "Tests failed. Commit aborted."
+#   exit 1
+# }
+
+npx prettier --write .
+git update-index --again

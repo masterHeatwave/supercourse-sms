@@ -1,0 +1,35 @@
+<p-sidebar [(visible)]="visible" [showCloseIcon]="true" [baseZIndex]="10000" styleClass="mobile-sidebar" (onHide)="onHide()">
+  <ng-container *ngTemplateOutlet="sidebarContent"></ng-container>
+</p-sidebar>
+
+<!-- Desktop Sidebar (always visible on desktop) -->
+<div class="desktop-sidebar">
+  <ng-container *ngTemplateOutlet="sidebarContent"></ng-container>
+</div>
+
+<!-- Shared sidebar content template -->
+<ng-template #sidebarContent>
+  <div class="sidebar-header">
+    <p-image src="assets/images/logo.svg" alt="Image" width="200px" />
+  </div>
+  <div class="sidebar-content">
+    <!-- Branch Selector dropdown -->
+    <app-branch-selector></app-branch-selector>
+    
+    <ul class="sidebar-menu">
+      @for (item of menuItems; track item.label) {
+      <li class="sidebar-menu-item">
+        <a
+          [routerLink]="item.routerLink"
+          class="sidebar-menu-link"
+          [class.active]="isMenuItemActive(item)"
+          (click)="isMobile && onHide()"
+        >
+          <i class="{{ item.icon }}"></i>
+          <span>{{ (item.label || '') | translate }}</span>
+        </a>
+      </li>
+      }
+    </ul>
+  </div>
+</ng-template>

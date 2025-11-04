@@ -1,0 +1,30 @@
+//@import "../../../../styles/variables";
+
+:host ::ng-deep {
+  .p-dialog-header {
+    color: var(--primary-color);
+  }
+  .warningDiv {
+    padding-top: 5px;
+    width: 100%;
+    .p-button {
+      width: 110px !important;
+      height: 35px !important;
+      margin-left: 12px !important;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+  }
+}
+
+.warningDiv {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.warningMessageLabel {
+  font-size: larger !important;
+  margin-bottom: 20px !important;
+}

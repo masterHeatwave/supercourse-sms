@@ -1,0 +1,18 @@
+/* Disabled input/select look darker, similar to placeholder */
+.disabled-appearance,
+input:disabled,
+textarea:disabled {
+  color: #6b7280; /* gray-500 */
+  background-color: #f3f4f6; /* gray-100 */
+  border-color: #d1d5db; /* gray-300 */
+  cursor: not-allowed;
+}
+
+/* For PrimeNG input text class */
+.p-inputtext.disabled-appearance,
+.p-inputtext:disabled {
+  color: #6b7280;
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+

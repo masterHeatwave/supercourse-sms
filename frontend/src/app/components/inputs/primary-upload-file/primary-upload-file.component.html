@@ -1,0 +1,35 @@
+<div>
+    <p-toast></p-toast>
+    <p-fileUpload
+      mode="advanced"
+      [multiple]="true"
+      accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      [maxFileSize]="10000000"
+      chooseLabel="Upload documents"
+      chooseIcon="pi pi-cloud-upload"
+      styleClass="custom-upload-button"
+      [showUploadButton]="false"
+      [showCancelButton]="false"
+      (onSelect)="onFileSelect($event)"
+      [disabled]="uploading"
+    ></p-fileUpload>
+    
+    <div *ngIf="uploading" class="my-2 flex align-items-center">
+      <i class="pi pi-spin pi-spinner mr-2"></i>
+      <span>Uploading documents...</span>
+    </div>
+    
+    <div class="uploaded-files mt-3">
+      <div *ngFor="let file of uploadedFiles; let i = index" class="uploaded-file flex align-items-center p-2 mb-2 surface-100 border-round">
+        <span class="flex-grow-1">{{ file.name }}</span>
+        <button 
+          pButton 
+          type="button" 
+          icon="pi pi-times" 
+          class="p-button-rounded p-button-text p-button-sm" 
+          (click)="removeFile(i)"
+          [disabled]="uploading"
+        ></button>
+      </div>
+    </div>
+  </div>

@@ -1,0 +1,95 @@
+<div
+  cdkDropList
+  [cdkDropListData]="groups"
+  (cdkDropListDropped)="dropGroup($event)"
+  class="group-list"
+>
+  <div
+    *ngFor="let group of groups; let groupIndex = index"
+    cdkDrag
+    class="group"
+  >
+    <div style="display: flex; align-items: center">
+      <div
+        style="display: flex; align-items: center"
+        *ngIf="editIndex !== groupIndex; else editTemplate"
+      >
+        <h3 style="padding-bottom: 1px; margin: 0" cdkDragHandle>
+          <i class="pi pi-ellipsis-v"></i>{{ group.groupName }}
+        </h3>
+        <i
+          class="pi pi-pen-to-square"
+          style="
+            font-size: 1.5rem;
+            margin-left: 10px;
+            padding-bottom: 2px;
+            cursor: pointer;
+          "
+          (click)="enableEdit(groupIndex)"
+        ></i>
+      </div>
+      <ng-template #editTemplate>
+        <input
+          class="input-class"
+          [(ngModel)]="groups[groupIndex].groupName"
+          (blur)="saveEdit()"
+          (keydown.enter)="saveEdit()"
+          (mousedown)="$event.stopPropagation()"
+        />
+      </ng-template>
+      <app-image-selector
+        (onErrorMessage)="handleErrorMessage($event)"
+        (onImageURLChanged)="handleImageURLChanged($event, groupIndex)"
+        [imageURL]="group.imageURL"
+        style="padding-top: 2px"
+      ></app-image-selector>
+      <i
+        class="pi pi-trash"
+        style="font-size: 1.5rem; margin-left: 10px; padding-bottom: 2px"
+        (click)="removeGroup(groupIndex)"
+      ></i>
+    </div>
+    <div
+      cdkDropList
+      [cdkDropListData]="group.items"
+      (cdkDropListDropped)="dropQuestion($event, groupIndex)"
+      class="question-list"
+    >
+      <div
+        *ngFor="let item of group.items; let itemIndex = index"
+        cdkDrag
+        class="question"
+      >
+        <label
+          cdkDragHandle
+          style="cursor: grab; padding-left: 0px; padding-right: 0px"
+          ><span
+            style="margin-top: -10px !important; margin-left: -10px !important"
+            ><i class="pi pi-ellipsis-v"></i></span
+          >{{ itemIndex + 1 }}.</label
+        >
+        <group-sort-answer
+          [answerText]="item.answer.answerText"
+          [imageURL]="item.answer.imageURL"
+          [answerNumber]="item.answer.answerNumber"
+          [TTSText]="item.answer.TTSText"
+          (deleteClicked)="handleDeleteClicked(groupIndex, itemIndex)"
+          (imageURLChanged)="
+            handleImageURLChange($event, groupIndex, itemIndex)
+          "
+          (inputChanged)="handleInputChange($event, groupIndex, itemIndex)"
+          (TTSTextChanged)="handleTTSTextChange($event, groupIndex, itemIndex)"
+        ></group-sort-answer>
+      </div>
+    </div>
+    <span class="add-item-span" (click)="addQuestion(groupIndex)"
+      >+Add Item</span
+    >
+  </div>
+</div>
+<span class="add-group-span" (click)="addGroup()">+Add Group</span>
+<app-warning-dialog
+  [warningMessage]="warningMessage"
+  [isDialogVisible]="isWarningDialogVisible"
+  (onClose)="isWarningDialogVisible = false"
+/>

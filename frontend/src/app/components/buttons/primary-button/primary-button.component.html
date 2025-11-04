@@ -1,0 +1,25 @@
+<a class="no-underline" [routerLink]="href ? href : null" [queryParams]="query">
+  <p-button
+    [disabled]="disabled"
+    [loading]="loading"
+    [icon]="icon"
+    [iconPos]="iconPos"
+    [type]="type"
+    [styleClass]="styleClass + ' flex justify-content-center'"
+    [size]="size === 'medium' ? 'large' : size"
+    [style]="{
+      width: fullWidth ? '100%' : 'auto',
+      background: clear ? 'transparent' : '',
+      border: clear ? '1px solid #00395E !important' : 'none',
+      color: clear ? '#333' : ''
+    }"
+  >
+    @if (loading) {
+      <span class="mr-2">{{ 'loading.label' | translate }}</span>
+    } @else {
+      <div class="mr-2">
+        <ng-content></ng-content>
+      </div>
+    }
+  </p-button>
+</a>

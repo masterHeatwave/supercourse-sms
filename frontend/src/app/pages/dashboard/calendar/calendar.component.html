@@ -1,0 +1,153 @@
+<div class="calendar-page">
+  <div class="toolbar">
+    <p-dropdown [options]="academicPeriods" [(ngModel)]="selectedPeriod" optionValue="value" styleClass="period-dropdown">
+      <ng-template pTemplate="selectedItem" let-sel>
+        {{ sel?.label | translate }}
+      </ng-template>
+      <ng-template pTemplate="item" let-item>
+        {{ item.label | translate }}
+      </ng-template>
+    </p-dropdown>
+
+    <div class="toolbar-actions">
+      <p-button [label]="'calendar.toolbar.download' | translate" icon="pi pi-download" styleClass="p-button-text" (onClick)="onDownloadCalendar()"></p-button>
+      <p-button [label]="'calendar.toolbar.my_events' | translate" icon="pi pi-list" styleClass="p-button-text" (onClick)="goToMyEvents()"></p-button>
+      <p-button [label]="'calendar.toolbar.new_event' | translate" icon="pi pi-plus" (onClick)="openCreateDialog()"></p-button>
+    </div>
+  </div>
+
+  <div class="calendar-wrapper">
+    <full-calendar [options]="calendarOptions"></full-calendar>
+  </div>
+
+  <!-- Create Event Dialog -->
+  <p-dialog [(visible)]="showCreateDialog" [modal]="true" [draggable]="false" [header]="('calendar.toolbar.new_event' | translate)" styleClass="event-dialog" [breakpoints]="{'960px': '75vw', '640px': '95vw'}" [style]="{width: '650px'}">
+    <form [formGroup]="createForm" class="event-form">
+      <div class="grid">
+        <div class="col-12 md:col-6">
+          <label class="field-label">{{ 'calendar.form.title' | translate }} *</label>
+          <input pInputText formControlName="title" [placeholder]="'calendar.placeholders.title' | translate" />
+        </div>
+        <div class="col-12 md:col-6">
+          <label class="field-label">{{ 'calendar.form.location' | translate }}</label>
+          <input pInputText formControlName="location" [placeholder]="'calendar.placeholders.location' | translate" />
+        </div>
+        <div class="col-12">
+          <label class="field-label">{{ 'calendar.form.description' | translate }} *</label>
+          <textarea pInputTextarea rows="4" formControlName="description" [placeholder]="'calendar.placeholders.description' | translate"></textarea>
+        </div>
+        <div class="col-12 md:col-6">
+          <label class="field-label">{{ 'calendar.form.start_date' | translate }} *</label>
+          <p-calendar formControlName="start" [showTime]="true" hourFormat="24" [appendTo]="'body'" [iconDisplay]="'input'"></p-calendar>
+        </div>
+        <div class="col-12 md:col-6">
+          <label class="field-label">{{ 'calendar.form.end_date' | translate }} *</label>
+          <p-calendar formControlName="end" [showTime]="true" hourFormat="24" [appendTo]="'body'" [iconDisplay]="'input'"></p-calendar>
+        </div>
+        <div class="col-12 md:col-6 flex align-items-center gap-2">
+          <p-checkbox formControlName="allDay" inputId="allday"></p-checkbox>
+          <label for="allday">{{ 'calendar.form.all_day' | translate }}</label>
+        </div>
+        <div class="col-12 md:col-6">
+          <label class="field-label">{{ 'calendar.form.select_invitees' | translate }} *</label>
+          <p-dropdown [options]="inviteeOptions" optionValue="value" formControlName="invitees">
+            <ng-template pTemplate="selectedItem" let-sel>
+              {{ sel?.label | translate }}
+            </ng-template>
+            <ng-template pTemplate="item" let-item>
+              {{ item.label | translate }}
+            </ng-template>
+          </p-dropdown>
+        </div>
+        <div class="col-12">
+          <label class="field-label">{{ 'calendar.form.color' | translate }} *</label>
+          <p-dropdown [options]="categories" optionValue="id" formControlName="category" [styleClass]="'w-full'">
+            <ng-template pTemplate="item" let-item>
+              <div class="flex align-items-center gap-2">
+                <span class="color-dot" [style.background]="item.color"></span>
+                <span>{{ item.name | translate }}</span>
+              </div>
+            </ng-template>
+            <ng-template pTemplate="selectedItem" let-sel>
+              <div class="flex align-items-center gap-2">
+                <span class="color-dot" [style.background]="sel?.color"></span>
+                <span>{{ sel?.name | translate }}</span>
+              </div>
+            </ng-template>
+          </p-dropdown>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <p-button [label]="'common.save' | translate" icon="pi pi-check" (onClick)="saveEvent()"></p-button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <!-- Event Details Dialog -->
+  <p-dialog [(visible)]="showDetailsDialog" [modal]="true" [draggable]="false" [closable]="true" [dismissableMask]="true" [style]="{width: '650px'}" [header]="selectedEvent?.title || ('calendar.details.event' | translate)">
+    <div class="details-grid" *ngIf="selectedEvent">
+      <div class="details-row">
+        <i class="pi pi-map-marker details-icon"></i>
+        <div>
+          <div class="label">{{ 'calendar.details.location' | translate }}</div>
+          <div class="value">{{ selectedEvent?.extendedProps?.location || '—' }}</div>
+        </div>
+      </div>
+      <div class="details-row">
+        <i class="pi pi-align-left details-icon"></i>
+        <div>
+          <div class="label">{{ 'calendar.details.description' | translate }}</div>
+          <div class="value">{{ selectedEvent?.extendedProps?.description || '—' }}</div>
+        </div>
+      </div>
+      <div class="details-row">
+        <i class="pi pi-clock details-icon"></i>
+        <div>
+          <div class="label">{{ 'calendar.details.start' | translate }}</div>
+          <div class="value">{{ selectedEvent?.start | date:'dd-MM-yyyy HH:mm' }}</div>
+        </div>
+      </div>
+      <div class="details-row">
+        <i class="pi pi-clock details-icon"></i>
+        <div>
+          <div class="label">{{ 'calendar.details.end' | translate }}</div>
+          <div class="value">{{ selectedEvent?.end | date:'dd-MM-yyyy HH:mm' }}</div>
+        </div>
+      </div>
+      <div class="details-row">
+        <i class="pi pi-users details-icon"></i>
+        <div>
+          <div class="label">{{ 'calendar.details.invitees' | translate }}</div>
+          <div class="value">{{ selectedEvent?.extendedProps?.invitees || '—' }}</div>
+        </div>
+      </div>
+      <div class="details-row">
+        <i class="pi pi-palette details-icon"></i>
+        <div>
+          <div class="label">{{ 'calendar.details.color' | translate }}</div>
+          <div class="value flex align-items-center gap-2"><span class="color-dot" [style.background]="selectedEvent?.backgroundColor"></span> {{ (selectedEvent?.extendedProps?.category || ('calendar.categories.generic' | translate)) }}</div>
+        </div>
+      </div>
+      <div class="details-row">
+        <i class="pi pi-user details-icon"></i>
+        <div>
+          <div class="label">{{ 'calendar.details.creator' | translate }}</div>
+          <div class="value">{{ selectedEvent?.extendedProps?.creator || '—' }}</div>
+        </div>
+      </div>
+      <div class="details-row">
+        <i class="pi pi-calendar details-icon"></i>
+        <div>
+          <div class="label">{{ 'calendar.details.created_updated' | translate }}</div>
+          <div class="value">{{ selectedEvent?.extendedProps?.updatedAt | date:'dd/MM/yyyy' }}</div>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <p-button [label]="'calendar.details.edit' | translate" icon="pi pi-pencil" styleClass="p-button-outlined"></p-button>
+        <p-button [label]="'calendar.details.delete' | translate" icon="pi pi-trash" styleClass="p-button-danger p-button-outlined"></p-button>
+      </div>
+    </div>
+  </p-dialog>
+</div>

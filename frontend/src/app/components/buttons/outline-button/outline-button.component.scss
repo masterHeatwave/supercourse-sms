@@ -1,0 +1,21 @@
+:host ::ng-deep {
+  .p-button.outline-btn {
+    transition: all 0.3s ease !important;
+    
+    &:enabled:hover,
+    &:enabled:focus {
+      background-color: var(--hover-bg-color, var(--primary-color)) !important;
+      color: var(--hover-text-color, white) !important;
+      border-color: var(--hover-bg-color, var(--primary-color));
+      
+      .p-button-icon,
+      .p-button-label {
+        color: var(--hover-text-color, white);
+      }
+    }
+    
+    .p-button-label {
+      font-weight: 500;
+    }
+  }
+} 

@@ -1,0 +1,288 @@
+<p-toast></p-toast>
+
+<!-- Document Upload Dialog -->
+<p-dialog [(visible)]="uploadDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
+  [header]="('staff.single.upload_dialog.title' | translate)" [style]="{width: '450px'}" [closeOnEscape]="true" [dismissableMask]="true">
+
+  <div class="flex flex-column">
+    <div class="mb-3">
+      <label for="fileUpload" class="font-medium mb-2 block">{{ 'staff.single.upload_dialog.select_file' | translate }}</label>
+      <input type="file" id="fileUpload" (change)="onFileSelect($event)" [disabled]="isUploading" />
+    </div>
+
+    <div *ngIf="uploadFileName" class="mb-3">
+      <p>{{ 'staff.single.upload_dialog.selected_file' | translate }} <strong>{{ uploadFileName }}</strong></p>
+    </div>
+
+    <div *ngIf="isUploading" class="mb-3">
+      <p-progressBar [value]="uploadProgress"></p-progressBar>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton class="p-button-text" [label]="'common.cancel' | translate" (click)="uploadDialogVisible = false" [disabled]="isUploading">
+    </button>
+    <button pButton [label]="'staff.single.upload_dialog.upload' | translate" icon="pi pi-upload" (click)="uploadDocument()"
+      [disabled]="!uploadFile || isUploading">
+    </button>
+  </ng-template>
+</p-dialog>
+
+<ng-container *ngIf="staffData$ | async as staffData">
+  <!-- Add a wrapper div with consistent padding -->
+  <div class="px-5 px-md-5">
+    <div class="pt-6 flex flex-column md:flex-row gap-4">
+      <div class="flex justify-content-center md:justify-content-start">
+        <!-- Avatar with image if available -->
+        <p-avatar *ngIf="staffData.avatar && staffData.avatarUrl" [image]="staffData.avatarUrl" size="xlarge"
+          shape="circle" [style]="{ width: '14rem', height: '14rem', 'min-width': '14rem' }"
+          class="mb-3 md:mb-0"></p-avatar>
+
+        <!-- Avatar with initials if no image -->
+        <p-avatar *ngIf="!staffData.avatar || !staffData.avatarUrl" [label]="staffData.avatarInitials" size="xlarge"
+          shape="circle" [style]="{ 
+            width: '14rem', 
+            height: '14rem', 
+            'min-width': '14rem', 
+            'background-color': staffData.avatarColor, 
+            color: '#ffffff',
+            'font-size': '4rem'
+          }" class="mb-3 md:mb-0"></p-avatar>
+      </div>
+      <div class="flex flex-1 flex-column gap-2">
+        <div class="flex flex-column md:flex-row justify-content-between gap-2">
+          <div>
+            <div class="text-primary font-bold text-3xl text-center md:text-left">
+              <span class="flex align-items-center justify-content-center md:justify-content-start">
+                {{ staffData.firstname }} {{ staffData.lastname }}
+                <i *ngIf="staffData.is_active" class="pi pi-check-circle text-primary ml-2" style="font-size: 1.2rem"
+                  [pTooltip]="'staff.single.active_user' | translate" tooltipPosition="right"></i>
+              </span>
+            </div>
+            <div class="text-center md:text-left flex gap-2 align-items-center">
+              <span class="text-black text-xl font-medium">{{ staffData.role_title }}</span>
+              <span class="text-500">({{ staffData.roles[0]?.title }})</span>
+            </div>
+          </div>
+          <div class="flex justify-content-center md:justify-content-end gap-2 mt-2 md:mt-0">
+            <app-confirm-dialog [customHeaderKey]="'confirm-dialog.staff.delete_header'"
+              [customMessageKey]="'confirm-dialog.staff.delete_message'" (onConfirmAction)="onDeleteConfirm($event)">
+            </app-confirm-dialog>
+            <app-outline-button [borderColor]="'var(--primary-color)'" [textColor]="'var(--primary-color)'"
+              [hoverBackgroundColor]="'var(--primary-color)'" [hoverTextColor]="'white'" (click)="onEdit()">
+              <i class="pi pi-pencil mr-2"></i>{{ 'common.edit' | translate }}
+            </app-outline-button>
+          </div>
+        </div>
+        <!-- Social Icons -->
+        <div class="flex justify-content-center md:justify-content-end mt-2">
+          <a class="cursor-pointer p-1 no-underline" *ngIf="staffData.phone" [href]="'tel:' + staffData.phone">
+            <div class="border-circle bg-primary flex align-items-center justify-content-center"
+              style="width: 36px; height: 36px">
+              <i class="pi pi-phone text-white mt-1"></i>
+            </div>
+          </a>
+          <a class="cursor-pointer p-1 no-underline" *ngIf="staffData.email" [href]="'mailto:' + staffData.email">
+            <div class="border-circle bg-primary flex align-items-center justify-content-center"
+              style="width: 36px; height: 36px">
+              <i class="pi pi-at text-white mt-1"></i>
+            </div>
+          </a>
+          <a class="cursor-pointer p-1 no-underline" *ngIf="staffData.facebook_link" [href]="staffData.facebook_link"
+            target="_blank">
+            <div class="border-circle bg-blue-700 flex align-items-center justify-content-center"
+              style="width: 36px; height: 36px">
+              <i class="pi pi-facebook text-white mt-1"></i>
+            </div>
+          </a>
+          <a class="cursor-pointer p-1 no-underline" *ngIf="staffData.twitter_link" [href]="staffData.twitter_link"
+            target="_blank">
+            <div class="border-circle bg-primary flex align-items-center justify-content-center"
+              style="width: 36px; height: 36px">
+              <i class="pi pi-twitter text-white mt-1"></i>
+            </div>
+          </a>
+          <a class="cursor-pointer p-1 no-underline" *ngIf="staffData.linkedin_link" [href]="staffData.linkedin_link"
+            target="_blank">
+            <div class="border-circle bg-blue-700 flex align-items-center justify-content-center"
+              style="width: 36px; height: 36px">
+              <i class="pi pi-linkedin text-white mt-1"></i>
+            </div>
+          </a>
+        </div>
+        <div class="grid custom-card m-0 mt-4">
+          <!-- Column 1 -->
+          <div class="col-12 sm:col-6 md:col-3">
+            <div class="mb-3">
+               <span class="font-bold text-primary mb-1">{{ 'staff.single.status.label' | translate }}</span>
+              <span class="ml-2" [class.text-green-500]="staffData.is_active"
+                [class.text-red-500]="!staffData.is_active">
+                {{ staffData.is_active ? ('table.active' | translate) : ('table.inactive' | translate) }}
+              </span>
+            </div>
+            <div class="mb-3">
+              <span class="font-bold text-primary mb-1">{{ 'staff.single.code' | translate }}</span>
+              <span class="ml-2">{{ staffData.code }}</span>
+            </div>
+          </div>
+
+          <!-- Column 2 -->
+          <div class="col-12 sm:col-6 md:col-3">
+            <div class="mb-3">
+              <span class="font-bold text-primary mb-1">{{ 'staff.single.email' | translate }}</span>
+              <span class="ml-2">{{ staffData.email || ('staff.single.not_provided' | translate) }}</span>
+            </div>
+            <div class="mb-3">
+              <span class="font-bold text-primary mb-1">{{ 'staff.single.phone' | translate }}</span>
+              <span class="ml-2">{{ staffData.phone || ('staff.single.not_provided' | translate) }}</span>
+            </div>
+            <div class="mb-3">
+              <span class="font-bold text-primary mb-1">{{ 'staff.single.mobile' | translate }}</span>
+              <span class="ml-2">{{ staffData.mobile || ('staff.single.not_provided' | translate) }}</span>
+            </div>
+          </div>
+
+          <!-- Column 3 -->
+          <div class="col-12 sm:col-6 md:col-3">
+            <div class="mb-3">
+              <span class="font-bold text-primary mb-1">{{ 'staff.single.address' | translate }}</span>
+              <span class="ml-2">{{ staffData?.city }}</span>
+            </div>
+            <div class="mb-3">
+              <span class="ml-4">{{ staffData?.address }}</span>
+            </div>
+            <div class="mb-3">
+              <span class="ml-4">{{ staffData?.country }}</span>
+            </div>
+          </div>
+
+          <!-- Column 4 -->
+          <div class="col-12 sm:col-6 md:col-3">
+            <div class="mb-3">
+              <span class="font-bold text-primary mb-1">{{ 'staff.single.registered_by' | translate }}</span>
+              <span class="ml-2"></span>
+            </div>
+            <div class="mb-3">
+              <span class="font-bold text-primary mb-1">{{ 'staff.single.registered' | translate }}</span>
+            </div>
+            <div class="mb-3">
+              <span class="font-bold text-primary mb-1">{{ 'staff.single.last_updated' | translate }}</span>
+              <span class="ml-2">{{ staffData.updatedAt | date:'mediumDate' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Academic Overview Section -->
+    <div *ngIf="(academicOverview$ | async) as overview">
+      <app-staff-overview [overview]="overview"></app-staff-overview>
+    </div>
+
+
+    <!-- Documents Section -->
+    <div class="custom-card mt-4 px-4 py-5">
+      <div class="flex flex-column">
+        <div class="flex justify-content-between align-items-center mb-3">
+          <h2 class="text-2xl font-bold text-primary m-0">{{ 'staff.single.documents' | translate }}</h2>
+        </div>
+
+        <div class="grid">
+          <ng-container *ngIf="documents && documents.length > 0; else noDocuments">
+            <div class="col-12 sm:col-6 md:col-4 lg:col-3 mb-3" *ngFor="let doc of documents">
+              <div
+                class="document-card cursor-pointer p-3 border-round hover:surface-200 transition-colors transition-duration-200"
+                (click)="downloadDocument(doc)">
+                <div class="flex align-items-center">
+                  <i class="pi mr-2 text-xl" [ngClass]="{
+                      'pi-file-pdf text-red-600': doc.type.includes('pdf'),
+                      'pi-file-word text-blue-600': doc.type.includes('word'),
+                      'pi-image text-purple-600': doc.type.includes('image')
+                    }"></i>
+                  <span
+                    class="text-primary text-lg flex-grow-1 hover:text-primary-600 transition-colors transition-duration-200">{{
+                    doc.name }}</span>
+                  <i class="pi pi-download text-primary"></i>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+          <ng-template #noDocuments>
+            <div class="col-12 text-center text-500 py-5">
+              <i class="pi pi-file text-500 text-4xl mb-3"></i>
+              <p>{{ 'staff.single.no_documents' | translate }}</p>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active in Branches -->
+    <div class="custom-card mt-4 px-4 py-5 flex align-items-center gap-4" *ngIf="staffData?.branches?.length">
+      <div class="flex flex-row align-items-center mb-2">
+        <h2 class="text-2xl font-bold text-primary m-0">{{ 'staff.single.active_in_branches' | translate }}</h2>
+      </div>
+      <div class="flex flex-wrap align-items-center gap-3">
+        <ng-container *ngFor="let branch of staffData.branches">
+          <span class="text-black font-medium" style="display: flex; align-items: center;">
+            <span class="dot"
+              style="height:8px;width:8px;background:#009688;border-radius:50%;display:inline-block;margin-right:8px;"></span>
+            {{ branch.name }}
+          </span>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- Permissions Section -->
+    <div class="custom-card mt-4 px-4 py-5" *ngIf="staffData.roles?.[0]?.permissions?.length">
+      <div class="flex flex-row justify-content-between align-items-center mb-4">
+        <h2 class="text-2xl font-bold text-primary m-0">{{ 'staff.single.permissions' | translate }}</h2>
+          <button type="button" pButton [label]="allExpanded ? ('staff.single.collapse_all' | translate) : ('staff.single.expand_all' | translate)"
+          [icon]="allExpanded ? 'pi pi-minus' : 'pi pi-plus'" class="p-button-text" (click)="toggleAllSubgroups()">
+        </button>
+      </div>
+
+      <div class="grid permission-grid">
+        <div class="col-12 md:col-3 relative pl-6"
+          *ngFor="let permission of staffData.roles[0].permissions; let i = index">
+          <h3 class="font-bold text-lg mb-3">{{ permission.name }}</h3>
+          <div class="flex flex-column gap-2">
+            <!-- For permissions with subgroups like myStaff -->
+            <ng-container *ngIf="permission.subgroups && permission.subgroups.length > 0">
+              <div class="flex flex-column mb-3" *ngFor="let subgroup of permission.subgroups">
+                <div class="flex align-items-center mb-2 permission-header cursor-pointer"
+                  (click)="toggleSubgroup(subgroup)">
+                  <i class="pi text-primary mr-2" [class.pi-chevron-down]="subgroup.isExpanded"
+                    [class.pi-chevron-right]="!subgroup.isExpanded"></i>
+                  <span class="font-medium">{{ subgroup.name }}</span>
+                </div>
+                <div class="ml-4" *ngIf="subgroup.isExpanded" [@expandCollapse]>
+                  <div class="flex align-items-center mb-1" *ngFor="let action of subgroup.actions">
+                    <span class="inline-block w-1rem h-1rem border-circle bg-primary mr-2"></span>
+                    <span>{{ action }}</span>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+
+            <!-- For permissions without subgroups -->
+            <ng-container *ngIf="!permission.subgroups || permission.subgroups.length === 0">
+              <div class="flex align-items-center" *ngFor="let action of permission.actions">
+                <span class="inline-block w-1rem h-1rem border-circle bg-primary mr-2"></span>
+                <span>{{ action }}</span>
+              </div>
+            </ng-container>
+          </div>
+          <!-- Add divider except for the last column -->
+          <div class="permission-divider" *ngIf="i < staffData.roles[0].permissions.length - 1"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes Section -->
+    <div class="custom-card mt-4 mb-4 px-4 py-5" *ngIf="staffData.notes">
+       <h2 class="text-2xl font-bold text-primary mb-3">{{ 'staff.single.notes' | translate }}</h2>
+      <p class="m-0 line-height-3">{{ staffData.notes }}</p>
+    </div>
+  </div>
+</ng-container>

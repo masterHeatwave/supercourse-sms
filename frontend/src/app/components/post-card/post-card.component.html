@@ -1,0 +1,36 @@
+<div class="custom-card">
+  <div class="card-image">
+    <img [src]="postImage" alt="Post image" />
+  </div>
+  <div class="card-content p-3">
+    <div class="flex justify-content-between mb-2">
+      <div class="text-xl font-bold">{{ title }}</div>
+    </div>
+    <div class="card-text mb-3">
+      {{ content }}
+    </div>
+    <!-- Tags -->
+    <div class="flex flex-wrap gap-2 mb-3" *ngIf="tags.length > 0">
+      <span *ngFor="let tag of tags" class="p-1 border-round bg-primary text-white text-sm">
+        {{ tag }}
+      </span>
+    </div>
+    <div class="flex pt-4 justify-content-between mt-auto">
+      <div>
+        <div class="flex align-items-center">
+          <span class="border-circle inline-block mr-2 bg-primary" style="width: 20px; height: 20px"></span>
+          <span class="text-sm" *ngIf="author">{{ author }}</span>
+        </div>
+      </div>
+      <div class="flex gap-2 align-items-center">
+        <div class="text-black font-bold">
+          <i class="pi pi-clock mr-2"></i>
+          <span>{{ date }}</span>
+        </div>
+        <div>
+          <i class="pi pi-heart-fill text-red-500" style="width: 20px; height: 20px"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

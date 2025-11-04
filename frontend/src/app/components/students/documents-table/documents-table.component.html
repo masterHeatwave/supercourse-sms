@@ -1,0 +1,8 @@
+<div class="documents-table-container">
+  <p-toast></p-toast>
+  <app-document-list 
+    [documents]="processedDocuments" 
+    [showDeleteButton]="false"
+    (download)="onDownloadDocument($event)">
+  </app-document-list>
+</div>

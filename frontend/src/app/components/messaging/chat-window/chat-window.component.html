@@ -1,0 +1,299 @@
+<!-- chat-window.component.html - Clean and Fixed -->
+<div class="h-full flex flex-column surface-card">
+  <!-- Header -->
+  <div class="flex align-items-center justify-content-between p-3 border-bottom-1 surface-border bg-white">
+    <div class="flex align-items-center gap-3">
+      <!-- Avatar with Online Status -->
+      <div class="relative">
+        <p-avatar 
+          [label]="getAvatarInitials()" 
+          shape="circle" 
+          size="large"
+          [style]="{'background-color': getAvatarColor(), 'color': 'white'}">
+        </p-avatar>
+        
+        <div *ngIf="isOnline()" 
+             class="absolute border-circle bg-green-500"
+             style="width: 12px; height: 12px; top: -2px; right: -2px; border: 2px solid white;">
+        </div>
+      </div>
+      
+      <!-- Chat Info -->
+      <div class="flex flex-column">
+        <div class="flex align-items-center gap-2">
+          <span class="font-semibold text-900">{{ getChatName() }}</span>
+          <p-tag 
+            [value]="getUserRole()"
+            [severity]="getRoleSeverity()"
+            styleClass="text-xs">
+          </p-tag>
+        </div>
+        <span class="text-sm text-500">{{ getChatSubtitle() }}</span>
+        <div *ngIf="typingFrom && !isSentUser(typingFrom)" class="text-xs text-primary">
+          {{ getTypingUserName() }} is typing...
+        </div>
+      </div>
+    </div>
+    
+    <p-button 
+      icon="pi pi-ellipsis-v" 
+      [rounded]="true" 
+      [text]="true"
+      pTooltip="More options"
+      tooltipPosition="bottom"
+      (onClick)="showChatMenu($event, contextMenu)">
+    </p-button>
+  </div>
+
+  <!-- Messages Container -->
+  <p-scrollPanel class="flex-1" [style]="{height: 'calc(100vh - 200px)'}" #scrollPanel>
+    <div class="flex flex-column gap-3 p-3">
+      <div *ngFor="let msg of messages; trackBy: trackByMessageId"
+           class="flex"
+           [class.justify-content-end]="isSent(msg)"
+           [class.justify-content-start]="!isSent(msg)">
+        
+        <div class="flex flex-column max-w-30rem message-wrapper"
+             [class.align-items-end]="isSent(msg)"
+             [class.align-items-start]="!isSent(msg)">
+          
+          <!-- Sender Name (group chats only) -->
+          <div *ngIf="!isSent(msg) && chat.type === 'group'" 
+               class="text-xs text-600 mb-1 ml-2">
+            {{ getSenderName(msg) }}
+          </div>
+          
+          <!-- Reply Context -->
+          <div *ngIf="msg.replyToMessage" 
+               class="reply-context mb-2"
+               [class.ml-2]="!isSent(msg)"
+               [class.mr-2]="isSent(msg)">
+            <p-card styleClass="reply-card p-2">
+              <div class="flex align-items-start gap-2">
+                <i class="pi pi-reply text-xs text-500 mt-1"></i>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-medium text-600 mb-1">
+                    {{ getReplyToSenderName(msg.replyToMessage) }}
+                  </div>
+                  <div class="text-xs text-500 line-height-3 overflow-hidden text-overflow-ellipsis" 
+                       style="max-height: 2.4em;">
+                    {{ msg.replyToMessage.content }}
+                  </div>
+                </div>
+              </div>
+            </p-card>
+          </div>
+          
+          <!-- Message Bubble -->
+          <div class="relative">
+            <!-- Message Actions (hover) -->
+            <div class="message-actions absolute"
+                 [class.message-actions-sent]="isSent(msg)"
+                 [class.message-actions-received]="!isSent(msg)">
+              
+              <p-button
+                icon="pi pi-reply"
+                [rounded]="true"
+                [text]="true"
+                size="small"
+                class="action-btn"
+                pTooltip="Reply"
+                tooltipPosition="top"
+                (onClick)="startReply(msg)"
+                [style]="{'width': '28px', 'height': '28px'}">
+              </p-button>
+              
+              <p-button
+                *ngIf="isSent(msg)"
+                icon="pi pi-trash"
+                [rounded]="true"
+                [text]="true"
+                size="small"
+                class="action-btn"
+                pTooltip="Delete"
+                tooltipPosition="top"
+                (onClick)="deleteMessage(msg)"
+                [style]="{'width': '28px', 'height': '28px'}">
+              </p-button>
+            </div>
+            
+            <!-- Message Content -->
+            <div class="p-3 border-round-2xl shadow-1 max-w-full word-wrap message-bubble"
+                 [class.bg-primary]="isSent(msg)"
+                 [class.text-white]="isSent(msg)"
+                 [class.surface-100]="!isSent(msg)"
+                 [class.text-900]="!isSent(msg)"
+                 (contextmenu)="showMessageContextMenu($event, msg, messageContextMenu)">
+              
+              <!-- Text Content -->
+              <div *ngIf="msg.content" class="text-sm line-height-3"
+                   [class.mb-2]="msg.attachments?.length">
+                {{ msg.content }}
+              </div>
+              
+              <!-- Attachments -->
+              <div *ngIf="msg.attachments?.length" class="attachment-list">
+                <div *ngFor="let attachment of msg.attachments" 
+                     class="attachment-item flex align-items-center gap-2 p-2 border-round-lg mb-1 last:mb-0 cursor-pointer"
+                     [class.surface-0]="isSent(msg)"
+                     [class.surface-200]="!isSent(msg)"
+                     (click)="downloadAttachment(attachment)">
+                  
+                  <i [class]="AttachmentUtils.getFileIcon(attachment.originalName)" 
+                     class="text-lg flex-shrink-0"
+                     [class.text-primary]="isSent(msg)"
+                     [class.text-600]="!isSent(msg)"></i>
+                  
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium overflow-hidden text-overflow-ellipsis"
+                         [class.text-primary]="isSent(msg)"
+                         [class.text-900]="!isSent(msg)">
+                      {{ attachment.originalName }}
+                    </div>
+                    <div class="text-xs"
+                         [class.text-primary-300]="isSent(msg)"
+                         [class.text-500]="!isSent(msg)">
+                      {{ AttachmentUtils.formatFileSize(attachment.fileSize) }}
+                      <span *ngIf="attachment.status !== 'ready'" class="ml-1">
+                        • {{ attachment.status }}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <i *ngIf="attachment.status === 'uploading'"
+                     class="pi pi-spin pi-spinner text-sm flex-shrink-0"
+                     [class.text-primary-300]="isSent(msg)"
+                     [class.text-500]="!isSent(msg)"></i>
+                  
+                  <i *ngIf="attachment.status === 'error'"
+                     class="pi pi-exclamation-triangle text-sm flex-shrink-0 text-red-500"></i>
+
+                  <i *ngIf="attachment.status === 'ready' && attachment.virusScanStatus === 'clean'"
+                     class="pi pi-download text-sm flex-shrink-0"
+                     [class.text-primary-300]="isSent(msg)"
+                     [class.text-500]="!isSent(msg)"></i>
+                </div>
+              </div>
+              
+              <!-- Message Time and Status -->
+              <div class="flex align-items-center justify-content-end gap-1 mt-2"
+                   [class.text-white]="isSent(msg)"
+                   [class.text-500]="!isSent(msg)">
+                <span class="text-xs">{{ msg.timestamp | date:'shortTime' }}</span>
+                
+                <div *ngIf="isSent(msg)" class="flex align-items-center ml-1">
+                  <i *ngIf="getMessageStatus(msg) === 'sent'" 
+                     class="pi pi-check text-xs"
+                     [class.text-white]="isSent(msg)">
+                  </i>
+                  
+                  <ng-container *ngIf="getMessageStatus(msg) === 'delivered'">
+                    <i class="pi pi-check text-xs"
+                       [class.text-white]="isSent(msg)">
+                    </i>
+                    <i class="pi pi-check text-xs -ml-1"
+                       [class.text-white]="isSent(msg)">
+                    </i>
+                  </ng-container>
+                  
+                  <ng-container *ngIf="getMessageStatus(msg) === 'read'">
+                    <i class="pi pi-check text-xs text-blue-400"></i>
+                    <i class="pi pi-check text-xs text-blue-400 -ml-1"></i>
+                  </ng-container>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Typing Indicator -->
+      <div *ngIf="typingFrom && !isSentUser(typingFrom)" 
+           class="flex justify-content-start">
+        <div class="flex align-items-center gap-2 p-2 surface-100 border-round-2xl">
+          <div class="flex gap-1">
+            <div class="typing-dot bg-600"></div>
+            <div class="typing-dot bg-600"></div>
+            <div class="typing-dot bg-600"></div>
+          </div>
+          <span class="text-xs text-600">{{ getTypingUserName() }} is typing</span>
+        </div>
+      </div>
+
+      <!-- Upload Progress Indicator -->
+      <div *ngIf="isUploadingAttachments" 
+           class="flex justify-content-start">
+        <div class="flex align-items-center gap-2 p-3 surface-100 border-round-2xl">
+          <i class="pi pi-spin pi-spinner text-primary"></i>
+          <div class="flex flex-column">
+            <span class="text-sm font-medium text-primary">Uploading files...</span>
+            <span class="text-xs text-500">{{ uploadingFiles.length }} file(s) selected</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </p-scrollPanel>
+
+  <!-- Reply Context Bar -->
+  <div *ngIf="replyingToMessage" 
+       class="reply-bar flex align-items-center justify-content-between p-2 bg-blue-50 border-top-1 border-blue-200">
+    <div class="flex align-items-center gap-2">
+      <i class="pi pi-reply text-blue-600"></i>
+      <div class="flex flex-column">
+        <span class="text-xs font-medium text-blue-800">
+          Replying to {{ getReplyToSenderName(replyingToMessage) }}
+        </span>
+        <span class="text-xs text-blue-600 overflow-hidden text-overflow-ellipsis" 
+              style="max-width: 300px; white-space: nowrap;">
+          {{ replyingToMessage.content }}
+        </span>
+      </div>
+      <p-button 
+      icon="pi pi-times" 
+      [rounded]="true" 
+      [text]="true" 
+      size="small"
+      pTooltip="Cancel reply"
+      (onClick)="cancelReply()">
+    </p-button>
+    </div>
+  </div>
+
+  <!-- Message Input Area -->
+  <div class="message-input p-3 border-top-1 surface-border bg-white">
+    <div class="flex align-items-end gap-2">
+      <!-- Attachment Button -->
+      <app-attachment
+        [chatId]="chat._id"
+        [disabled]="isUploadingAttachments"
+        (uploadStart)="onUploadStart($event)"
+        (uploadComplete)="onUploadComplete($event)"
+        (uploadError)="onUploadError($event)">
+      </app-attachment>
+      
+      <!-- Message Input - PLAIN TEXTAREA -->
+      <div class="flex-1">
+        <textarea 
+          class="w-full p-inputtext"
+          rows="1"
+          [(ngModel)]="newMessage"
+          (input)="onMessageInput()" 
+          (keydown)="handleKeydown($event)"
+          placeholder="Type your message...">
+        </textarea>
+      </div>
+      
+      <!-- Send Button -->
+      <p-button 
+        icon="pi pi-send" 
+        [rounded]="true"
+        [disabled]="!newMessage || !newMessage.trim()"
+        (onClick)="sendMessage()">
+      </p-button>
+    </div>
+  </div>
+</div>
+
+<!-- Context Menus -->
+<p-menu #contextMenu [model]="menuItems" [popup]="true"></p-menu>
+<p-menu #messageContextMenu [model]="messageMenuItems" [popup]="true"></p-menu>

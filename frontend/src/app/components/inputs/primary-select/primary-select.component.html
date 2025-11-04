@@ -1,0 +1,43 @@
+<div class="primary-select flex flex-column gap-2 {{ styleClass }}">
+  <!-- Label and compact error summary -->
+  <label *ngIf="!isSearch && label" [for]="field.id" class="{{ labelClass }}">
+    {{ label | translate }} <span *ngIf="required" class="text-red-500">*</span>
+  </label>
+  <span class="relative" *ngIf="!multiple">
+    <select
+      [id]="field.id!"
+      [formControl]="formControl"
+      [formlyAttributes]="field"
+      class="w-full p-inputtext ng-invalid ng-dirty primary-select__control"
+      [class.ng-invalid]="showError"
+      [class.ng-dirty]="showError"
+      [class.disabled-appearance]="disabled || formControl.disabled"
+      pInputText
+    >
+      <option *ngIf="placeholder" [ngValue]="null">
+        {{ placeholder | translate }}
+      </option>
+      <option *ngFor="let option of selectOptions" [ngValue]="option.value">
+        {{ option.label | translate }}
+      </option>
+    </select>
+    <i class="pi pi-chevron-down primary-select__chevron"></i>
+  </span>
+  <span class="relative" *ngIf="multiple">
+    <p-multiSelect
+      [id]="field.id!"
+      [formControl]="formControl"
+      [options]="selectOptions"
+      [formlyAttributes]="field"
+      class="w-full p-inputtext ng-invalid ng-dirty primary-select__control"
+      [class.ng-invalid]="showError"
+      [class.ng-dirty]="showError"
+      [class.disabled-appearance]="disabled || formControl.disabled"
+      pInputText
+    />
+    <i class="pi pi-chevron-down primary-select__chevron"></i>
+  </span>
+  @if (props.description) {
+  <small [id]="field.id + '-help'">{{ props.description }}</small>
+  }
+</div>

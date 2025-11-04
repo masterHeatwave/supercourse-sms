@@ -1,0 +1,19 @@
+<div class="search-container" [style.min-width]="minWidth">
+  <input 
+    type="text" 
+    [placeholder]="placeholder"
+    [value]="value"
+    [disabled]="disabled"
+    (input)="onInputChange($event)"
+    (focus)="onFocus()"
+    (blur)="onBlur()"
+    class="search-input"
+    [style.border-bottom-color]="isFocused ? borderColor : '#6c757d'"
+  />
+  <i class="pi pi-search search-icon"></i>
+  <i 
+    *ngIf="value && !disabled" 
+    class="pi pi-times clear-icon cursor-pointer"
+    (click)="clearSearch()">
+  </i>
+</div>

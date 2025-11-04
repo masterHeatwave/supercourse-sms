@@ -1,0 +1,248 @@
+/* messaging-container.component.css - REFACTORED */
+
+.messaging-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+
+  &.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.messaging-panel {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 90%;
+  max-width: 1200px;
+  height: 100vh;
+  background: white;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -2px 0 20px rgba(0, 0, 0, 0.2);
+  transition: right 0.3s ease;
+
+  &.visible {
+    right: 0;
+  }
+}
+
+/* ==================== HEADER ==================== */
+.messaging-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: white;
+  min-height: 70px; /* ✅ Fixed height for consistent alignment */
+  gap: 2rem; /* ✅ Space between sections */
+}
+
+/* Left Section: Title + Close Button */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0; /* ✅ Don't shrink */
+
+  h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #111827;
+    white-space: nowrap;
+  }
+
+  .close-btn {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+/* Center Section: Tabs */
+.p-tabmenu-nav {
+  gap: 1.5rem !important; /* Space between Chats and Files */
+}
+
+/* Make the tabs bigger */
+.p-menuitem-link {
+  padding: 0.75rem 2rem !important; /* Make tabs bigger */
+  font-size: 1.1rem !important; /* Bigger text */
+}
+
+/* Icon size */
+.p-menuitem-icon {
+  font-size: 1.2rem !important;
+  margin-right: 0.5rem !important;
+  color: #6b7280 !important;
+}
+
+.p-menuitem-text {
+  color: #585f6b !important;
+  font-weight: 500 !important;
+}
+
+/* Hover effect */
+.p-menuitem-link:hover {
+  background: #e5e7eb !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Active tab */
+.p-tabmenuitem.p-highlight .p-menuitem-link {
+  /* background: #3b82f6 !important;
+  border-color: #3b82f6 !important; */
+  color: white !important;
+}
+
+.p-tabmenuitem.p-highlight .p-menuitem-icon,
+::ng-deep .header-center .p-tabmenuitem.p-highlight .p-menuitem-text {
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.header-center .p-tabmenu-ink-bar {
+  display: none !important;
+}
+
+
+/* Right Section: Notifications */
+.header-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0; /* ✅ Don't shrink */
+}
+
+/* ==================== BODY ==================== */
+.messaging-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.chat-list-section {
+  width: 400px;
+  border-right: 1px solid #e5e7eb;
+  overflow-y: auto;
+  background: #f9fafb;
+}
+
+.chat-window-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ==================== NO CHAT SELECTED ==================== */
+.no-chat-selected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6b7280;
+  padding: 2rem;
+  text-align: center;
+
+  .icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  .title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #374151;
+  }
+
+  .subtitle {
+    color: #9ca3af;
+    font-size: 0.95rem;
+  }
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .messaging-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .messaging-header {
+    padding: 0.5rem 1rem;
+    min-height: auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .header-left {
+    justify-content: space-between;
+    width: 100%;
+    
+    h3 {
+      font-size: 1.25rem;
+    }
+  }
+
+  .header-center {
+    justify-content: flex-start;
+    
+    ::ng-deep .p-tabmenu .p-tabmenu-nav {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  .header-right {
+    justify-content: flex-end;
+  }
+
+  .chat-list-section {
+    width: 100%;
+    border-right: none;
+  }
+}
+
+/* ==================== ANIMATIONS ==================== */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.messaging-panel.visible {
+  animation: slideInRight 0.3s ease-out;
+}
+
+.messaging-overlay.visible {
+  animation: fadeIn 0.3s ease-out;
+}

@@ -1,0 +1,643 @@
+{
+  "login": {
+    "authcard": {
+      "welcome": "Καλωσήρθατε!",
+      "subtitle": "Συνδεθείτε για να συνεχίσετε",
+      "username": { "label": "Όνομα χρήστη" },
+      "password": { "label": "Κωδικός" },
+      "button": { "label": "Σύνδεση" },
+      "forgot-password": { "label": "Ξέχασα τον κωδικό μου" }
+    }
+  },
+  "confirm-dialog": {
+    "title": "Επιβεβαίωση",
+    "message": "Είστε σίγουροι;",
+    "staff": {
+      "delete_header": "Διαγραφή μέλους προσωπικού",
+      "delete_message": "Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το μέλος προσωπικού;"
+    },
+    "confirm": "Επιβεβαίωση",
+    "cancel": "Ακύρωση"
+  },
+  "loading": {
+    "label": "Περιμένετε..."
+  },
+  "pagination": {
+    "current_page_report_template": "Εμφάνιση {first} έως {last} από {totalRecords} εγγραφές"
+  },
+  "api_messages": {
+    "success_title": "Επιτυχία",
+    "error_title": "Σφάλμα"
+  },
+  "common": {
+    "clear": "Καθαρισμός",
+    "error_title": "Σφάλμα",
+    "success_title": "Επιτυχία",
+    "export": "Εξαγωγή",
+    "unknown": "Άγνωστο",
+    "back": "Πίσω",
+    "save": "Αποθήκευση",
+    "cancel": "Ακύρωση",
+    "edit": "Επεξεργασία",
+    "delete": "Διαγραφή",
+    "retry": "Επανάληψη",
+    "grid_view": "Προβολή πλέγματος",
+    "list_view": "Προβολή λίστας",
+    "view": "Προβολή",
+    "add": "Προσθήκη",
+    "update": "Ενημέρωση",
+    "create": "Δημιουργία",
+    "close": "Κλείσιμο"
+  },
+  "validation": {
+    "required": "Το πεδίο {{field}} είναι υποχρεωτικό",
+    "minlength": "Το πεδίο {{field}} πρέπει να έχει τουλάχιστον {{min}} χαρακτήρες"
+  },
+  "board": {
+    "title": "Πίνακας",
+    "create": {
+      "button": "Δημιουργία ανάρτησης",
+      "header": "Νέα ανάρτηση:",
+      "upload_image": "Μεταφόρτωση εικόνας",
+      "preview_alt": "Προεπισκόπηση ανάρτησης",
+      "fields": {
+        "title": "Τίτλος",
+        "content": "Περιεχόμενο"
+      },
+      "placeholders": {
+        "title": "Εισαγάγετε τον τίτλο της ανάρτησης",
+        "editor": "Γράψτε εδώ το περιεχόμενο της ανάρτησης...",
+        "select_datetime": "Επιλέξτε ημερομηνία και ώρα",
+        "sample_date": "Σεπ. 01, 2024"
+      },
+      "poll": { "add": "Προσθήκη νέας ψηφοφορίας" },
+      "recipients": {
+        "title": "Παραλήπτες:",
+        "all": "Όλοι",
+        "administrators": "Διαχειριστές",
+        "non_academic_users": "Μη ακαδημαϊκοί χρήστες",
+        "classes": "Τάξεις",
+        "teachers": "Καθηγητές",
+        "students": "Μαθητές",
+        "parents_guardians": "Γονείς & Κηδεμόνες"
+      },
+      "options": {
+        "title": "Επιλογές:",
+        "priority": "Προτεραιότητα ανάρτησης:",
+        "pin": "Καρφίτσωμα ανάρτησης:",
+        "publish": "Δημοσίευση ανάρτησης:",
+        "expiration": "Ημερομηνία λήξης:",
+        "allow_replies": "Να επιτρέπονται απαντήσεις",
+        "allow_reactions": "Να επιτρέπονται αντιδράσεις"
+      },
+      "priority": { "low": "Χαμηλή", "normal": "Κανονική", "high": "Υψηλή" },
+      "pin": { "yes": "Ναι", "no": "Όχι" },
+      "publish": { "now": "Τώρα", "later": "Αργότερα", "draft": "Αποθήκευση ως πρόχειρο" },
+      "actions": { "cancel": "Ακύρωση", "save": "Αποθήκευση" },
+      "messages": {
+        "image_uploaded": "Η εικόνα μεταφορτώθηκε με επιτυχία",
+        "feature_title": "Λειτουργία",
+        "poll_todo": "Η λειτουργία ψηφοφορίας θα υλοποιηθεί",
+        "created": "Η ανάρτηση δημιουργήθηκε με επιτυχία",
+        "create_failed": "Αποτυχία δημιουργίας ανάρτησης",
+        "validation_error": "Σφάλμα επικύρωσης",
+        "fill_required": "Συμπληρώστε όλα τα υποχρεωτικά πεδία"
+      }
+    },
+    "filters": {
+      "view": "Προβολή:",
+      "priority": "Προτεραιότητα:",
+      "date": "Ημερομηνία (από - έως):",
+      "from": "Από",
+      "to": "Έως",
+      "academic_period": "Ακαδημαϊκή περίοδος:",
+      "creator": "Δημιουργός",
+      "all_creators": "Όλοι οι δημιουργοί",
+      "administrator": "Διαχειριστής",
+      "teacher": "Καθηγητής"
+    },
+    "sort": {
+      "placeholder": "Ταξινόμηση κατά",
+      "by": { "date": "Ημερομηνία", "title": "Τίτλος", "author": "Συγγραφέας" }
+    },
+    "sections": {
+      "pinned": "Καρφιτσωμένες αναρτήσεις",
+      "other": "Άλλες αναρτήσεις"
+    },
+    "no_posts": "Δεν υπάρχουν διαθέσιμες αναρτήσεις",
+    "tooltips": { "edit_post": "Επεξεργασία ανάρτησης" },
+    "messages": {
+      "could_not_load": "Δεν ήταν δυνατή η φόρτωση αναρτήσεων",
+      "failed_to_fetch": "Αποτυχία λήψης αναρτήσεων",
+      "export_detail": "Η λειτουργία εξαγωγής θα υλοποιηθεί"
+    }
+  },
+  "calendar": {
+    "toolbar": {
+      "download": "Λήψη ημερολογίου",
+      "my_events": "Τα γεγονότα μου",
+      "new_event": "Νέο γεγονός"
+    },
+    "filters": {
+      "academic_period": "Ακαδημαϊκή περίοδος",
+      "period_a": "Περίοδος Α",
+      "period_b": "Περίοδος Β"
+    },
+    "form": {
+      "title": "Τίτλος",
+      "location": "Τοποθεσία",
+      "description": "Περιγραφή γεγονότος",
+      "start_date": "Ημερομηνία έναρξης",
+      "end_date": "Ημερομηνία λήξης",
+      "all_day": "Ολοήμερο",
+      "select_invitees": "Επιλογή προσκεκλημένων",
+      "color": "Χρώμα"
+    },
+    "placeholders": {
+      "title": "Τίτλος",
+      "location": "Τοποθεσία",
+      "description": "Περιγραφή"
+    },
+    "invitees": {
+      "all_students": "Όλοι οι μαθητές",
+      "all_staff": "Όλο το προσωπικό",
+      "all": "Όλοι"
+    },
+    "categories": {
+      "a": "Κατηγορία Α",
+      "b": "Κατηγορία Β",
+      "c": "Κατηγορία Γ",
+      "d": "Κατηγορία Δ",
+      "generic": "Κατηγορία"
+    },
+    "details": {
+      "event": "Γεγονός",
+      "location": "Τοποθεσία",
+      "description": "Περιγραφή",
+      "start": "Έναρξη",
+      "end": "Λήξη",
+      "invitees": "Προσκεκλημένοι",
+      "color": "Χρώμα",
+      "creator": "Δημιουργός γεγονότος",
+      "created_updated": "Ημερομηνία δημιουργίας / ενημέρωσης",
+      "edit": "Επεξεργασία",
+      "delete": "Διαγραφή"
+    }
+  },
+  "staff": {
+    "overview": {
+      "title": "Επισκόπηση",
+      "headers": {
+        "title": "Τίτλος",
+        "role": "Ρόλος",
+        "branches": "Παραρτήματα",
+        "classes": "Τάξεις",
+        "start_date": "Ημ/νία έναρξης",
+        "end_date": "Ημ/νία λήξης"
+      },
+      "empty": "Δεν υπάρχουν διαθέσιμα δεδομένα επισκόπησης"
+    },
+    "roles": {
+      "administrator": "Διαχειριστής",
+      "manager": "Υπεύθυνος",
+      "teacher": "Καθηγητής"
+    },
+    "single": {
+      "upload_dialog": {
+        "title": "Μεταφόρτωση εγγράφου",
+        "select_file": "Επιλογή αρχείου",
+        "selected_file": "Επιλεγμένο αρχείο:",
+        "upload": "Μεταφόρτωση"
+      },
+      "active_user": "Ενεργός χρήστης",
+      "status": { "label": "Κατάσταση:" },
+      "code": "Κωδικός:",
+      "email": "E-mail:",
+      "phone": "Τηλέφωνο:",
+      "mobile": "Κινητό:",
+      "address": "Διεύθυνση:",
+      "registered_by": "Καταχωρήθηκε από:",
+      "registered": "Ημερομηνία καταχώρησης:",
+      "last_updated": "Τελευταία ενημέρωση:",
+      "documents": "Έγγραφα",
+      "no_documents": "Δεν υπάρχουν διαθέσιμα έγγραφα",
+      "active_in_branches": "Ενεργός στα παραρτήματα",
+      "permissions": "Δικαιώματα",
+      "collapse_all": "Σύμπτυξη όλων",
+      "expand_all": "Ανάπτυξη όλων",
+      "notes": "Σημειώσεις:",
+      "not_provided": "Δεν έχει δοθεί",
+      "documents_download_started": "Η λήψη για {{name}} ξεκίνησε",
+      "documents_download_failed": "Αποτυχία λήψης του {{name}}",
+      "errors": {
+        "no_id": "Δεν δόθηκε ID προσωπικού",
+        "fetch_failed": "Αποτυχία ανάκτησης δεδομένων προσωπικού",
+        "download_failed": "Αποτυχία λήψης εγγράφου",
+        "select_file": "Παρακαλώ επιλέξτε ένα αρχείο για μεταφόρτωση",
+        "upload_failed": "Αποτυχία μεταφόρτωσης εγγράφου",
+        "delete_failed": "Αποτυχία διαγραφής μέλους προσωπικού"
+      },
+      "document_uploaded": "Το έγγραφο μεταφορτώθηκε με επιτυχία",
+      "document_uploaded_mock": "Το έγγραφο μεταφορτώθηκε με επιτυχία (mock)",
+      "deleted": "Το μέλος προσωπικού διαγράφηκε με επιτυχία"
+    },
+    "table": {
+      "code": "Κωδικός",
+      "status": "Κατάσταση",
+      "name": "Όνομα",
+      "role": "Ρόλος",
+      "no_role_assigned": "Δεν έχει ανατεθεί ρόλος",
+      "class": "Τάξη",
+      "address": "Διεύθυνση",
+      "city": "Πόλη",
+      "zip": "ΤΚ",
+      "phone": "Τηλέφωνο",
+      "email": "Email",
+      "branches": "Παραρτήματα",
+      "no_branches_assigned": "Δεν έχουν ανατεθεί παραρτήματα"
+    }
+  },
+  "table": {
+    "actions": "Ενέργειες",
+    "active": "Ενεργό",
+    "inactive": "Ανενεργό"
+  },
+
+  "academic_years": {
+    "form": {
+      "header_create": "Δημιουργία νέου ακαδημαϊκού έτους",
+      "header_edit": "Επεξεργασία ακαδημαϊκού έτους",
+      "title": "Τίτλος",
+      "start_date": "Ημερομηνία έναρξης:",
+      "end_date": "Ημερομηνία λήξης:",
+      "set_periods": "Ορισμός ακαδημαϊκών περιόδων",
+      "period": "Περίοδος",
+      "delete_period": "Διαγραφή περιόδου",
+      "period_title": "Τίτλος:",
+      "terms": "Όροι",
+      "no_terms": "Δεν έχουν προστεθεί ακόμη όροι.",
+      "term": "Όρος",
+      "add_term": "Προσθήκη όρου",
+      "add_another_period": "Προσθήκη ακόμη μίας περιόδου",
+      "notes": "Σημειώσεις",
+      "placeholders": {
+        "title_example": "π.χ. 2023-2024",
+        "select_start_date": "Επιλέξτε ημερομηνία έναρξης",
+        "select_end_date": "Επιλέξτε ημερομηνία λήξης",
+        "period_title_example": "π.χ. Χειμερινή περίοδος, Θερινή περίοδος",
+        "sample_start": "Σεπ. 01, 2023",
+        "sample_end": "Ιουν. 30, 2024",
+        "term_title": "π.χ. Όρος",
+        "notes": "Σημειώσεις"
+      }
+    }
+  },
+  "classrooms": {
+    "title": "Αίθουσες",
+    "search_placeholder": "Αναζήτηση στις αίθουσες",
+    "add": "Προσθήκη αίθουσας",
+    "loading": "Φόρτωση αιθουσών...",
+    "load_error": "Αδυναμία φόρτωσης αιθουσών",
+    "empty": {
+      "title": "Δεν βρέθηκαν αίθουσες",
+      "subtitle": "Ξεκινήστε προσθέτοντας την πρώτη σας αίθουσα."
+    },
+    "create_header": "Δημιουργία νέας αίθουσας",
+    "edit_header": "Επεξεργασία αίθουσας",
+    "unknown_branch": "Άγνωστο παράρτημα",
+    "table": {
+      "name": "Όνομα",
+      "branch": "Παράρτημα",
+      "capacity": "Χωρητικότητα",
+      "location": "Τοποθεσία",
+      "equipment": "Εξοπλισμός",
+      "availability": "Διαθεσιμότητα"
+    }
+  },
+  "classes": {
+    "table": {
+      "code": "Κωδικός",
+      "status": "Κατάσταση",
+      "current": "Τρέχουσα",
+      "archived": "Αρχειοθετημένη",
+      "name": "Όνομα",
+      "level": "Επίπεδο",
+      "subject": "Μάθημα",
+      "teacher": "Καθηγητής",
+      "students": "Μαθητές",
+      "sessions_per_week": "Συνεδρίες/Εβδομάδα",
+      "total_duration": "Συνολική διάρκεια",
+      "days": "Ημέρες"
+    }
+  },
+  "dashboard": {
+    "primary_branch": "Κύριο παράρτημα",
+    "secondary_branch": "Δευτερεύον παράρτημα",
+    "week": "Εβδομάδα",
+    "branch_contact_details": "Στοιχεία επικοινωνίας παραρτήματος",
+    "website": "Ιστότοπος:",
+    "administrator": "Διαχειριστής:",
+    "manager": "Υπεύθυνος:",
+    "address": "Διεύθυνση:",
+    "branch_email": "E-mail παραρτήματος:",
+    "administrator_email": "E-mail διαχειριστή:",
+    "manager_email": "E-mail υπευθύνου:",
+    "phone": "Τηλέφωνο:",
+    "code": "Κωδικός:",
+    "vat": "ΑΦΜ:",
+    "absences": "Απουσίες",
+    "no_absences": "Δεν υπάρχουν καταγεγραμμένες απουσίες",
+    "my_finances": "Τα οικονομικά μου",
+    "board": "Πίνακας",
+    "no_posts": "Δεν υπάρχουν διαθέσιμες αναρτήσεις",
+    "latest_activity": "Πρόσφατη δραστηριότητα",
+    "no_recent_activity": "Δεν υπάρχει πρόσφατη δραστηριότητα",
+    "students": "Μαθητές",
+    "stats": {
+      "enrolled_students": "Εγγεγραμμένοι μαθητές",
+      "staff_members": "Μέλη προσωπικού",
+      "classes": "Τάξεις",
+      "ongoing_sessions": "Συνεδρίες σε εξέλιξη"
+    }
+  },
+  "sessions": {
+    "list": {
+      "view_timetable": "Προβολή προγράμματος",
+      "ended": "Ολοκληρώθηκε",
+      "no_teachers": "Χωρίς καθηγητές",
+      "no_subject": "Χωρίς μάθημα",
+      "no_class": "Χωρίς τάξη",
+      "no_classroom": "Χωρίς αίθουσα",
+      "no_location": "Χωρίς τοποθεσία",
+      "mode": { "recurring": "Επαναλαμβανόμενο", "one_time": "Μοναδικό" },
+      "na": "—"
+    },
+    "table": {
+      "code": "Κωδικός",
+      "status": "Κατάσταση",
+      "title": "Τίτλος",
+      "class": "Τάξη",
+      "teachers": "Καθηγητές",
+      "students": "Μαθητές",
+      "mode": "Τύπος",
+      "classroom": "Αίθουσα",
+      "location": "Τοποθεσία",
+      "absences": "Απουσίες",
+      "scheduled_timeframe": "Προγραμματισμένο διάστημα",
+      "start_time": "Ώρα έναρξης",
+      "time_left": "Χρόνος που απομένει"
+    },
+    "timetable": {
+      "title": "Πρόγραμμα",
+      "prev_week": "Προηγούμενη εβδομάδα",
+      "next_week": "Επόμενη εβδομάδα",
+      "today": "Σήμερα",
+      "filter_sessions": "Φιλτράρισμα συνεδριών",
+      "filters": {
+        "all_sessions": "Όλες οι συνεδρίες",
+        "my_sessions": "Οι συνεδρίες μου",
+        "scheduled": "Προγραμματισμένη",
+        "in_progress": "Σε εξέλιξη",
+        "completed": "Ολοκληρωμένη"
+      },
+      "back_to_sessions": "Πίσω στις συνεδρίες",
+      "time": "Ώρα",
+      "events_suffix": "συμβάν(τα)",
+      "all_day": "Ολοήμερο",
+      "no_sessions": "Δεν έχουν προγραμματιστεί συνεδρίες",
+      "no_sessions_desc": "Δεν υπάρχουν συνεδρίες για αυτή την εβδομάδα.",
+      "go_to_sessions": "Μετάβαση στις συνεδρίες"
+    },
+    "errors": {
+      "id_not_found": "Δεν βρέθηκε το αναγνωριστικό συνεδρίας",
+      "load_failed": "Αποτυχία φόρτωσης λεπτομερειών συνεδρίας",
+      "delete_failed": "Αποτυχία διαγραφής συνεδρίας",
+      "invalid_date": "Μη έγκυρη ημερομηνία",
+      "invalid_time": "Μη έγκυρη ώρα"
+    },
+    "messages": { "deleted": "Η συνεδρία διαγράφηκε με επιτυχία" },
+    "confirm_delete": "Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή τη συνεδρία; Η ενέργεια δεν μπορεί να αναιρεθεί.",
+    "attendance": { "present": "Παρόν", "absent": "Απών" },
+    "status": { "upcoming": "Επερχόμενη", "completed": "Ολοκληρωμένη", "in_progress": "Σε εξέλιξη" },
+    "chat": { "title": "Συνομιλία", "opening": "Άνοιγμα συνομιλίας συνεδρίας..." },
+    "download": { "title": "Λήψη", "downloading": "Λήψη αρχείων συνεδρίας..." },
+    "launch": { "title": "Εκκίνηση διαδικτυακά", "launching": "Εκκίνηση διαδικτυακής συνεδρίας..." },
+    "create": {
+      "header_edit": "Επεξεργασία συνεδρίας",
+      "header_create": "Δημιουργία νέας συνεδρίας",
+      "sessions_header": "Συνεδρίες:",
+      "fill_fake": "Συμπλήρωση με ψεύτικα δεδομένα",
+      "class": "Τάξη",
+      "select_class": "Επιλέξτε τάξη",
+      "academic_period": "Ακαδημαϊκή περίοδος",
+      "select_academic_period": "Επιλέξτε ακαδημαϊκή περίοδο",
+      "academic_subperiod": "Υποπερίοδος",
+      "select_academic_subperiod": "Επιλέξτε υποπερίοδο",
+      "start_time": "Ώρα έναρξης",
+      "select_start_time": "Επιλέξτε ώρα έναρξης",
+      "end_time": "Ώρα λήξης",
+      "select_end_time": "Επιλέξτε ώρα λήξης",
+      "select_date_range": "Επιλέξτε εύρος ημερομηνιών",
+      "select_duration": "Επιλέξτε διάρκεια",
+      "select_mode": "Επιλέξτε τρόπο διεξαγωγής",
+      "teachers": "Καθηγητές",
+      "select_teachers": "Επιλέξτε καθηγητές",
+      "students": "Μαθητές",
+      "select_students": "Επιλέξτε μαθητές",
+      "classroom": "Αίθουσα",
+      "select_classroom": "Επιλέξτε αίθουσα",
+      "modes": {
+        "in_person": "Δια ζώσης",
+        "online": "Εξ αποστάσεως",
+        "hybrid": "Μικτό"
+      },
+      "room": "Δωμάτιο/Τοποθεσία",
+      "enter_room": "Εισαγάγετε συγκεκριμένο δωμάτιο ή τοποθεσία",
+      "color": "Χρώμα",
+      "color_placeholder": "#3b82f6",
+      "session_options": "Επιλογές συνεδρίας",
+      "recurring_session": "Επαναλαμβανόμενη συνεδρία",
+      "invite_participants": "Αποστολή πρόσκλησης μέσω e-mail σε όλους τους συμμετέχοντες",
+      "errors": {
+        "class_required": "Η τάξη είναι υποχρεωτική",
+        "academic_period_required": "Η ακαδημαϊκή περίοδος είναι υποχρεωτική",
+        "start_time_required": "Η ώρα έναρξης είναι υποχρεωτική",
+        "end_time_required": "Η ώρα λήξης είναι υποχρεωτική",
+        "teachers_required": "Απαιτείται τουλάχιστον ένας καθηγητής",
+        "classroom_required": "Η αίθουσα είναι υποχρεωτική"
+      },
+      "load_failed": "Αποτυχία φόρτωσης δεδομένων συνεδρίας",
+      "updated": "Η συνεδρία ενημερώθηκε με επιτυχία",
+      "created": "Η συνεδρία δημιουργήθηκε με επιτυχία",
+      "generic_error": "Προέκυψε σφάλμα κατά τη δημιουργία της συνεδρίας",
+      "validation_errors_prefix": "Σφάλματα επικύρωσης:"
+    }
+  },
+  "branch_selector": {
+    "select_branch": "Επιλέξτε παράρτημα"
+  },
+  "students": {
+    "table": {
+      "code": "Κωδικός",
+      "status": "Κατάσταση",
+      "name": "Όνομα",
+      "registration": "Εγγραφή",
+      "phone": "Τηλέφωνο",
+      "email": "E-mail",
+      "age_dob": "Ηλικία (Ημ. γέννησης)",
+      "invalid_date": "Μη έγκυρη ημερομηνία",
+      "class": "Τάξη",
+      "class_assigned": "Ανατέθηκε τάξη",
+      "level": "Επίπεδο",
+      "subject": "Μάθημα",
+      "health": "Υγεία",
+      "allergies_medication": "Αλλεργίες - Φαρμακευτική αγωγή",
+      "none": "Καμία",
+      "branch": "Παράρτημα",
+      "branch_assigned": "Ανατέθηκε παράρτημα",
+      "no_branch_assigned": "Δεν έχει ανατεθεί παράρτημα"
+    },
+    "errors": {
+      "no_id": "Δεν δόθηκε αναγνωριστικό μαθητή",
+      "fetch_failed": "Αποτυχία ανάκτησης δεδομένων μαθητή",
+      "update_failed": "Αποτυχία ενημέρωσης μαθητή",
+      "delete_failed": "Αποτυχία διαγραφής μαθητή"
+    },
+    "messages": { 
+      "updated": "Ο μαθητής ενημερώθηκε με επιτυχία", 
+      "deleted": "Ο μαθητής διαγράφηκε με επιτυχία",
+      "document_deleted": "Το έγγραφο διαγράφηκε με επιτυχία"
+    },
+    "confirm_delete": {
+      "header": "Διαγραφή μαθητή",
+      "message": "Αυτή η ενέργεια θα αφαιρέσει οριστικά τον/την {{name}} από το σύστημα. Όλα τα σχετικά δεδομένα θα χαθούν και η ενέργεια δεν μπορεί να αναιρεθεί."
+    },
+    "single": {
+      "student_id": "Ταυτότητα μαθητή",
+      "labels": {
+        "code": "Κωδικός",
+        "mobile": "Κινητό",
+        "last_updated_by": "Τελευταία ενημέρωση από",
+        "email": "E-mail",
+        "address": "Διεύθυνση",
+        "registered_by": "Καταχωρήθηκε από",
+        "age_dob": "Ηλικία (Ημ. γέννησης)",
+        "last_updated": "Τελευταία ενημέρωση",
+        "registered": "Ημερομηνία καταχώρησης",
+        "primary_contact": "Κύρια επαφή",
+        "health_info": "Πληροφορίες υγείας",
+        "siblings_attending": "Αδέλφια που φοιτούν",
+        "general_notes": "Γενικές σημειώσεις"
+      },
+      "tabs": {
+        "overview": "Επισκόπηση",
+        "books": "Βιβλία",
+        "progress": "Πρόοδος",
+        "documents": "Έγγραφα"
+      }
+    }
+  },
+  "inventory": {
+    "create": { "title": "Δημιουργία εγγραφής αποθέματος" },
+    "edit": { "title": "Επεξεργασία εγγραφής αποθέματος" },
+    "fields": {
+      "billingPerson": "Χρεώσιμο Πρόσωπο",
+      "billingDate": "Ημερομηνία χρέωσης",
+      "returnDate": "Ημερομηνία επιστροφής",
+      "notes": "Σημειώσεις",
+      "bookTitle": "Τίτλος βιβλίου",
+      "assetTitle": "Τίτλος πόρου"
+    },
+    "messages": {
+      "created": "Η εγγραφή αποθέματος δημιουργήθηκε με επιτυχία",
+      "updated": "Η εγγραφή αποθέματος ενημερώθηκε με επιτυχία"
+    },
+    "errors": {
+      "customer_missing": "Ο πελάτης δεν είναι διαθέσιμος",
+      "create_failed": "Αποτυχία δημιουργίας εγγραφής αποθέματος",
+      "update_failed": "Αποτυχία ενημέρωσης εγγραφής αποθέματος"
+    },
+    "table": {
+      "code": "Κωδικός",
+      "title": "Τίτλος",
+      "billingDate": "Ημ/νία χρέωσης",
+      "returnDate": "Ημ/νία επιστροφής",
+      "billingPerson": "Χρεώσιμο Πρόσωπο"
+    }
+  },
+  "assets": {
+    "table": {
+      "name": "Όνομα",
+      "category": "Κατηγορία",
+      "condition": "Κατάσταση",
+      "location": "Τοποθεσία",
+      "assignedTo": "Ανατέθηκε σε",
+      "purchaseDate": "Ημερομηνία αγοράς"
+    },
+    "confirm_delete": {
+      "header": "Διαγραφή Πόρου",
+      "message": "Είστε σίγουροι ότι θέλετε να διαγράψετε \"{{name}}\";"
+    },
+    "messages": { "deleted": "Ο πόρος διαγράφηκε με επιτυχία" },
+    "errors": { "delete_failed": "Αποτυχία διαγραφής πόρου" }
+  },
+  "eLibrary": {
+    "table": {
+      "title": "Τίτλος",
+      "type": "Τύπος",
+      "author": "Συγγραφέας",
+      "publishedAt": "Ημ/νία δημοσίευσης"
+    },
+    "confirm_delete": {
+      "header": "Διαγραφή στοιχείου Η-βιβλιοθήκης",
+      "message": "Είστε σίγουροι ότι θέλετε να διαγράψετε \"{{name}}\";"
+    },
+    "messages": { "deleted": "Το στοιχείο Η-βιβλιοθήκης διαγράφηκε με επιτυχία" },
+    "errors": { "delete_failed": "Αποτυχία διαγραφής στοιχείου Η-βιβλιοθήκης" }
+  },
+  "settings": {
+    "roles": {
+      "title": "Ρόλοι",
+      "search_placeholder": "Αναζήτηση στους ρόλους",
+      "grid_view": "Προβολή πλέγματος",
+      "list_view": "Προβολή λίστας",
+      "access": "Πρόσβαση:",
+      "no_results": "Δεν βρέθηκαν ρόλοι που να ταιριάζουν στην αναζήτησή σας.",
+      "view": {
+        "edit_title": "Επεξεργασία ρόλου:",
+        "description": "Περιγραφή",
+        "set_permissions": "Ορισμός δικαιωμάτων",
+        "modify_text": "Τροποποιήστε τι μπορούν να κάνουν τα άτομα στο επιλεγμένο ρόλο.",
+        "expand_all": "Ανάπτυξη όλων",
+        "loading": "Φόρτωση λεπτομερειών ρόλου..."
+      },
+      "permissions": {
+        "school": "Πρόσβαση σχολείου",
+        "staff": "Πρόσβαση προσωπικού",
+        "student": "Πρόσβαση μαθητών",
+        "class": "Πρόσβαση τάξεων",
+        "assessments": "Πρόσβαση αξιολογήσεων",
+        "library": "Πρόσβαση βιβλιοθήκης",
+        "board": "Πρόσβαση πίνακα",
+        "progress": "Πρόσβαση προόδου / βαθμών"
+      }
+    }
+  },
+  "sidebar": {
+    "dashboard": "Πίνακας",
+    "staff": "Προσωπικό",
+    "students": "Μαθητές",
+    "classes": "Τάξεις",
+    "sessions": "Συνεδρίες",
+    "timetable": "Πρόγραμμα",
+    "board": "Αναρτήσεις",
+    "calendar": "Ημερολόγιο",
+    "elibrary": "Η-βιβλιοθήκη",
+    "assets": "Πόροι",
+    "assignments": "Αναθέσεις",
+    "progress": "Πρόοδος",
+    "revision-center": "Κέντρο Επανάληψης",
+    "wellness-center": "Κέντρο Ευεξίας",
+    "resources": "Πόροι"
+  }
+}

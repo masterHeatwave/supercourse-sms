@@ -1,0 +1,306 @@
+:host {
+  display: block;
+}
+
+.student-id-card {
+  width: 100%;
+  max-width: 500px;
+  margin: 10px auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+}
+
+/* Top Section - Yellow Background */
+.id-card-top {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  padding: 20px;
+  text-align: center;
+  position: relative;
+}
+
+.school-banner {
+  background: #6A4C93;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  display: inline-block;
+}
+
+.school-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+  letter-spacing: 0.5px;
+}
+
+.student-address {
+  color: #333;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Middle Section - White Background */
+.id-card-middle {
+  background: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 200px;
+}
+
+.id-card-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.grade-info {
+  margin-bottom: 8px;
+}
+
+.grade {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contact-label {
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.contact-value {
+  font-size: 0.9rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.qr-code {
+  margin-top: 8px;
+}
+
+.qr-placeholder {
+  width: 60px;
+  height: 60px;
+  border: 2px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1px;
+  width: 50px;
+  height: 50px;
+}
+
+.qr-cell {
+  background: white;
+  border: 1px solid #ddd;
+}
+
+.qr-cell.qr-filled {
+  background: #333;
+}
+
+/* Center - School Logo */
+.id-card-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.school-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo-shield {
+  width: 80px;
+  height: 80px;
+  background: #2196F3;
+  border: 3px solid white;
+  border-radius: 8px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-content {
+  text-align: center;
+}
+
+.logo-symbols {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.symbol {
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.logo-year {
+  color: white;
+  font-weight: bold;
+  font-size: 0.8rem;
+}
+
+/* Right Side */
+.id-card-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.academic-year {
+  text-align: center;
+}
+
+.year-label {
+  font-weight: bold;
+  font-size: 1rem;
+  color: #333;
+}
+
+.student-photo {
+  display: flex;
+  justify-content: center;
+}
+
+.dob-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.dob-label {
+  font-size: 0.7rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.dob-value {
+  font-size: 0.8rem;
+  color: #333;
+  font-weight: 600;
+}
+
+/* Bottom Section - Purple Background */
+.id-card-bottom {
+  background: #6A4C93;
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.student-name {
+  flex: 1;
+}
+
+.name-text {
+  font-weight: bold;
+  font-size: 1.3rem;
+  letter-spacing: 1px;
+}
+
+.expiry-info {
+  text-align: right;
+}
+
+.expiry-label {
+  font-size: 0.8rem;
+  opacity: 0.9;
+  margin-right: 4px;
+}
+
+.expiry-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: right;
+  padding: 20px;
+}
+
+.print-btn, .download-btn {
+  flex: 1;
+  max-width: 150px;
+}
+
+/* Print Styles */
+@media print {
+  :host {
+    display: none;
+  }
+  
+  .student-id-card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+  
+  .action-buttons {
+    display: none;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .id-card-middle {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+  
+  .id-card-left, .id-card-right {
+    width: 100%;
+  }
+  
+  .id-card-bottom {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+  
+  .expiry-info {
+    text-align: center;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .print-btn, .download-btn {
+    max-width: 200px;
+    width: 100%;
+  }
+}

@@ -1,0 +1,31 @@
+.outer-div {
+  width: 100%;
+  align-items: center;
+  label {
+    margin-right: 10px;
+    font-size: 26px;
+  }
+}
+
+.inner-div {
+  border: 1px solid #777;
+  border-radius: 10px;
+  padding: 10px;
+  background-color: white;
+  @media (max-width: 471px) {
+    width: 310px;
+  }
+}
+
+.rows-div {
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+:host ::ng-deep .p-button {
+  margin-left: 10px;
+  font-size: 10px;
+  width: 32px;
+  height: 32px;
+}

@@ -1,0 +1,272 @@
+<div class="create-academic-year-container">
+  <!-- Toast Messages -->
+  <p-toast></p-toast>
+
+  <!-- Header -->
+  <div class="flex justify-content-between align-items-center mb-4">
+    <h2 class="text-2xl font-semibold text-900 m-0">
+      {{ isEditing ? ('academic_years.form.header_edit' | translate) : ('academic_years.form.header_create' | translate) }}
+    </h2>
+  </div>
+
+  <!-- Form -->
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-container">
+    <!-- Title and Date Range Section -->
+    <div class="flex gap-4 mb-4">
+      <!-- Title -->
+      <div class="flex flex-column gap-2" style="flex: 0 0 50%;">
+        <label class="text-sm font-medium text-900">{{ 'academic_years.form.title' | translate }} <span style="color: #ef4444;">*</span></label>
+        <input
+          type="text"
+          pInputText
+          [placeholder]="'academic_years.form.placeholders.title_example' | translate"
+          [(ngModel)]="model.title"
+          [ngModelOptions]="{standalone: true}"
+          class="w-full"
+        />
+      </div>
+
+      <!-- Start Date -->
+      <div class="flex flex-column gap-2" style="flex: 0 0 25%;">
+        <label class="text-sm font-medium text-900">{{ 'academic_years.form.start_date' | translate }}</label>
+        <p-calendar
+          [(ngModel)]="model.academicYearRange.startDate"
+          [ngModelOptions]="{standalone: true}"
+          [showIcon]="true"
+          [iconDisplay]="'input'"
+          [placeholder]="'academic_years.form.placeholders.select_start_date' | translate"
+          dateFormat="M. dd, yy"
+          class="w-full">
+        </p-calendar>
+      </div>
+
+      <!-- End Date -->
+      <div class="flex flex-column gap-2" style="flex: 0 0 25%;">
+        <label class="text-sm font-medium text-900">{{ 'academic_years.form.end_date' | translate }}</label>
+        <p-calendar
+          [(ngModel)]="model.academicYearRange.endDate"
+          [ngModelOptions]="{standalone: true}"
+          [showIcon]="true"
+          [iconDisplay]="'input'"
+          [placeholder]="'academic_years.form.placeholders.select_end_date' | translate"
+          dateFormat="M. dd, yy"
+          [minDate]="model.academicYearRange.startDate"
+          class="w-full">
+        </p-calendar>
+      </div>
+    </div>
+
+    <!-- Academic Year Timeline (full width) -->
+    <div *ngIf="model.academicYearRange.startDate && model.academicYearRange.endDate" class="timeline-container mb-4">
+      <div class="timeline-track">
+        <div class="timeline-progress"></div>
+        <div class="timeline-handle timeline-start">
+          <span class="timeline-date">{{ model.academicYearRange.startDate | date:'MMM. dd, yyyy' }}</span>
+        </div>
+        <div class="timeline-handle timeline-end">
+          <span class="timeline-date">{{ model.academicYearRange.endDate | date:'MMM. dd, yyyy' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Set Academic Periods Header -->
+    <h3 class="text-xl font-semibold text-900 mb-3">{{ 'academic_years.form.set_periods' | translate }}</h3>
+
+    <!-- Manual Periods Section -->
+    <div class="periods-section mb-4">
+      <!-- Period Item -->
+      <div *ngFor="let period of model.periods; let i = index" class="period-item mb-4">
+        <div class="flex justify-content-between align-items-start mb-3">
+          <h4 class="text-lg font-medium text-900 m-0">{{ 'academic_years.form.period' | translate }} {{ i + 1 }}</h4>
+          <p-button
+            *ngIf="model.periods.length > 1"
+            icon="pi pi-trash"
+            styleClass="p-button-text p-button-danger p-button-sm"
+            [pTooltip]="'academic_years.form.delete_period' | translate"
+            (click)="removePeriod(i)">
+          </p-button>
+        </div>
+
+        <div class="flex gap-4">
+          <!-- Period Title -->
+          <div class="flex flex-column gap-2" style="flex: 0 0 50%;">
+            <label class="text-sm font-medium text-900">{{ 'academic_years.form.period_title' | translate }}</label>
+            <input
+              type="text"
+              pInputText
+               [placeholder]="'academic_years.form.placeholders.period_title_example' | translate"
+              [(ngModel)]="period.title"
+              [ngModelOptions]="{standalone: true}"
+              class="w-full"
+            />
+          </div>
+
+          <!-- Start Date -->
+          <div class="flex flex-column gap-2" style="flex: 0 0 25%;">
+            <label class="text-sm font-medium text-900">{{ 'academic_years.form.start_date' | translate }}</label>
+            <p-calendar
+              [(ngModel)]="period.periodRange.startDate"
+              [ngModelOptions]="{standalone: true}"
+              [showIcon]="true"
+              [iconDisplay]="'input'"
+              [placeholder]="'academic_years.form.placeholders.sample_start' | translate"
+              dateFormat="M. dd, yy"
+              [minDate]="getMinDateForPeriod()"
+              [maxDate]="getMaxDateForPeriod()"
+              class="w-full">
+            </p-calendar>
+          </div>
+
+          <!-- End Date -->
+          <div class="flex flex-column gap-2" style="flex: 0 0 25%;">
+            <label class="text-sm font-medium text-900">{{ 'academic_years.form.end_date' | translate }}</label>
+            <p-calendar
+              [(ngModel)]="period.periodRange.endDate"
+              [ngModelOptions]="{standalone: true}"
+              [showIcon]="true"
+              [iconDisplay]="'input'"
+              [placeholder]="'academic_years.form.placeholders.sample_end' | translate"
+              dateFormat="M. dd, yy"
+              [minDate]="period.periodRange.startDate || getMinDateForPeriod()"
+              [maxDate]="getMaxDateForPeriod()"
+              class="w-full">
+            </p-calendar>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div *ngIf="period.periodRange.startDate && period.periodRange.endDate" class="timeline-container mt-3">
+            <div class="timeline-track">
+              <div class="timeline-progress"></div>
+              <div class="timeline-handle timeline-start">
+                <span class="timeline-date">{{ period.periodRange.startDate | date:'MMM. dd, yyyy' }}</span>
+              </div>
+              <div class="timeline-handle timeline-end">
+                <span class="timeline-date">{{ period.periodRange.endDate | date:'MMM. dd, yyyy' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Terms Section (list + add popup) -->
+        <div class="mt-3" *ngIf="period">
+          <h5 class="text-md font-medium text-900 mb-2">{{ 'academic_years.form.terms' | translate }}</h5>
+          <div *ngIf="!period.terms || period.terms.length === 0" class="text-600 mb-2">
+            {{ 'academic_years.form.no_terms' | translate }}
+          </div>
+
+          <div *ngFor="let term of period.terms; let t = index" class="term-item mb-2 p-2 border-1 surface-border border-round">
+            <div class="flex justify-content-between align-items-center">
+              <div>
+                <div class="text-900 font-medium">{{ term.title || (('academic_years.form.term' | translate) + ' ' + (t + 1)) }}</div>
+                <div class="text-600 text-sm">{{ term.startDate | date:'MMM. dd, yyyy' }} - {{ term.endDate | date:'MMM. dd, yyyy' }}</div>
+              </div>
+              <div class="flex align-items-center gap-2">
+                <p-button *ngIf="term.id" icon="pi pi-trash" styleClass="p-button-text p-button-danger p-button-sm" (click)="deleteTermFromServer(i, t, term.id)"></p-button>
+                <p-button *ngIf="!term.id" icon="pi pi-trash" styleClass="p-button-text p-button-danger p-button-sm" (click)="removeTerm(i, t)"></p-button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Term Button (opens dialog) -->
+          <div class="flex justify-content-end mt-2">
+            <app-outline-button
+              [borderColor]="'var(--primary-color)'"
+              [textColor]="'var(--primary-color)'"
+              [hoverBackgroundColor]="'var(--primary-color)'"
+              [hoverTextColor]="'white'"
+              (click)="addTermToPeriod(i)">
+              {{ 'academic_years.form.add_term' | translate }}
+            </app-outline-button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Term Dialog -->
+      <p-dialog [header]="'academic_years.form.add_term' | translate" [(visible)]="displayTermDialog" [modal]="true" [style]="{width: '600px'}" [draggable]="false">
+        <div class="flex p-4" style="padding: 1rem;">
+          <!-- Term Title -->
+          <div class="flex flex-column gap-2" style="flex: 0 0 50%;">
+            <label class="text-sm font-medium text-900">{{ 'academic_years.form.period_title' | translate }}</label>
+            <input 
+              type="text" 
+              pInputText 
+              [placeholder]="'academic_years.form.placeholders.term_title' | translate" 
+              [(ngModel)]="termDialogModel.title" 
+              [ngModelOptions]="{standalone: true}" 
+              class="w-full border-1 border-black"/>
+          </div>
+          
+          <!-- Start Date -->
+          <div class="flex flex-column gap-2" style="flex: 0 0 25%;">
+            <label class="text-sm font-medium text-900">{{ 'academic_years.form.start_date' | translate }}</label>
+            <p-calendar [(ngModel)]="termDialogModel.startDate" [ngModelOptions]="{standalone: true}" [showIcon]="true" [iconDisplay]="'input'" placeholder="Select start date" dateFormat="M. dd, yy" [minDate]="getPeriodStartDate()" [maxDate]="getTermMaxDate()" [appendTo]="'body'" class="w-full"></p-calendar>
+          </div>
+          
+          <!-- End Date -->
+          <div class="flex flex-column gap-2 ml-4" style="flex: 0 0 25%;">
+            <label class="text-sm font-medium text-900">{{ 'academic_years.form.end_date' | translate }}</label>
+            <p-calendar [(ngModel)]="termDialogModel.endDate" [ngModelOptions]="{standalone: true}" [showIcon]="true" [iconDisplay]="'input'" placeholder="Select end date" dateFormat="M. dd, yy" [minDate]="termDialogModel.startDate || getPeriodStartDate()" [maxDate]="getTermMaxDate()" [appendTo]="'body'" class="w-full"></p-calendar>
+          </div>
+        </div>
+        <ng-template pTemplate="footer">
+          <div class="flex justify-content-end gap-3">
+            <app-outline-button
+              [borderColor]="'#dc3545'"
+              [textColor]="'#dc3545'"
+              [hoverBackgroundColor]="'#dc3545'"
+              [hoverTextColor]="'white'"
+              (click)="cancelTermDialog()">
+              {{ 'common.cancel' | translate }}
+            </app-outline-button>
+            <app-outline-button
+              [borderColor]="'var(--primary-color)'"
+              [textColor]="'var(--primary-color)'"
+              [hoverBackgroundColor]="'var(--primary-color)'"
+              [hoverTextColor]="'white'"
+              (click)="saveTermFromDialog()">
+              {{ 'common.add' | translate }}
+            </app-outline-button>
+          </div>
+        </ng-template>
+      </p-dialog>
+
+      <!-- Add Another Period Button -->
+      <div class="flex align-items-center gap-2 p-3 bg-gray-50 border-round mb-4 cursor-pointer"
+           (click)="addPeriod()">
+        <i class="pi pi-plus-circle text-primary"></i>
+        <span class="text-900 font-medium">{{ 'academic_years.form.add_another_period' | translate }}</span>
+      </div>
+    </div>
+
+    <!-- Notes Section -->
+    <div class="flex flex-column gap-2 mb-4">
+      <app-primary-textarea
+        [(value)]="model.notes"
+        [standalonePlaceholder]="'academic_years.form.placeholders.notes' | translate"
+        [standaloneRows]="4"
+        [standaloneAutoResize]="false"
+      ></app-primary-textarea>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex justify-content-end gap-3 mt-4">
+      <app-outline-button
+        [borderColor]="'#dc3545'"
+        [textColor]="'#dc3545'"
+        [hoverBackgroundColor]="'#dc3545'"
+        [hoverTextColor]="'white'"
+        (click)="cancel()">
+        {{ 'common.cancel' | translate }}
+      </app-outline-button>
+      <app-outline-button
+        [borderColor]="'var(--primary-color)'"
+        [textColor]="'var(--primary-color)'"
+        [hoverBackgroundColor]="'var(--primary-color)'"
+        [hoverTextColor]="'white'"
+        (click)="onSubmit()">
+        {{ isEditing ? ('common.update' | translate) : ('common.save' | translate) }}
+      </app-outline-button>
+    </div>
+  </form>
+</div>

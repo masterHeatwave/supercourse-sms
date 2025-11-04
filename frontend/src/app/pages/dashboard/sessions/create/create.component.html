@@ -1,0 +1,9 @@
+<p-toast></p-toast>
+
+<app-create-session-form
+  [isEditMode]="false"
+  [sessionData]="null"
+  (sessionCreated)="onSessionCreated($event)"
+  (formSubmitError)="onFormError($event)"
+  (cancelForm)="goBack()">
+</app-create-session-form>

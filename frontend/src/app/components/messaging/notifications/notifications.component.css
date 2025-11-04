@@ -1,0 +1,329 @@
+/* Notification Wrapper */
+.notification-wrapper {
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Notification Bell Icon */
+  .notification-icon {
+    font-size: 1.25rem;
+    color: #6b7280;
+    transition: all 0.2s ease;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    position: relative;
+  }
+  
+  .notification-icon:hover {
+    color: #374151;
+    background-color: #f3f4f6;
+  }
+  
+  /* Panel Header */
+  .notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #f3f4f6;
+    background-color: #fafafa;
+    margin: -1rem -1rem 0 -1rem; /* Offset OverlayPanel's default padding */
+  }
+  
+  .header-title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+  }
+  
+  .header-actions {
+    display: flex;
+    gap: 0.25rem;
+  }
+  
+  .action-btn {
+    width: 2rem !important;
+    height: 2rem !important;
+    border-radius: 0.375rem !important;
+    color: #6b7280 !important;
+  }
+  
+  .action-btn:hover {
+    background-color: #f3f4f6 !important;
+    color: #374151 !important;
+  }
+  
+  .action-btn:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+  }
+  
+  /* Panel Content */
+  .notification-content {
+    max-height: 520px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db #f9fafb;
+    margin-top: 1rem;
+  }
+  
+  .notification-content::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .notification-content::-webkit-scrollbar-track {
+    background: #f9fafb;
+  }
+  
+  .notification-content::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+  }
+  
+  .notification-content::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+  
+  /* State Containers */
+  .state-container {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1.25rem;
+  }
+  
+  .loading-state,
+  .empty-state,
+  .error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    color: #6b7280;
+  }
+  
+  .loading-icon,
+  .empty-icon,
+  .error-icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .empty-icon {
+    color: #d1d5db;
+  }
+  
+  .error-icon {
+    color: #ef4444;
+  }
+  
+  .error-message {
+    margin: 0 0 1rem 0;
+    font-size: 0.875rem;
+  }
+  
+  .empty-subtext {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 0.25rem;
+  }
+  
+  /* Notifications List */
+  .notifications-list {
+    padding: 0;
+  }
+  
+  .notification-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #f3f4f6;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    position: relative;
+  }
+  
+  .notification-item:hover {
+    background-color: #f9fafb;
+  }
+  
+  .notification-item:last-child {
+    border-bottom: none;
+  }
+  
+  .notification-item.unread {
+    background-color: #eff6ff;
+    border-left: 3px solid #3b82f6;
+    padding-left: calc(1.25rem - 3px); /* Adjust padding to account for border */
+  }
+  
+  .notification-item.unread:hover {
+    background-color: #dbeafe;
+  }
+  
+  /* Notification Icon */
+  .notification-icon-container {
+    position: relative;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background-color: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+  }
+  
+  .unread-indicator {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background-color: #ef4444;
+    border: 2px solid white;
+    border-radius: 50%;
+  }
+  
+  /* Notification Details */
+  .notification-details {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .notification-title {
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+    line-height: 1.25;
+  }
+  
+  .notification-content-text {
+    color: #6b7280;
+    font-size: 0.875rem;
+    line-height: 1.25;
+    margin-bottom: 0.5rem;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .notification-meta {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-bottom: 0.25rem;
+  }
+  
+  .related-user,
+  .related-chat {
+    font-weight: 500;
+  }
+  
+  .notification-time {
+    font-size: 0.75rem;
+    color: #9ca3af;
+  }
+  
+  /* Notification Actions */
+  .notification-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    margin-left: 0.5rem;
+  }
+  
+  .notification-item:hover .notification-actions {
+    opacity: 1;
+  }
+  
+  .notification-actions .action-btn {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+    min-width: 1.75rem !important;
+  }
+  
+  .delete-btn:hover {
+    color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+  }
+  
+  /* Load More */
+  .load-more-container {
+    padding: 1rem 1.25rem;
+    text-align: center;
+    border-top: 1px solid #f3f4f6;
+  }
+  
+  .load-more-btn {
+    color: #3b82f6 !important;
+    font-size: 0.875rem !important;
+  }
+  
+  .load-more-btn:hover {
+    background-color: #f0f9ff !important;
+  }
+  
+  /* Loading More */
+  .loading-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
+  
+  /* Custom Badge Styles */
+  :host ::ng-deep .p-badge {
+    background-color: #ef4444 !important;
+    color: white !important;
+    font-size: 0.75rem !important;
+    display: flex;
+    align-items: center; /* Centers vertically */
+    justify-content: center !important; /* Centers horizontally */
+    min-width: 1.125rem !important;
+    height: 1.125rem !important;
+    line-height: 1 !important;
+    border-radius: 0.5625rem !important;
+    padding: 0 !important; /* Remove any padding that might offset the text */
+    text-align: center !important; /* Additional centering for text */
+  }
+  
+  /* OverlayPanel custom styles */
+  :host ::ng-deep .p-overlaypanel {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    border-radius: 0.75rem !important;
+    border: 1px solid #e5e7eb !important;
+  }
+  
+  :host ::ng-deep .p-overlaypanel .p-overlaypanel-content {
+    padding: 0 !important; /* Remove default padding to control it ourselves */
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 480px) {
+    :host ::ng-deep .p-overlaypanel {
+      width: 360px !important;
+    }
+    
+    .notification-header {
+      padding: 0.75rem 1rem;
+    }
+    
+    .notification-item {
+      padding: 0.75rem 1rem;
+    }
+  }
+  
+  @media (max-width: 400px) {
+    :host ::ng-deep .p-overlaypanel {
+      width: calc(100vw - 2rem) !important;
+      max-width: 360px !important;
+    }
+  }

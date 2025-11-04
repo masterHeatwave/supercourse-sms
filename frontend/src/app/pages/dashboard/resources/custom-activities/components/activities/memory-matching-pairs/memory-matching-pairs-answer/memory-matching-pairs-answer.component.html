@@ -1,0 +1,19 @@
+<div class="answer-container">
+  <memory-matching-pairs-item
+    [answerText]="answer.item1?.answerText ?? ''"
+    [TTSText]="answer.item1?.TTSText ?? ''"
+    [imageURL]="answer.item1?.imageURL ?? ''"
+    (inputChanged)="handleInputChanged($event, 1)"
+    (imageURLChanged)="handleImageURLChanged($event, 1)"
+    (TTSTextChanged)="handleTTSTextChanged($event, 1)"
+  ></memory-matching-pairs-item>
+  <memory-matching-pairs-item
+    *ngIf="option === constants.PAIRS_OF_DIFF_ITEM_VALUE"
+    [answerText]="answer.item2?.answerText ?? ''"
+    [TTSText]="answer.item2?.TTSText ?? ''"
+    [imageURL]="answer.item2?.imageURL ?? ''"
+    (inputChanged)="handleInputChanged($event, 2)"
+    (imageURLChanged)="handleImageURLChanged($event, 2)"
+    (TTSTextChanged)="handleTTSTextChanged($event, 2)"
+  ></memory-matching-pairs-item>
+</div>

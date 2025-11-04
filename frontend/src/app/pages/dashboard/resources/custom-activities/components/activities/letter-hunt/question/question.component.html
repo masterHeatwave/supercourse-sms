@@ -1,0 +1,8 @@
+<div>
+  <app-loading [isLoading]="isLoading"></app-loading>
+  <app-warning-dialog
+    [warningMessage]="warningMessage"
+    [isDialogVisible]="isWarningDialogVisible"
+    (onClose)="isWarningDialogVisible = false"
+  />
+</div>

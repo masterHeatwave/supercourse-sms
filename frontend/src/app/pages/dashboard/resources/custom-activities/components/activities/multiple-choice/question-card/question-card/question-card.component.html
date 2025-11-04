@@ -1,0 +1,40 @@
+<div cdkDropList [cdkDropListData]="answers" (cdkDropListDropped)="drop($event)" class="question-card">
+  <div
+    style="display: flex; border: 1px solid #ccc; background-color: white; height: 52px; border-radius: 5px; margin-top: 10px; align-items: center"
+  >
+    <i class="pi pi-ellipsis-v" cdkDragHandle style="cursor: grab; padding-left: 5px"></i>
+    <label>{{ questionNumber }}.</label>
+  </div>
+  <div class="question-card-container">
+    <multiple-choice-question
+      (deleteClicked)="handleQuestionDelete()"
+      (questionTextChanged)="handleQuestionInputChange($event)"
+      (imageURLChanged)="handleQuestionImageURLChange($event)"
+      (TTSTextChanged)="handleQuestionTTSTextChange($event)"
+      [questionText]="questionText"
+      [TTSText]="TTSText"
+      [imageURL]="imageURL"
+    ></multiple-choice-question>
+    <label>Answers</label>
+    <div *ngFor="let answer of answers; let i = index" cdkDrag>
+      <multiple-choice-answer
+        [answerNumber]="answer.answerNumber ?? 0"
+        [label]="answer.label ?? ''"
+        [isCorrect]="answer.isCorrect ?? false"
+        [imageURL]="answer.imageURL"
+        [TTSText]="answer.TTSText ?? ''"
+        [answerText]="answer.answerText"
+        (deleteClicked)="handleDelete(i)"
+        (inputChanged)="handleInputChange($event, i)"
+        (checkedChanged)="handleCheckedChange($event, i)"
+        (imageURLChanged)="handleImageURLChange($event, i)"
+        (TTSTextChanged)="handleTTSTextChange($event, i)"
+      ></multiple-choice-answer>
+    </div>
+    <div>
+      <label (click)="addAnswer()">+Add an answer</label>
+    </div>
+  </div>
+
+  <app-warning-dialog [warningMessage]="warningMessage" [isDialogVisible]="isWarningDialogVisible" (onClose)="isWarningDialogVisible = false" />
+</div>

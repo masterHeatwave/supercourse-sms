@@ -1,0 +1,48 @@
+// App
+
+/*============================================================== 
+ For all pages 
+ ============================================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  height: 100vh;
+  width: 100vw;
+  overflow-x: hidden;
+}
+
+.layout-wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+.layout-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+}
+
+.main-content {
+  flex: 1;
+  padding-bottom: 1.5rem;
+  background-color: var(--surface-ground);
+  overflow-y: auto;
+}
+
+@media screen and (max-width: 768px) {
+  .layout-wrapper {
+    display: block;
+  }
+}
+
+.custom-card {
+  background: white;
+  border: 1px solid var(--surface-500);
+  border-radius: 16px;
+}

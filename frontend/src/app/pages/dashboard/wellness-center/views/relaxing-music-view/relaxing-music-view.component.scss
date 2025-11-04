@@ -1,0 +1,32 @@
+
+.video-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.video-and-content {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  border: 1px solid #7a7a7a;
+  background-color: white;
+  width: 500px;
+  min-width: 260px;
+  border-radius: 5px;
+  height: auto;
+  margin: 10px;
+  label {
+    margin: 10px;
+    word-wrap: break-word;
+    text-align: center;
+  }
+  
+  .video-wrapper video {
+    width: 100%;
+    max-width: 800px;
+    border-radius: 8px;
+    background: #000;
+  }
+}

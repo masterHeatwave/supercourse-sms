@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "commonjs",
+    "lib": ["es6"],
+    "allowJs": true,
+    "outDir": "gen-cli/dist",
+    "sourceMap": true,
+    "rootDir": "./gen-cli",
+    "strict": true,
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "baseUrl": "./gen-cli",
+    "paths": {
+      "@gen-cli/*": ["./*"]
+    }
+  },
+  "include": ["gen-cli/**/*.ts"],
+  "exclude": ["node_modules", "src"]
+}

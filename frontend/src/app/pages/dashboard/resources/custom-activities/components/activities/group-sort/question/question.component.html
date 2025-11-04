@@ -1,0 +1,16 @@
+<div class="question">
+  <p>{{ question.text }}</p>
+
+  <button (click)="addAnswer()">Add Answer</button>
+
+  <div
+    cdkDropList
+    [cdkDropListData]="question.answers"
+    (cdkDropListDropped)="drop($event)"
+    class="answer-list"
+  >
+    <div *ngFor="let answer of question.answers" cdkDrag>
+      <group-sort-answer [answer]="answer"></group-sort-answer>
+    </div>
+  </div>
+</div>

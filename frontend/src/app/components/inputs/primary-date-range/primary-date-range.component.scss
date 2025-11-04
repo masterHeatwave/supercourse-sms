@@ -1,0 +1,54 @@
+:host {
+  .primary-date-range {
+    .timeline-container {
+      position: relative;
+      margin-top: 1rem;
+
+      .timeline-track {
+        position: relative;
+        height: 6px;
+        background-color: var(--primary-100);
+        border-radius: 3px;
+      }
+
+      .timeline-progress {
+        position: absolute;
+        height: 100%;
+        background-color: var(--primary);
+        border-radius: 3px;
+        left: calc(50% - 1px);
+        right: 0;
+      }
+
+      .timeline-handle {
+        position: absolute;
+        top: -5px;
+        width: 8px;
+        height: 8px;
+        background-color: var(--primary);
+        border-radius: 50%;
+
+        &.timeline-start {
+          left: 0;
+        }
+
+        &.timeline-end {
+          right: 0;
+        }
+
+        .timeline-date {
+          position: absolute;
+          top: -25px;
+          transform: translateX(-50%);
+          white-space: nowrap;
+          font-size: 0.75rem;
+          background-color: var(--surface);
+          padding: 0.5rem;
+          border-radius: 4px;
+          box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+        }
+      }
+    }
+  }
+}
+

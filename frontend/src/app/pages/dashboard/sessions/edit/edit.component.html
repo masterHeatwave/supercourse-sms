@@ -1,0 +1,17 @@
+<p-toast></p-toast>
+
+<div class="page-container">
+  <app-spinner *ngIf="isLoadingData"></app-spinner>
+
+  <div *ngIf="!isLoadingData">
+    <app-create-session-form
+      [isEditMode]="true"
+      [sessionData]="sessionData"
+      (sessionUpdated)="onSessionUpdated($event)"
+      (formSubmitError)="onFormError($event)"
+      (cancelForm)="goBack()">
+    </app-create-session-form>
+  </div>
+</div>
+
+

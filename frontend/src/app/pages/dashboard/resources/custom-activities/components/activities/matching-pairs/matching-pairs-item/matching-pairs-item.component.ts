@@ -1,0 +1,99 @@
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  Output,
+  SimpleChanges,
+  ViewChild,
+} from '@angular/core';
+import { ImageSelectorComponent } from '../../../image-selector/image-selector.component';
+import { FormsModule } from '@angular/forms';
+import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-dialog.component';
+
+@Component({
+  selector: 'matching-pairs-item',
+  standalone: true,
+  imports: [ImageSelectorComponent, FormsModule, WarningDialogComponent],
+  templateUrl: './matching-pairs-item.component.html',
+  styleUrl: './matching-pairs-item.component.scss',
+})
+export class MatchingPairsItemComponent {
+  @Input() answerText: string = '';
+  @Input() imageURL: string = '';
+  @Input() TTSText: string = '';
+  private lastSoundElement: HTMLElement | null = null;
+  @ViewChild('lastSoundElementRef', { static: false })
+  lastSoundElementRef!: ElementRef<HTMLElement>;
+
+  warningMessage: string = '';
+  isWarningDialogVisible: boolean = false;
+
+  @Output() inputChanged: EventEmitter<string> = new EventEmitter<string>();
+  @Output() imageURLChanged: EventEmitter<string> = new EventEmitter<string>();
+  @Output() TTSTextChanged: EventEmitter<string> = new EventEmitter<string>();
+
+  handleErrorMessage(msg: string) {
+    this.warningMessage = msg;
+    this.isWarningDialogVisible = true;
+  }
+
+  ngAfterViewInit(): void {
+    this.lastSoundElement = this.lastSoundElementRef.nativeElement;
+    if (this.TTSText && this.lastSoundElement) {
+      this.lastSoundElement.classList.add('image-sound-selected-style');
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['TTSText']) {
+      if (this.lastSoundElement) {
+        this.lastSoundElement.classList.add('image-sound-selected-style');
+      }
+    }
+  }
+
+  handleImageURLChanged(imageUrl: string) {
+    this.imageURL = imageUrl;
+    this.imageURLChanged.emit(imageUrl);
+  }
+
+  onInputChange(newValue: string) {
+    if (this.answerText === '') {
+      if (this.lastSoundElement) {
+        if (
+          this.lastSoundElement.classList.contains('image-sound-selected-style')
+        ) {
+          this.lastSoundElement.classList.remove('image-sound-selected-style');
+          this.TTSText = '';
+          this.lastSoundElement = null;
+          this.TTSTextChanged.emit(newValue);
+        }
+      }
+    } else {
+      if (this.lastSoundElement !== null && this.TTSText !== '') {
+        this.TTSText = newValue;
+        this.TTSTextChanged.emit(newValue);
+      }
+    }
+    this.inputChanged.emit(newValue);
+  }
+
+  soundClick(event: Event) {
+    const target = event.target as HTMLElement;
+    if (
+      !target.classList.contains('image-sound-selected-style') &&
+      this.answerText !== ''
+    ) {
+      target.classList.add('image-sound-selected-style');
+      this.lastSoundElement = target;
+      this.TTSText = this.answerText;
+      this.TTSTextChanged.emit(this.answerText);
+    } else {
+      target.classList.remove('image-sound-selected-style');
+      this.lastSoundElement = null;
+      this.TTSText = '';
+      this.TTSTextChanged.emit('');
+    }
+  }
+}

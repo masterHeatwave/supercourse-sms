@@ -1,0 +1,24 @@
+<p-button (onClick)="onClick($event)">Back</p-button>
+
+<div class="video-container" *ngIf="videoList.length > 0; else noVideos">
+  <div *ngFor="let videoItem of videoList" class="video-and-content">
+    <div class="video-wrapper">
+      <video
+        #videoPlayer
+        controls
+        preload="auto"
+        [src]="videoItem.source"
+        crossorigin="anonymous"
+        (loadedmetadata)="onMetadataLoaded(videoPlayer, videoItem)"
+        (play)="onPlay(videoPlayer, videoItem)"
+        (pause)="onPause(videoPlayer, videoItem)"
+        (timeupdate)="onTimeUpdate(videoPlayer, videoItem)"
+      ></video>
+    </div>
+    <label *ngIf="videoItem.title !== ''">{{ videoItem.title }}</label>
+  </div>
+</div>
+
+<ng-template #noVideos>
+  <p>No videos to display.</p>
+</ng-template>

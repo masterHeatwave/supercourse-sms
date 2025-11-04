@@ -1,0 +1,46 @@
+<div class="answer">
+  <app-loading [isLoading]="isLoading"></app-loading>
+  <i class="pi pi-ellipsis-v" cdkDragHandle style="cursor: grab"></i>
+  <label>{{ label }}</label>
+  <p-toggleButton
+    [offIcon]="primeIcons.TIMES"
+    [onIcon]="primeIcons.CHECK"
+    iconPos="right"
+    [(ngModel)]="isCorrect"
+    (ngModelChange)="onCheckedChange($event)"
+  >
+  </p-toggleButton>
+
+  <app-image-selector
+    (onBusy)="handleImageSelectorBusy($event)"
+    (onErrorMessage)="handleErrorMessage($event)"
+    (onImageURLChanged)="handleImageURLChanged($event)"
+    [imageURL]="imageURL"
+  ></app-image-selector>
+
+  <label class="separator">|</label>
+  <i
+    #lastSoundElementRef
+    class="pi pi-volume-up"
+    style="font-size: 1.5rem"
+    (click)="soundClick($event)"
+  ></i>
+  <label class="separator">|</label>
+  <input
+    type="text"
+    placeholder="Insert an answer"
+    [(ngModel)]="answerText"
+    (ngModelChange)="onInputChange($event)"
+  />
+  <i
+    class="pi pi-times-circle"
+    style="font-size: 1.5rem; margin-left: 10px"
+    (click)="onDeleteClick()"
+  ></i>
+
+  <app-warning-dialog
+    [warningMessage]="warningMessage"
+    [isDialogVisible]="isWarningDialogVisible"
+    (onClose)="isWarningDialogVisible = false"
+  />
+</div>

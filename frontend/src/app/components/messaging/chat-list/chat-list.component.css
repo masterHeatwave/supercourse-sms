@@ -1,0 +1,465 @@
+/* chat-list.component.css - Minimal CSS using PrimeNG utilities */
+
+/* ==============================================
+   CHAT LIST COMPONENT - COMPLETE STYLES
+   ============================================== */
+
+/* ==============================================
+   CARD CONTAINER
+   ============================================== */
+   .chat-list-card {
+    height: 100%;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  
+  .chat-list-card .p-card-body {
+    padding: 0 !important;
+  }
+  
+  .chat-list-card .p-card-header {
+    border-bottom: 1px solid var(--surface-border);
+    border-radius: 0 !important;
+    background: var(--surface-0);
+  }
+  
+  /* ==============================================
+     CHAT ITEMS LIST
+     ============================================== */
+  .chat-items {
+    padding: 0.5rem;
+  }
+  
+  .chat-item {
+    background: var(--surface-0);
+    border: 1px solid transparent;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+  }
+  
+  .chat-item:hover {
+    background: var(--surface-50);
+    border-color: var(--surface-200);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .chat-item.chat-selected {
+    background: var(--primary-50);
+    border-color: var(--primary-200);
+    box-shadow: 0 2px 8px rgba(var(--primary-500), 0.2);
+  }
+  
+  .chat-item.chat-unread {
+    border-left: 3px solid var(--primary-500);
+    background: var(--surface-0);
+  }
+  
+  .chat-item.chat-pinned {
+    border-bottom: 2px solid var(--surface-200);
+  }
+  
+  .chat-item.chat-pinned:last-of-type {
+    margin-bottom: 0.5rem;
+    padding-bottom: 1rem;
+  }
+  
+  /* ==============================================
+     AVATAR & ONLINE STATUS
+     ============================================== */
+  .online-dot {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    background: var(--green-500);
+    border: 2px solid var(--surface-0);
+    border-radius: 50%;
+    z-index: 1;
+  }
+  
+  /* ==============================================
+     MENU BUTTON (3 DOTS)
+     ============================================== */
+  .menu-button {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  
+  .chat-item:hover .menu-button,
+  .chat-item.chat-selected .menu-button {
+    opacity: 1;
+  }
+  
+  /* ==============================================
+     CONTEXT MENU - Uses ::ng-deep because menu renders at body level
+     ============================================== */
+  ::ng-deep .p-menu {
+    min-width: 220px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid var(--surface-border) !important;
+    padding: 4px !important;
+  }
+  
+  ::ng-deep .p-menu .p-menu-list {
+    padding: 0 !important;
+  }
+  
+  ::ng-deep .p-menu .p-menuitem {
+    margin: 2px 0 !important;
+  }
+  
+  ::ng-deep .p-menu .p-menuitem-link {
+    padding: 0.75rem 1rem !important;
+    border-radius: 6px !important;
+    transition: all 0.15s ease !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+  
+  ::ng-deep .p-menu .p-menuitem-link:not(.p-disabled):hover {
+    background: var(--surface-100) !important;
+  }
+  
+  ::ng-deep .p-menu .p-menuitem-icon {
+    font-size: 1rem !important;
+    margin-right: 0.75rem !important;
+    color: var(--text-color-secondary) !important;
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+  
+  ::ng-deep .p-menu .p-menuitem-text {
+    font-size: 0.875rem !important;
+    color: var(--text-color) !important;
+    font-weight: 500 !important;
+  }
+  
+  /* Separator styling */
+  ::ng-deep .p-menu .p-menuitem-separator {
+    margin: 4px 0 !important;
+    border-top: 1px solid var(--surface-border) !important;
+    height: 1px !important;
+  }
+  
+  /* Delete action - special red styling */
+  ::ng-deep .p-menu .p-menuitem-link[ng-reflect-ng-class*="text-red-600"]:hover,
+  ::ng-deep .p-menu .p-menuitem-link.text-red-600:hover {
+    background: var(--red-50) !important;
+  }
+  
+  ::ng-deep .p-menu .p-menuitem-link[ng-reflect-ng-class*="text-red-600"]:hover .p-menuitem-icon,
+  ::ng-deep .p-menu .p-menuitem-link[ng-reflect-ng-class*="text-red-600"]:hover .p-menuitem-text,
+  ::ng-deep .p-menu .p-menuitem-link.text-red-600:hover .p-menuitem-icon,
+  ::ng-deep .p-menu .p-menuitem-link.text-red-600:hover .p-menuitem-text {
+    color: var(--red-600) !important;
+  }
+  
+  /* ==============================================
+     FILTER PANEL - Uses ::ng-deep because overlay renders at body level
+     ============================================== */
+  ::ng-deep .p-overlaypanel.filter-panel {
+    width: 280px !important;
+    max-width: 280px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    background-color: #b2e0ff;
+  }
+  
+  ::ng-deep .p-overlaypanel.filter-panel .p-overlaypanel-content {
+    padding: 1rem !important;
+    width: 100% !important;
+  }
+  
+  ::ng-deep .p-overlaypanel.filter-panel .p-overlaypanel-close {
+    top: 0.5rem !important;
+    right: 0.5rem !important;
+  }
+  
+  /* Filter panel header */
+  ::ng-deep .p-overlaypanel.filter-panel h4 {
+    font-size: 1rem !important;
+    margin: 0 !important;
+    line-height: 1.5 !important;
+    font-weight: 600 !important;
+    color: var(--text-color) !important;
+  }
+  
+  ::ng-deep .p-overlaypanel.filter-panel h5 {
+    margin: 0 0 0.5rem 0 !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    line-height: 1.5 !important;
+    color: var(--text-color-secondary) !important;
+  }
+  
+  /* Filter panel dividers */
+  ::ng-deep .p-overlaypanel.filter-panel .p-divider {
+    margin: 0.75rem 0 !important;
+  }
+  
+  ::ng-deep .p-overlaypanel.filter-panel .p-divider.p-divider-horizontal {
+    border-top: 1px solid var(--surface-border) !important;
+  }
+  
+  /* Filter panel labels */
+  ::ng-deep .p-overlaypanel.filter-panel label {
+    font-size: 0.875rem !important;
+    color: var(--text-color) !important;
+    cursor: pointer !important;
+    user-select: none !important;
+  }
+  
+  /* Filter panel checkboxes */
+  ::ng-deep .p-overlaypanel.filter-panel .p-checkbox {
+    width: 18px !important;
+    height: 18px !important;
+  }
+  
+  ::ng-deep .p-overlaypanel.filter-panel .p-checkbox .p-checkbox-box {
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 4px !important;
+  }
+  
+  ::ng-deep .p-overlaypanel.filter-panel .p-checkbox .p-checkbox-icon {
+    font-size: 0.75rem !important;
+  }
+  
+  /* Filter panel buttons */
+  ::ng-deep .p-overlaypanel.filter-panel .p-button {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  /* Filter panel spacing fixes */
+  ::ng-deep .p-overlaypanel.filter-panel .flex.flex-column.gap-4 {
+    gap: 1rem !important;
+  }
+  
+  ::ng-deep .p-overlaypanel.filter-panel .flex.flex-column.gap-3 {
+    gap: 0.75rem !important;
+  }
+  
+  ::ng-deep .p-overlaypanel.filter-panel .flex.flex-column.gap-2 {
+    gap: 0.5rem !important;
+  }
+  
+  ::ng-deep .p-overlaypanel.filter-panel .flex.align-items-center {
+    gap: 0.5rem !important;
+  }
+  
+  /* Icon styling within filter options */
+  ::ng-deep .p-overlaypanel.filter-panel label i {
+    font-size: 0.875rem !important;
+  }
+  
+  /* ==============================================
+     SCROLLBAR STYLING
+     ============================================== */
+  ::ng-deep .p-scrollpanel .p-scrollpanel-bar {
+    background-color: var(--surface-300);
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+    border-radius: 4px;
+  }
+  
+  ::ng-deep .p-scrollpanel:hover .p-scrollpanel-bar {
+    opacity: 1;
+  }
+  
+  ::ng-deep .p-scrollpanel .p-scrollpanel-bar-y {
+    width: 6px;
+  }
+  
+  /* ==============================================
+     EMPTY STATE
+     ============================================== */
+  .empty-state {
+    padding: 2rem 1rem;
+  }
+  
+  /* ==============================================
+     BADGES & INDICATORS
+     ============================================== */
+  ::ng-deep .p-badge {
+    min-width: 1.25rem;
+    height: 1.25rem;
+    line-height: 1.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  
+  ::ng-deep .p-badge.p-badge-info {
+    background: var(--primary-500);
+    color: white;
+  }
+  
+  /* ==============================================
+     TAGS (User Role Tags)
+     ============================================== */
+  ::ng-deep .p-tag {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 4px;
+  }
+  
+  ::ng-deep .p-tag.p-tag-success {
+    background: var(--green-100);
+    color: var(--green-700);
+  }
+  
+  ::ng-deep .p-tag.p-tag-info {
+    background: var(--blue-100);
+    color: var(--blue-700);
+  }
+  
+  ::ng-deep .p-tag.p-tag-warning {
+    background: var(--orange-100);
+    color: var(--orange-700);
+  }
+  
+  ::ng-deep .p-tag.p-tag-danger {
+    background: var(--red-100);
+    color: var(--red-700);
+  }
+  
+  ::ng-deep .p-tag.p-tag-secondary {
+    background: var(--surface-200);
+    color: var(--text-color);
+  }
+  
+  ::ng-deep .p-tag.p-tag-contrast {
+    background: var(--surface-900);
+    color: var(--surface-0);
+  }
+  
+  /* ==============================================
+     TOOLTIPS
+     ============================================== */
+  ::ng-deep .p-tooltip {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  ::ng-deep .p-tooltip .p-tooltip-text {
+    padding: 0;
+  }
+  
+  /* ==============================================
+     RESPONSIVE ADJUSTMENTS
+     ============================================== */
+  @media (max-width: 768px) {
+    .chat-list-card .p-card-header {
+      padding: 1rem;
+    }
+    
+    .chat-item {
+      padding: 0.75rem !important;
+    }
+    
+    .chat-items {
+      padding: 0.25rem;
+    }
+    
+    ::ng-deep .p-overlaypanel.filter-panel {
+      width: 260px !important;
+    }
+    
+    ::ng-deep .p-menu {
+      min-width: 200px !important;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    ::ng-deep .p-overlaypanel.filter-panel {
+      width: calc(100vw - 2rem) !important;
+      max-width: 300px !important;
+    }
+    
+    .chat-item .text-xs {
+      font-size: 0.7rem !important;
+    }
+  }
+  
+  /* ==============================================
+     LOADING SKELETONS
+     ============================================== */
+  ::ng-deep .p-skeleton {
+    background: var(--surface-200);
+    border-radius: 4px;
+  }
+  
+  ::ng-deep .p-skeleton.p-skeleton-circle {
+    border-radius: 50%;
+  }
+  
+  /* ==============================================
+     ANIMATIONS
+     ============================================== */
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .chat-item {
+    animation: slideIn 0.2s ease-out;
+  }
+  
+  /* ==============================================
+     UTILITY OVERRIDES FOR PRIMENG COMPONENTS
+     ============================================== */
+  ::ng-deep .p-button.p-button-rounded {
+    border-radius: 50%;
+  }
+  
+  ::ng-deep .p-button.p-button-text {
+    background: transparent;
+    border-color: transparent;
+  }
+  
+  ::ng-deep .p-button.p-button-text:not(:disabled):hover {
+    background: var(--surface-100);
+  }
+  
+  ::ng-deep .p-button.p-button-outlined {
+    border: 1px solid var(--primary-500);
+    color: var(--primary-500);
+  }
+  
+  ::ng-deep .p-button.p-button-outlined:hover {
+    background: var(--primary-50);
+  }
+  
+  /* ==============================================
+     DARK MODE SUPPORT (Optional)
+     ============================================== */
+  @media (prefers-color-scheme: dark) {
+    .chat-item {
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+    
+    .chat-item:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+    
+    ::ng-deep .p-menu {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+    }
+    
+    ::ng-deep .p-overlaypanel {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+    }
+  }

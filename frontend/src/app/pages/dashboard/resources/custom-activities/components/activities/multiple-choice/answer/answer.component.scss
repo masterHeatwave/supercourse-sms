@@ -1,0 +1,54 @@
+//@import "../../../../../styles/variables";
+@import '../../../../styles/styles.scss';
+
+.answer {
+  display: flex;
+  margin-top: 2px;
+  width: inherit;
+  align-items: center;
+  border: 1px solid #ccc;
+  background-color: white;
+  border-radius: 5px;
+  min-width: 380px;
+  label {
+    margin: 10px !important;
+    padding: 0;
+    min-width: 21px !important;
+    max-width: 21px !important;
+    text-align: center;
+  }
+}
+
+:host ::ng-deep {
+  .answer .pi-times {
+    color: white;
+  }
+
+  .answer .pi-check {
+    color: white;
+  }
+}
+
+input {
+  font-size: 1.5rem;
+  border: none !important;
+  outline: none !important;
+  width: 100%;
+  min-width: 100px;
+}
+
+label {
+  font-weight: 600;
+  color: var(--primary-color);
+  padding-top: 8px;
+}
+
+.separator {
+  padding: 0 !important;
+  padding-bottom: 3px !important;
+  color: #666 !important;
+  margin-left: 5px !important;
+  margin-right: 5px !important;
+  font-weight: 300 !important;
+  user-select: none;
+}

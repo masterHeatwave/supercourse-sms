@@ -1,0 +1,49 @@
+<div class="p-4">
+  <p-toast></p-toast>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <!-- Main Information Card -->
+    <p-card styleClass="custom-card shadow-none mb-4">
+      <ng-template pTemplate="content">
+        <formly-form [form]="form" [fields]="personalInfoFields" [model]="model"></formly-form>
+      </ng-template>
+    </p-card>
+
+    <!-- Social Media Card -->
+    <p-card styleClass="custom-card shadow-none mb-4">
+      <ng-template pTemplate="header">
+        <h3 class="text-primary font-bold text-2xl m-0 p-3">Social Media:</h3>
+      </ng-template>
+      <ng-template pTemplate="content">
+        <formly-form [form]="form" [fields]="socialMediaFields" [model]="model"></formly-form>
+      </ng-template>
+    </p-card>
+
+    <!-- Documents Card -->
+    <p-card styleClass="custom-card shadow-none mb-4">
+      <ng-template pTemplate="content">
+        <formly-form [form]="form" [fields]="documentUploadFields" [model]="model"></formly-form>
+
+        <!-- Document List - Show only in edit mode -->
+        <div class="mt-4" *ngIf="isEditMode">
+          <h3 class="text-primary font-bold text-xl mb-2">Uploaded Documents:</h3>
+          <app-document-list 
+            [documents]="uploadedFiles" 
+            [showDeleteButton]="true"
+            (download)="onDownloadDocument($event)" 
+            (remove)="removeFile($event)">
+          </app-document-list>
+        </div>
+
+        <h3 class="text-primary font-bold text-2xl pb-3">Notes:</h3>
+        <formly-form [form]="form" [fields]="notesFields" [model]="model"></formly-form>
+      </ng-template>
+    </p-card>
+
+    <!-- Submit Button -->
+    <div class="flex justify-content-end mt-3">
+      <app-outline-button (click)="onSubmit()" [borderColor]="'var(--primary-color)'" [loading]="loading" [disabled]="loading">
+        {{ submitButtonLabel }}
+      </app-outline-button>
+    </div>
+  </form>
+</div>

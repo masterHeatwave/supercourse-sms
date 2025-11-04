@@ -1,0 +1,56 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: supercourse-sms-api
+    ports:
+      - '3193:3193'
+    volumes:
+      - ./:/app
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - PORT=3193
+      - MONGO_URI=mongodb://mongodb:27017/supercourse-sms
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - WATCHPACK_POLLING=true
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - supercourse-sms-network
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:latest
+    container_name: supercourse-sms-mongodb
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - supercourse-sms-network
+    restart: unless-stopped
+    command: mongod --quiet --logpath=/dev/null
+
+  redis:
+    image: redis:alpine
+    container_name: supercourse-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - supercourse-sms-network
+    restart: unless-stopped
+    command: redis-server --loglevel warning
+
+networks:
+  supercourse-sms-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  redis_data:

@@ -1,0 +1,33 @@
+<div style="display: block; width: 98%; justify-content: center">
+  <app-preview-view *ngIf="isReady === false" (onActivityLoad)="handleActivityLoad($event)"></app-preview-view>
+  <app-unity *ngIf="isLoading === false && isReady === true && hasData === true" [data]="activityData" [extraSettings]="extraSettings"></app-unity>
+  <div *ngIf="isLoading === false && isReady === false" class="settings">
+    <!--<label><u>Settings</u></label>
+    <div style="display: flex; flex-direction: column; align-items: start">
+      <p-checkbox
+        [(ngModel)]="animationsChecked"
+        (ngModelChange)="onAnimationsChange()"
+        [binary]="true"
+        inputId="animations"
+        label="Play success/failure animations"
+      ></p-checkbox>
+      <div style="display: flex; align-items: center">
+        <label class="dropdown-label">Max seconds per question:</label>
+        <p-dropdown [options]="options" [(ngModel)]="seconds" (ngModelChange)="onTimerChange()" placeholder="Seconds"></p-dropdown>
+      </div>-->
+    <div *ngIf="activityData.playerMode === 'multiplayer'" style="display: flex; flex-direction: column">
+      <div>
+        <label class="slider-label">Players:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+        <input type="range" min="2" [max]="maxPlayers" [(ngModel)]="players" (ngModelChange)="onPlayersChange()" />
+        <label class="dropdown-label">{{ players }}</label>
+        <label class="message-label" *ngIf="players > questions">{{ playersMessage }}</label>
+      </div>
+      <div>
+        <label class="slider-label">Questions:</label>
+        <input type="range" min="2" [max]="maxQuestions" [(ngModel)]="questions" (ngModelChange)="onQuestionsChange()" />
+        <label class="dropdown-label">{{ questions }}</label>
+      </div>
+    </div>
+    <p-button *ngIf="isLoading === false" (onClick)="startActivityClick()">Start activity</p-button>
+  </div>
+</div>

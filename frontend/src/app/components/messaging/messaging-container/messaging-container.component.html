@@ -1,0 +1,76 @@
+<!-- messaging-container.component.html - FIXED -->
+<!-- Toast for notifications -->
+<p-toast position="top-right" [life]="3000"></p-toast>
+  
+<!-- Overlay (backdrop) -->
+<div 
+  class="messaging-overlay" 
+  [class.visible]="isVisible" 
+  (click)="hide()">
+</div>
+
+<!-- Messaging Panel -->
+<div class="messaging-panel" [class.visible]="isVisible">
+  <!-- ✅ FIXED: Header with title, tabs, and notifications all in one line -->
+  <div class="messaging-header">
+    <!-- Left: Title and Close Button -->
+    <div class="header-left">
+      <h3>Messages</h3>
+      <button 
+        pButton 
+        icon="pi pi-times" 
+        class="p-button-text p-button-rounded close-btn" 
+        (click)="hide()">
+      </button>
+    </div>
+
+    <!-- Center: Tabs (Chats, Files) -->
+    <div class="header-center">
+      <p-tabMenu 
+        [model]="items" 
+        [(activeItem)]="activeItem"
+        class="header-tabs">
+      </p-tabMenu>
+    </div>
+
+    <!-- ✅ FIXED: Right Section INSIDE the messaging-header -->
+    <div class="header-right">
+      <app-notifications [currentUserId]="currentUserId"></app-notifications>
+    </div>
+  </div>
+  
+  <!-- Chat Layout -->
+  <div class="messaging-body">
+    <!-- Chat List (Sidebar) -->
+    <div class="chat-list-section">
+      <app-chat-list
+        [chats]="chats"
+        [isLoading]="isLoading"
+        [currentUserId]="currentUserId"
+        (selectChat)="onSelectChat($event)"
+        (deleteChat)="onDeleteChat($event)"
+        (chatCreated)="onChatCreated($event)"
+        (chatUpdated)="onChatUpdated($event)">
+      </app-chat-list>
+    </div>
+
+    <!-- Chat Window -->
+    <div class="chat-window-section">
+      <app-chat-window 
+        *ngIf="selectedChat; else noChatSelected" 
+        [chat]="selectedChat"
+        [currentUserId]="currentUserId"
+        (chatUpdated)="onChatUpdated($event)"
+        (deleteChat)="onDeleteChat($event)">
+      </app-chat-window>
+      
+      <ng-template #noChatSelected>
+        <div class="no-chat-selected">
+          <div class="icon">💬</div>
+          <p class="title">Select a conversation</p>
+          <p class="subtitle">Choose a conversation to start chatting</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>

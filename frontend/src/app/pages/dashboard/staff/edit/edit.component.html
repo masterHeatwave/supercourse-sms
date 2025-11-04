@@ -1,0 +1,16 @@
+<p-toast></p-toast>
+<ng-container *ngIf="staffData$ | async as staffData; else loadingTemplate">
+  <app-create-staff-form
+    [isEditMode]="true"
+    [staffData]="staffData"
+    [submitButtonLabel]="'Update Staff'"
+    [loading]="loading"
+    (staffUpdated)="onStaffUpdated($event)"
+    (formSubmitError)="onError($event)"
+  ></app-create-staff-form>
+</ng-container>
+<ng-template #loadingTemplate>
+  <div class="flex justify-content-center align-items-center" style="height: 200px">
+    <p>Loading staff data...</p>
+  </div>
+</ng-template>

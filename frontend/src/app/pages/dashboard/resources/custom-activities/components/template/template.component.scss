@@ -1,0 +1,50 @@
+.hide {
+  display: none;
+  width: 0px;
+  height: 0px;
+}
+
+.selected {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  font-size: x-large;
+  @media (max-width: 1080px) {
+    flex-direction: column;
+    box-sizing: border-box;
+    margin: 10px;
+    gap: 5px;
+    .img-big {
+      min-height: 300px;
+      max-height: 300px;
+    }
+  }
+}
+
+.img-big {
+  min-height: 550px;
+  max-height: 550px;
+}
+
+:host ::ng-deep {
+  .p-dropdown {
+    min-width: 250px;
+    max-width: 250px;
+    //margin-right: 20px;
+    margin-bottom: 10px;
+  }
+}
+
+.dropdown-item,
+.selected-item {
+  display: flex;
+  align-items: center;
+}
+
+.item-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+}
