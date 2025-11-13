@@ -1,5 +1,3 @@
-// src/app/services/socket/socket.service.ts
-
 import { Injectable, OnDestroy, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { io, Socket } from 'socket.io-client';
@@ -8,8 +6,13 @@ import { takeUntil, filter, take } from 'rxjs/operators';
 import { SOCKET_URL } from '@config/endpoints';
 import { AuthStoreService } from '@services/messaging/auth-store.service';
 import { NotificationsWrapperService } from '../messaging/notifications-wrapper.service';
+import { Store } from '@ngrx/store';
+import { selectAuthState } from '@store/auth/auth.selectors';
 
-// Interfaces for type safety
+// ==========================================
+// INTERFACES
+// ==========================================
+
 interface TypingEvent {
   chatId: string;
   userId: string;
@@ -36,8 +39,9 @@ interface DeliveryStatus {
   deliveredAt: Date;
 }
 
-interface NotificationEvent {
+export interface NotificationEvent {
   _id: string;
+  userId: string;
   type: string;
   title: string;
   content: string;
@@ -48,6 +52,10 @@ interface NotificationEvent {
   relatedMessageId?: string;
 }
 
+// ==========================================
+// SERVICE
+// ==========================================
+
 @Injectable({
   providedIn: 'root'
 })
@@ -55,11 +63,14 @@ export class SocketService implements OnDestroy {
   public socket!: Socket;
   private destroy$ = new Subject<void>();
   private authService = inject(AuthStoreService);
-  private notificationsService = inject(NotificationsWrapperService);
   private platformId = inject(PLATFORM_ID);
   
-  // ✅ Check if running in browser
+  // Browser check
   private isBrowser: boolean;
+
+  // ✅ Notification subjects
+  private notifications$ = new BehaviorSubject<NotificationEvent | null>(null);
+  private notificationMarkedRead$ = new BehaviorSubject<{ notificationId: string } | null>(null);
   
   // Connection status management
   private connectionStatus = new BehaviorSubject<boolean>(false);
@@ -76,23 +87,40 @@ export class SocketService implements OnDestroy {
 
   // Current user ID for notification updates
   private currentUserId: string = '';
+  
+  // ✅ Store tenantId from NgRx store
+  private tenantId: string = '';
+  
+  store = inject(Store);
 
-  on(eventName: string): Observable<any> {
-    return this.listen(eventName);
-  }
+  public onNewNotification$ = this.notifications$
+      .asObservable()
+      .pipe(filter(n => n !== null)) as Observable<NotificationEvent>;
 
   constructor() {
-    // ✅ Only initialize socket in browser
     this.isBrowser = isPlatformBrowser(this.platformId);
     
     if (this.isBrowser) {
       console.log('🌐 Running in browser - initializing socket');
+      
+      // ✅ Subscribe to auth state to get tenantId
+      this.store.select(selectAuthState).subscribe({
+        next: (authState: any) => {
+          console.log('🏢 TenantId (customerContext):', authState.customerContext);
+          this.tenantId = authState.customerContext;
+        }
+      });
+      
       this.initializeSocket();
       this.setupAuthSubscription();
     } else {
       console.log('🖥️ Running on server (SSR) - skipping socket initialization');
     }
   }
+
+  // ==========================================
+  // INITIALIZATION
+  // ==========================================
 
   private setupAuthSubscription(): void {
     if (!this.isBrowser) return;
@@ -122,7 +150,6 @@ export class SocketService implements OnDestroy {
       console.log('🔧 Initializing SocketService');
       console.log('🔧 SOCKET_URL:', SOCKET_URL);
       
-      // ✅ Ensure URL doesn't have trailing slash
       const cleanUrl = SOCKET_URL.replace(/\/$/, '');
       console.log('🔧 Clean Socket URL:', cleanUrl);
       
@@ -147,11 +174,10 @@ export class SocketService implements OnDestroy {
   private setupSocketListeners() {
     if (!this.isBrowser || !this.socket) return;
   
-    // ✅ KEEP ONLY THIS ONE connect handler - REMOVE THE DUPLICATE
+    // ========== CONNECTION EVENTS ==========
     this.socket.on('connect', () => {
       console.log('✅ Connected to Socket.IO server');
       console.log('📡 Socket ID:', this.socket.id);
-      console.log('📡 Transport:', this.socket.io.engine?.transport?.name);
       
       this.connectionStatus.next(true);
       this.reconnectAttempts = 0;
@@ -180,11 +206,22 @@ export class SocketService implements OnDestroy {
       }
     });
 
-    // Authentication events
+    // ========== AUTHENTICATION EVENTS ==========
     this.socket.on('authenticated', (data: any) => {
-      console.log('✅ Socket authenticated for user:', data.userId);
-      console.log('📝 Auth response:', data);
+      console.log('✅ Socket authenticated for user:', data.userId, 'tenant:', data.tenantId);
       this._isAuthenticated.next(true);
+
+      // Ensure we store the current userId and join the notifications room
+      if (data?.userId) {
+        this.currentUserId = data.userId;
+        try {
+          // Ask the server to put this socket in the notifications room for this user
+          this.socket.emit('joinNotifications', data.userId);
+          console.log(`🔔 Requested to join notifications for user ${data.userId}`);
+        } catch (err) {
+          console.warn('⚠️ Failed to emit joinNotifications:', err);
+        }
+      }
     });
 
     this.socket.on('authenticationError', (error: any) => {
@@ -192,22 +229,25 @@ export class SocketService implements OnDestroy {
       this._isAuthenticated.next(false);
     });
 
-    // Notification events
+    // ========== NOTIFICATION EVENTS ==========
+
+    this.socket.on('notificationsJoined', (data: { userId: string; timestamp: Date }) => {
+      console.log('🔔 Successfully joined notifications room:', data);
+    });
+    
     this.socket.on('newNotification', (notification: NotificationEvent) => {
-      console.log('🔔 New notification received via socket:', notification);
-      
-      if (this.currentUserId) {
-        this.notificationsService.refreshUnreadCount(this.currentUserId);
-      }
+      console.log('🔔 New notification (single global listener):', notification);
+      this.notifications$.next(notification);
     });
 
-    // Reconnection events
+    this.socket.on('notificationMarkedRead', (data: { notificationId: string }) => {
+      console.log('📖 Notification marked as read:', data);
+      this.notificationMarkedRead$.next(data);
+    });
+
+    // ========== RECONNECTION EVENTS ==========
     this.socket.on('reconnect', (attemptNumber: number) => {
       console.log('🔄 Reconnected after', attemptNumber, 'attempts');
-      
-      if (this.currentUserId) {
-        this.notificationsService.refreshUnreadCount(this.currentUserId);
-      }
     });
 
     this.socket.on('reconnect_attempt', (attemptNumber: number) => {
@@ -227,7 +267,10 @@ export class SocketService implements OnDestroy {
     });
   }
 
-  // ========== AUTHENTICATION ==========
+  // ==========================================
+  // AUTHENTICATION
+  // ==========================================
+
   authenticate(userId: string): Promise<void> {
     if (!this.isBrowser) {
       return Promise.resolve();
@@ -237,7 +280,6 @@ export class SocketService implements OnDestroy {
       console.log('🔐 Authenticating socket for user:', userId);
       
       if (this._isAuthenticated.value) {
-        console.log('✅ Already authenticated');
         resolve();
         return;
       }
@@ -267,6 +309,9 @@ export class SocketService implements OnDestroy {
     });
   }
 
+  /**
+   * ✅ UPDATED: Send both userId AND tenantId to backend
+   */
   private performAuthentication(
     userId: string, 
     resolve: () => void, 
@@ -276,6 +321,15 @@ export class SocketService implements OnDestroy {
       reject(new Error('Socket not initialized'));
       return;
     }
+
+    // ✅ Check if tenantId is available
+    if (!this.tenantId) {
+      console.error('❌ No tenantId available for authentication');
+      reject(new Error('TenantId not available'));
+      return;
+    }
+
+    console.log('🔐 Authenticating with userId:', userId, 'tenantId:', this.tenantId);
 
     const onAuthenticated = (data: any) => {
       console.log('✅ Authentication successful:', data);
@@ -292,8 +346,8 @@ export class SocketService implements OnDestroy {
     this.socket.once('authenticated', onAuthenticated);
     this.socket.once('authenticationError', onAuthError);
     
-    console.log('📤 Emitting authenticate event with userId:', userId);
-    this.socket.emit('authenticate', userId);
+    // ✅ CRITICAL: Send BOTH userId and tenantId as an object
+    this.socket.emit('authenticate', { userId, tenantId: this.tenantId });
     
     setTimeout(() => {
       this.socket.off('authenticated', onAuthenticated);
@@ -302,7 +356,82 @@ export class SocketService implements OnDestroy {
     }, 5000);
   }
 
-  // ========== CONNECTION MANAGEMENT ==========
+  // ==========================================
+  // NOTIFICATION METHODS
+  // ==========================================
+
+  /**
+   * ✅ Join notification room for user
+   */
+  joinNotifications(userId: string): void {
+    if (!this.isBrowser || !this.socket?.connected) {
+      console.warn('⚠️ Cannot join notifications - socket not connected');
+      return;
+    }
+    this.socket.emit('joinNotifications', userId);
+  }
+
+  /**
+   * ✅ Observable for new notifications
+   */
+  onNewNotification(): Observable<NotificationEvent> {
+    if (!this.isBrowser) {
+      return new Observable(observer => observer.complete());
+    }
+
+    return new Observable<NotificationEvent>(observer => {
+      const handler = (notification: NotificationEvent) => {
+        console.log('🔔 Notification event emitted to subscribers:', notification);
+        observer.next(notification);
+      };
+      
+      this.socket.on('newNotification', handler);
+      
+      return () => {
+        this.socket.off('newNotification', handler);
+      };
+    }).pipe(takeUntil(this.destroy$));
+    
+  }
+
+  /**
+   * ✅ Mark notification as read via socket
+   */
+  markNotificationAsRead(notificationId: string, userId: string): void {
+    if (!this.isBrowser || !this.socket?.connected) {
+      console.warn('⚠️ Cannot mark notification as read - socket not connected');
+      return;
+    }
+    
+    console.log('📖 Marking notification as read:', notificationId);
+    this.socket.emit('markNotificationRead', { notificationId, userId });
+  }
+
+  /**
+   * ✅ Observable for notification read confirmations
+   */
+  onNotificationMarkedRead(): Observable<{ notificationId: string }> {
+    if (!this.isBrowser) {
+      return new Observable(observer => observer.complete());
+    }
+
+    return new Observable<{ notificationId: string }>(observer => {
+      const handler = (data: { notificationId: string }) => {
+        observer.next(data);
+      };
+      
+      this.socket.on('notificationMarkedRead', handler);
+      
+      return () => {
+        this.socket.off('notificationMarkedRead', handler);
+      };
+    }).pipe(takeUntil(this.destroy$));
+  }
+
+  // ==========================================
+  // CONNECTION MANAGEMENT
+  // ==========================================
+
   isConnected(): boolean {
     if (!this.isBrowser) return false;
     return this.socket?.connected && this._isAuthenticated.value;
@@ -355,7 +484,10 @@ export class SocketService implements OnDestroy {
     });
   }
 
-  // ========== CHAT MANAGEMENT ==========
+  // ==========================================
+  // CHAT MANAGEMENT
+  // ==========================================
+
   joinChat(chatId: string): boolean {
     if (!this.isBrowser || !this.isConnected()) {
       console.warn('⚠️ Cannot join chat, socket not connected/authenticated');
@@ -375,7 +507,10 @@ export class SocketService implements OnDestroy {
     return this.emit('leaveChat', chatId);
   }
 
-  // ========== MESSAGE EVENTS ==========
+  // ==========================================
+  // MESSAGE EVENTS
+  // ==========================================
+
   emitTyping(chatId: string, userId: string, isTyping: boolean = true): boolean {
     if (!this.isBrowser || !this.isConnected()) {
       return false;
@@ -384,7 +519,10 @@ export class SocketService implements OnDestroy {
     return this.emit('typing', { chatId, userId, isTyping });
   }
 
-  // ========== CHAT FEATURE EVENTS ==========
+  // ==========================================
+  // CHAT FEATURE EVENTS
+  // ==========================================
+
   emitChatUpdate(chatId: string, userId: string, updates: any): boolean {
     if (!this.isBrowser || !this.isConnected()) {
       console.warn('⚠️ Cannot emit chat update, socket not connected');
@@ -415,7 +553,9 @@ export class SocketService implements OnDestroy {
     return this.emitChatUpdate(chatId, userId, { isArchived });
   }
 
-  // ========== EVENT LISTENERS ==========
+  // ==========================================
+  // EVENT LISTENERS (OBSERVABLES)
+  // ==========================================
   
   listen(eventName: string): Observable<any> {
     if (!this.isBrowser) {
@@ -468,6 +608,11 @@ export class SocketService implements OnDestroy {
     this.socket.on(eventName, eventHandler);
   }
 
+  // ✅ Convenience method for backward compatibility
+  on(eventName: string): Observable<any> {
+    return this.listen(eventName);
+  }
+
   onNewMessage(): Observable<any> {
     if (!this.isBrowser) {
       return new Observable(observer => observer.complete());
@@ -498,25 +643,6 @@ export class SocketService implements OnDestroy {
 
       return () => {
         this.socket.off('newMessage', handler);
-      };
-    }).pipe(takeUntil(this.destroy$));
-  }
-
-  onNewNotification(): Observable<NotificationEvent> {
-    if (!this.isBrowser) {
-      return new Observable(observer => observer.complete());
-    }
-
-    return new Observable<NotificationEvent>(observer => {
-      const handler = (notification: NotificationEvent) => {
-        console.log('🔔 Notification event emitted to subscribers:', notification);
-        observer.next(notification);
-      };
-      
-      this.socket.on('newNotification', handler);
-      
-      return () => {
-        this.socket.off('newNotification', handler);
       };
     }).pipe(takeUntil(this.destroy$));
   }
@@ -617,7 +743,10 @@ export class SocketService implements OnDestroy {
     }).pipe(takeUntil(this.destroy$));
   }
 
-  // ========== EVENT EMITTERS ==========
+  // ==========================================
+  // EVENT EMITTERS
+  // ==========================================
+
   emit(eventName: string, data: any): boolean {
     if (!this.isBrowser) return false;
 
@@ -641,7 +770,10 @@ export class SocketService implements OnDestroy {
     }
   }
 
-  // ========== ADVANCED FEATURES ==========
+  // ==========================================
+  // ADVANCED FEATURES
+  // ==========================================
+
   forceReauth(): void {
     if (!this.isBrowser) return;
 
@@ -678,13 +810,17 @@ export class SocketService implements OnDestroy {
       socketId: this.socket?.id,
       transport: this.socket?.io?.engine?.transport?.name,
       userId: this.authService.getCurrentUserIDSync(),
+      tenantId: this.tenantId, // ✅ Include tenantId
       reconnectAttempts: this.reconnectAttempts,
       socketUrl: SOCKET_URL,
       isBrowser: true
     };
   }
 
-  // ========== CLEANUP ==========
+  // ==========================================
+  // CLEANUP
+  // ==========================================
+
   disconnect(): void {
     if (!this.isBrowser) return;
 

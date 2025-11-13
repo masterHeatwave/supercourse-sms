@@ -1,172 +1,191 @@
-<!-- notifications.component.html - FIXED with type guards -->
+<!-- src/app/components/messaging/notifications/notifications.component.html -->
+
+<!-- Notification Bell Button -->
 <div class="notification-wrapper">
-  <!-- Notification Bell Icon with Badge -->
-  <i class="pi pi-bell notification-icon" 
-     pBadge 
-     [value]="badgeValue" 
-     severity="danger"
-     (click)="toggleNotificationPanel($event)"
-     pTooltip="Notifications"
-     tooltipPosition="bottom">
-  </i>
+  <p-button
+    #notificationButton
+    icon="pi pi-bell"
+    [badge]="badgeValue"
+    [badgeClass]="hasUnreadNotifications() ? 'p-badge-danger' : ''"
+    styleClass="p-button-text p-button-rounded"
+    [outlined]="true"
+    pTooltip="Notifications"
+    tooltipPosition="bottom"
+    (onClick)="toggleNotificationPanel($event)">
+  </p-button>
 </div>
 
-<!-- Overlay Panel for Notifications -->
+<!-- Notification Panel -->
 <p-overlayPanel 
-  #notificationPanel 
-  [style]="{width: '420px', maxHeight: '600px'}"
-  [showCloseIcon]="false"
+  #notificationPanel
+  [showCloseIcon]="true"
   [dismissable]="true"
+  styleClass="notification-panel"
+  [style]="{'width': '400px', 'max-width': '90vw'}"
   (onShow)="onPanelShow()"
   (onHide)="onPanelHide()">
   
-  <!-- Panel Header -->
-  <div class="notification-header">
-    <h4 class="header-title">Notifications</h4>
-    <div class="header-actions">
-      <button 
-        pButton 
-        type="button" 
-        icon="pi pi-check-square" 
-        class="p-button-text p-button-sm action-btn"
-        pTooltip="Mark all as read"
-        tooltipPosition="top"
-        (click)="markAllAsRead()"
-        [disabled]="unreadCount === 0 || loading">
-      </button>
-      <button 
-        pButton 
-        type="button" 
-        icon="pi pi-trash" 
-        class="p-button-text p-button-sm action-btn"
-        pTooltip="Clear all"
-        tooltipPosition="top"
-        (click)="clearAllNotifications()"
-        [disabled]="notifications.length === 0 || loading">
-      </button>
-      <button 
-        pButton 
-        type="button" 
-        icon="pi pi-times" 
-        class="p-button-text p-button-sm action-btn"
-        pTooltip="Close"
-        tooltipPosition="top"
-        (click)="notificationPanel.hide()">
-      </button>
+  <!-- Header -->
+  <ng-template pTemplate="header">
+    <div class="flex justify-content-between align-items-center w-full px-3 py-2">
+      <h3 class="m-0 text-lg font-semibold">Notifications</h3>
+      
+      <div class="flex gap-2">
+        <!-- Refresh Button -->
+        <p-button
+          icon="pi pi-refresh"
+          styleClass="p-button-text p-button-sm p-button-rounded"
+          pTooltip="Refresh"
+          [disabled]="loading"
+          (onClick)="refreshNotifications()">
+        </p-button>
+        
+        <!-- Mark All as Read -->
+        <p-button
+          *ngIf="hasUnreadNotifications()"
+          icon="pi pi-check-square"
+          label="Mark all read"
+          styleClass="p-button-text p-button-sm"
+          [disabled]="loading"
+          (onClick)="markAllAsRead()">
+        </p-button>
+        
+        <!-- Clear All -->
+        <p-button
+          *ngIf="hasNotifications()"
+          icon="pi pi-trash"
+          styleClass="p-button-text p-button-sm p-button-rounded p-button-danger"
+          pTooltip="Clear all"
+          [disabled]="loading"
+          (onClick)="clearAllNotifications()">
+        </p-button>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Loading State -->
+  <div *ngIf="loading && !hasNotifications()" class="p-4">
+    <div class="flex flex-column gap-3">
+      <div *ngFor="let i of [1,2,3]" class="flex gap-3">
+        <p-skeleton shape="circle" size="3rem"></p-skeleton>
+        <div class="flex-1">
+          <p-skeleton width="100%" height="1rem" styleClass="mb-2"></p-skeleton>
+          <p-skeleton width="80%" height="0.8rem"></p-skeleton>
+        </div>
+      </div>
     </div>
   </div>
-  
-  <!-- Panel Content -->
-  <div class="notification-content">
-    <!-- Loading State -->
-    <div *ngIf="loading && notifications.length === 0" class="state-container">
-      <div class="loading-state">
-        <i class="pi pi-spin pi-spinner loading-icon"></i>
-        <span>Loading notifications...</span>
-      </div>
-    </div>
-    
-    <!-- Error State -->
-    <div *ngIf="error && !loading" class="state-container">
-      <div class="error-state">
-        <i class="pi pi-exclamation-triangle error-icon"></i>
-        <p class="error-message">{{ error }}</p>
-        <button 
-          pButton 
-          type="button" 
-          label="Try Again" 
-          class="p-button-sm p-button-outlined"
-          (click)="retryLoading()">
-        </button>
-      </div>
-    </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="p-5 text-center">
+    <i class="pi pi-exclamation-triangle text-4xl text-red-500 mb-3"></i>
+    <p class="text-600 mb-3">{{ error }}</p>
+    <p-button 
+      label="Try Again" 
+      icon="pi pi-refresh"
+      styleClass="p-button-sm"
+      (onClick)="retryLoading()">
+    </p-button>
+  </div>
+
+  <!-- Notifications List -->
+  <p-scrollPanel 
+    *ngIf="!loading || hasNotifications()"
+    [style]="{'height': hasNotifications() ? '400px' : 'auto', 'max-height': '60vh'}">
     
     <!-- Empty State -->
-    <div *ngIf="!loading && !error && notifications.length === 0" class="state-container">
-      <div class="empty-state">
-        <i class="pi pi-inbox empty-icon"></i>
-        <p>No notifications</p>
-        <span class="empty-subtext">You're all caught up!</span>
-      </div>
+    <div 
+      *ngIf="!hasNotifications() && !error"
+      class="flex flex-column align-items-center justify-content-center p-5 text-center">
+      <i class="pi pi-bell text-5xl text-300 mb-3"></i>
+      <p class="text-600 m-0">{{ getEmptyStateMessage() }}</p>
     </div>
-    
-    <!-- Notifications List -->
-    <div *ngIf="notifications.length > 0 && !error" class="notifications-list">
-      <div 
-        *ngFor="let notification of notifications; trackBy: trackByNotificationId" 
-        class="notification-item"
-        [class.unread]="!notification.isRead"
-        (click)="onNotificationClick(notification)">
-        
-        <!-- Notification Icon -->
-        <div class="notification-icon-container">
-          <i [class]="getNotificationIcon(notification.type)"
-             [style.color]="getNotificationIconColor(notification.type)">
-          </i>
-          <div *ngIf="!notification.isRead" class="unread-indicator"></div>
+
+    <!-- Notification Items -->
+    <div 
+      *ngFor="let notification of notifications; trackBy: trackByNotificationId"
+      class="notification-item"
+      [class.unread]="!notification.isRead"
+      (click)="onNotificationClick(notification)"
+      pRipple>
+      
+      <div class="flex gap-3 p-3">
+        <!-- Icon -->
+        <div class="flex-shrink-0">
+          <div 
+            class="notification-icon"
+            [style.color]="getNotificationIconColor(notification.type)">
+            <i [class]="getNotificationIcon(notification.type)"></i>
+          </div>
         </div>
-        
-        <!-- Notification Content -->
-        <div class="notification-details">
-          <div class="notification-title">{{ notification.title }}</div>
-          <div class="notification-content-text">{{ notification.content }}</div>
-          
-          <!-- ✅ FIXED: Related User Info with type guard -->
-          <div *ngIf="isPopulatedUser(notification.relatedUserId)" class="notification-meta">
-            <span class="related-user">{{ getRelatedUsername(notification.relatedUserId) }}</span>
+
+        <!-- Content -->
+        <div class="flex-1 min-w-0">
+          <div class="flex justify-content-between align-items-start mb-1">
+            <h4 class="notification-title" [class.font-semibold]="!notification.isRead">
+              {{ notification.title }}
+            </h4>
+            <span class="notification-time">
+              {{ formatTime(notification.createdAt) }}
+            </span>
+          </div>
+
+          <p class="notification-content">
+            {{ getShortContent(notification.content) }}
+          </p>
+
+          <!-- Related Info -->
+          <div *ngIf="isPopulatedUser(notification.relatedUserId)" class="notification-meta mt-1">
+            <span class="related-info">{{ getRelatedUsername(notification.relatedUserId) }}</span>
           </div>
           
-          <!-- ✅ FIXED: Related Chat Info with type guard -->
-          <div *ngIf="isPopulatedChat(notification.relatedChatId)" class="notification-meta">
-            <span class="related-chat">in {{ getRelatedChatName(notification.relatedChatId) }}</span>
+          <div *ngIf="isPopulatedChat(notification.relatedChatId)" class="notification-meta mt-1">
+            <span class="related-info">in {{ getRelatedChatName(notification.relatedChatId) }}</span>
           </div>
-          
-          <!-- ✅ FIXED: Timestamp with proper conversion -->
-          <div class="notification-time">{{ formatTime(notification.createdAt) }}</div>
+
+          <!-- Actions -->
+          <div class="flex gap-2 mt-2">
+            <!-- Mark as Read Button -->
+            <p-button
+              *ngIf="!notification.isRead"
+              icon="pi pi-check"
+              label="Mark read"
+              styleClass="p-button-text p-button-sm p-button-secondary"
+              (onClick)="markAsRead(notification._id, $event)">
+            </p-button>
+
+            <!-- Delete Button -->
+            <p-button
+              icon="pi pi-trash"
+              styleClass="p-button-text p-button-sm p-button-danger"
+              pTooltip="Delete"
+              (onClick)="deleteNotification($event, notification._id)">
+            </p-button>
+          </div>
         </div>
-        
-        <!-- Notification Actions -->
-        <div class="notification-actions">
-          <button 
-            *ngIf="!notification.isRead"
-            pButton 
-            type="button" 
-            icon="pi pi-check" 
-            class="p-button-text p-button-sm action-btn"
-            pTooltip="Mark as read"
-            tooltipPosition="left"
-            (click)="markAsRead(notification._id, $event)">
-          </button>
-          <button 
-            pButton 
-            type="button" 
-            icon="pi pi-times" 
-            class="p-button-text p-button-sm action-btn delete-btn"
-            pTooltip="Delete"
-            tooltipPosition="left"
-            (click)="deleteNotification($event, notification._id)">
-          </button>
+
+        <!-- Unread Indicator -->
+        <div 
+          *ngIf="!notification.isRead"
+          class="unread-dot">
         </div>
       </div>
     </div>
-    
+
     <!-- Load More -->
-    <div *ngIf="hasMore && !loading && !error" class="load-more-container">
-      <button 
-        pButton 
-        type="button" 
+    <div *ngIf="hasMore && !loading" class="p-3 text-center">
+      <p-button 
         label="Load More" 
-        class="p-button-text load-more-btn"
-        (click)="loadMore()"
-        [disabled]="loading">
-        <i *ngIf="loading" class="pi pi-spin pi-spinner mr-2"></i>
-      </button>
+        icon="pi pi-chevron-down"
+        styleClass="p-button-text"
+        (onClick)="loadMore()">
+      </p-button>
     </div>
-    
-    <!-- Loading More Indicator -->
-    <div *ngIf="loading && notifications.length > 0" class="loading-more">
-      <i class="pi pi-spin pi-spinner"></i>
-      <span>Loading more...</span>
+
+    <!-- Loading More -->
+    <div *ngIf="loading && hasNotifications()" class="p-3 text-center">
+      <i class="pi pi-spin pi-spinner text-primary"></i>
+      <span class="ml-2 text-600">Loading more...</span>
     </div>
-  </div>
+  </p-scrollPanel>
 </p-overlayPanel>

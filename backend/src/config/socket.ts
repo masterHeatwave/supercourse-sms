@@ -6,38 +6,41 @@ import { MessageService } from '@components/messaging/services/message.service';
 import { ChatService } from '@components/messaging/services/chat.service';
 import mongoose from 'mongoose';
 import { config } from '@config/config';
+import { ChatNotificationService } from '../components/messaging/services/chat-notification.service';
 
 let io: Server;
 
-// ✅ Function to get user from any tenant database
-async function findUserGlobally(userId: string) {
+// ✅ Store socket-specific data (userId and tenantId)
+interface SocketData {
+  userId: string;
+  tenantId: string;
+}
+
+// ✅ Map to store socket data for each connection
+const socketDataMap = new Map<string, SocketData>();
+
+/**
+ * ✅ Find user in tenant-specific collection
+ */
+async function findUserInTenant(userId: string, tenantId: string) {
   try {
-    // Try to import the User model correctly
-    const User = mongoose.connection.model('User');
-
-    // Query the default connection (main database)
-    const user = await User.findById(userId);
-
-    if (user) {
-      console.log('✅ User found in main database');
-      return user;
-    }
-
-    // If not found, try querying the users collection directly
     const db = mongoose.connection.db;
     if (!db) {
       console.error('❌ Database connection is undefined');
       return null;
     }
-    const userDoc = await db.collection('supercourse_users').findOne({
+
+    const collectionName = `${tenantId}_users`;
+
+    const userDoc = await db.collection(collectionName).findOne({
       _id: new mongoose.Types.ObjectId(userId)
     });
 
     if (userDoc) {
-      console.log('✅ User found in users collection directly');
       return userDoc;
     }
 
+    console.warn(`⚠️ User ${userId} not found in ${collectionName}`);
     return null;
   } catch (error) {
     console.error('❌ Error finding user:', error);
@@ -46,7 +49,6 @@ async function findUserGlobally(userId: string) {
 }
 
 export const initializeSocket = (httpServer: HttpServer) => {
-  console.log('🚀 Initializing Socket.IO server...');
 
   io = new Server(httpServer, {
     cors: {
@@ -67,21 +69,49 @@ export const initializeSocket = (httpServer: HttpServer) => {
 
   let messageService: MessageService;
   let chatService: ChatService;
+  let notificationService: ChatNotificationService;
+
+  messageService = new MessageService();
+  messageService.setSocketIO(io);
+  
+  chatService = new ChatService();
+  chatService.setSocketIO(io);
+  
+  notificationService = new ChatNotificationService();
+  notificationService.setSocketIO(io);
 
   io.on('connection', (socket) => {
     console.log('✅ Client connected:', socket.id);
-    console.log('📡 Transport:', socket.conn.transport.name);
 
     // ========== AUTHENTICATION ==========
-    socket.on('authenticate', async (userId: string) => {
+    socket.on('authenticate', async (data: { userId: string; tenantId: string } | string) => {
       try {
-        console.log('🔐 Authenticating user:', userId);
-        console.log('🔍 UserId type:', typeof userId);
-        console.log('🔍 UserId length:', userId?.length);
+        // ✅ Handle both old format (string) and new format (object)
+        let userId: string;
+        let tenantId: string;
+
+        if (typeof data === 'string') {
+          // ✅ OLD FORMAT: Just userId as string (backward compatibility)
+          console.warn('⚠️ Received old authentication format (userId only)');
+          userId = data;
+          tenantId = 'supercourse'; // ✅ Fallback to default tenant
+        } else {
+          // ✅ NEW FORMAT: Object with userId and tenantId
+          userId = data.userId;
+          tenantId = data.tenantId;
+        }
+
+        console.log('🔐 Authentication attempt - userId:', userId, 'tenantId:', tenantId);
 
         if (!userId || typeof userId !== 'string') {
           console.error('❌ Invalid userId provided:', userId);
           socket.emit('authenticationError', { error: 'Invalid user ID' });
+          return;
+        }
+
+        if (!tenantId || typeof tenantId !== 'string') {
+          console.error('❌ Invalid tenantId provided:', tenantId);
+          socket.emit('authenticationError', { error: 'Invalid tenant ID' });
           return;
         }
 
@@ -92,27 +122,30 @@ export const initializeSocket = (httpServer: HttpServer) => {
           return;
         }
 
-        // ✅ Use the global user finder
-        console.log('🔍 Looking up user globally...');
-        const user = await findUserGlobally(userId);
+        // ✅ Find user in tenant-specific collection
+        const user = await findUserInTenant(userId, tenantId);
 
         if (!user) {
-          console.error('❌ User not found in any database:', userId);
+          console.error('❌ User not found:', userId, 'in tenant:', tenantId);
           socket.emit('authenticationError', { error: 'User not found' });
           return;
         }
 
-        console.log('✅ User found:', user._id, user.username || user.email);
+        // ✅ Store tenant context for this socket
+        socketDataMap.set(socket.id, { userId, tenantId });
 
         // Join user to their personal room
         socket.join(`user-${userId}`);
-        console.log(`✅ User ${userId} authenticated and joined room user-${userId}`);
+
+        console.log(`✅ User ${userId} authenticated for tenant ${tenantId}`);
 
         socket.emit('authenticated', {
           userId,
+          tenantId,
           socketId: socket.id,
           message: 'Authentication successful'
         });
+
       } catch (error) {
         console.error('❌ Authentication error:', error);
         socket.emit('authenticationError', {
@@ -130,12 +163,20 @@ export const initializeSocket = (httpServer: HttpServer) => {
           return;
         }
 
+        const socketData = socketDataMap.get(socket.id);
+        if (!socketData) {
+          console.error('❌ User not authenticated, cannot join chat');
+          socket.emit('error', { message: 'Please authenticate first' });
+          return;
+        }
+
         socket.join(`chat-${chatId}`);
-        console.log(`✅ Socket ${socket.id} joined chat ${chatId}`);
+        console.log(`✅ Socket ${socket.id} (user ${socketData.userId}) joined chat ${chatId}`);
 
         socket.to(`chat-${chatId}`).emit('userJoined', {
           chatId,
           socketId: socket.id,
+          userId: socketData.userId,
           timestamp: new Date()
         });
       } catch (error) {
@@ -155,7 +196,7 @@ export const initializeSocket = (httpServer: HttpServer) => {
     // ========== MESSAGE EVENTS ==========
     socket.on('sendMessage', async (data) => {
       try {
-        console.log('📨 Received sendMessage event:', data);
+        console.log('📤 Sending message:', data);
 
         const { chatId, senderId, content, recipientIds, replyToMessageId } = data;
 
@@ -165,8 +206,16 @@ export const initializeSocket = (httpServer: HttpServer) => {
           return;
         }
 
+        const socketData = socketDataMap.get(socket.id);
+        if (!socketData) {
+          console.error('❌ No socket data available - user not authenticated');
+          socket.emit('messageError', { error: 'Authentication required' });
+          return;
+        }
+
+        console.log(`📨 Processing message from user ${senderId} in tenant ${socketData.tenantId}`);
+
         if (!messageService) {
-          const { MessageService } = await import('../components/messaging/services/message.service.js');
           messageService = new MessageService();
           messageService.setSocketIO(io);
         }
@@ -179,12 +228,12 @@ export const initializeSocket = (httpServer: HttpServer) => {
           replyToMessageId
         });
 
-        console.log('✅ Message processed:', message._id);
-
         io.to(`chat-${chatId}`).emit('newMessage', {
           ...message,
           chatId
         });
+
+        console.log('✅ Message sent successfully:', message._id);
 
       } catch (error) {
         console.error('❌ Error sending message:', error);
@@ -218,6 +267,12 @@ export const initializeSocket = (httpServer: HttpServer) => {
     // ========== MESSAGE STATUS ==========
     socket.on('markMessageRead', async (data: { messageId: string; userId: string }) => {
       try {
+        const socketData = socketDataMap.get(socket.id);
+        if (!socketData) {
+          console.error('❌ No socket data for marking message read');
+          return;
+        }
+
         if (!messageService) {
           const { MessageService } = await import('../components/messaging/services/message.service.js');
           messageService = new MessageService();
@@ -238,6 +293,12 @@ export const initializeSocket = (httpServer: HttpServer) => {
 
     socket.on('markMessageDelivered', async (data: { messageId: string; userId: string }) => {
       try {
+        const socketData = socketDataMap.get(socket.id);
+        if (!socketData) {
+          console.error('❌ No socket data for marking message delivered');
+          return;
+        }
+
         if (!messageService) {
           const { MessageService } = await import('../components/messaging/services/message.service.js');
           messageService = new MessageService();
@@ -285,12 +346,41 @@ export const initializeSocket = (httpServer: HttpServer) => {
           return;
         }
 
-        socket.join(`notifications-${userId}`);
-        console.log(`🔔 User ${userId} joined notifications room`);
+        const socketData = socketDataMap.get(socket.id);
+        if (!socketData) {
+          console.error('❌ User not authenticated for notifications');
+          return;
+        }
+
+        console.log(`🔔 User ${userId} (tenant: ${socketData.tenantId}) notifications ready`);
+        
+        socket.emit('notificationsJoined', { 
+          userId, 
+          timestamp: new Date(),
+          rooms: [`user-${userId}`]
+        });
       } catch (error) {
-        console.error('❌ Error joining notifications:', error);
+        console.error('❌ Error in joinNotifications:', error);
       }
     });
+
+    socket.on('markNotificationRead', async (data: { notificationId: string; userId: string }) => {
+      try {
+        console.log('📖 Marking notification as read:', data);
+        
+        socket.emit('notificationMarkedRead', {
+          notificationId: data.notificationId,
+          timestamp: new Date()
+        });
+        
+        io.to(`user-${data.userId}`).emit('notificationMarkedRead', {
+          notificationId: data.notificationId,
+          timestamp: new Date()
+        });
+      } catch (error) {
+        console.error('❌ Error marking notification as read:', error);
+      }
+    }); 
 
     // ========== USER PRESENCE ==========
     socket.on('userOnline', (userId: string) => {
@@ -314,6 +404,13 @@ export const initializeSocket = (httpServer: HttpServer) => {
     // ========== DISCONNECTION ==========
     socket.on('disconnect', (reason) => {
       console.log('❌ Client disconnected:', socket.id, 'Reason:', reason);
+      
+      // ✅ Clean up socket data
+      const socketData = socketDataMap.get(socket.id);
+      if (socketData) {
+        console.log(`🧹 Cleaning up socket data for user ${socketData.userId} (tenant: ${socketData.tenantId})`);
+        socketDataMap.delete(socket.id);
+      }
     });
 
     socket.on('error', (error) => {
@@ -332,7 +429,11 @@ export const initializeSocket = (httpServer: HttpServer) => {
 
 export const emitNotification = (userId: string, notification: any) => {
   if (io) {
-    io.to(`notifications-${userId}`).emit('newNotification', notification);
+    console.log(`🔔 Emitting notification to user-${userId}:`, notification.title);
+    // ✅ Only emit to user room (user is already in this room from authenticate)
+    io.to(`user-${userId}`).emit('newNotification', notification);
+  } else {
+    console.error('❌ Socket.IO not initialized, cannot emit notification');
   }
 };
 

@@ -12,23 +12,42 @@ import {
   MessageType,
 } from '../messaging.interface';
 import { Server as SocketIOServer } from 'socket.io';
+import { ChatNotificationService } from './chat-notification.service';
+import { requestContextLocalStorage } from '@config/asyncLocalStorage';
 
 export class MessageService {
   private io: SocketIOServer | null = null;
+
+  private notificationService: ChatNotificationService;
+
+  constructor() {
+
+    this.notificationService = new ChatNotificationService();
+
+  }
 
   /**
    * Set Socket.IO instance for real-time updates
    */
   setSocketIO(ioInstance: SocketIOServer): void {
     this.io = ioInstance;
+    this.notificationService.setSocketIO(ioInstance);
   }
 
   private getUsersCollectionName(): string {
-    return 'supercourse_users';
+    const tenantId = requestContextLocalStorage.getStore();
+    if (!tenantId) {
+      throw new ErrorResponse('Tenant context not available', StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+    return `${tenantId}_users`;
   }
 
   private getMessagesCollectionName(): string {
-    return 'supercourse_messages';
+    const tenantId = requestContextLocalStorage.getStore();
+    if (!tenantId) {
+      throw new ErrorResponse('Tenant context not available', StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+    return `${tenantId}_messages`;
   }
 
   /**
@@ -111,7 +130,6 @@ export class MessageService {
       }
 
       const message = await Message.create(messageData);
-      console.log('💾 Message saved:', message._id);
 
       chat.lastMessageId = message._id as any;
       chat.lastMessageContent = message.type === MessageType.TEXT ? (payload.content ?? '') : message.type;
@@ -133,6 +151,14 @@ export class MessageService {
         senderId,
         ...messageData.recipientIds.map((id: Types.ObjectId) => id.toString()),
       ]);
+
+      await this.notificationService.createMessageNotificationsWithMuteCheck(
+        senderId,
+        messageData.recipientIds.map((id: Types.ObjectId) => id.toString()),
+        message._id.toString(),
+        chatId,
+        payload.content || '[Attachment]'
+      );
 
       return completeMessage;
     } catch (err: any) {

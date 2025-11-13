@@ -1,52 +1,202 @@
-import { Injectable } from '@angular/core';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { map, tap, catchError } from 'rxjs/operators';
+// src/app/services/messaging/notifications-wrapper.service.ts
+import { Injectable, inject } from '@angular/core';
+import { Observable, BehaviorSubject, Subject, Subscription } from 'rxjs';
+import { map, catchError, tap, filter, shareReplay } from 'rxjs/operators';
 import { MessagingService } from '../../gen-api/messaging/messaging.service';
-import { 
-  Notification, 
+import {
+  Notification,
   NotificationResponse,
   NotificationActionResponse,
-  NotificationType 
+  NotificationType
 } from '@components/messaging/models/notification.models';
+import { SocketService } from '../socket/socket.service';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class NotificationsWrapperService {
+  private socketService = inject(SocketService);
+  
+  // Use shareReplay to ensure single subscription
+  private notificationStream$ = new Subject<Notification>();
+  public realTimeNotifications$ = this.notificationStream$.asObservable().pipe(
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
+  
+  // Unread count management
   private unreadCountSubject = new BehaviorSubject<number>(0);
   public unreadCount$ = this.unreadCountSubject.asObservable();
+  
+  // Cache for notifications
+  private notificationsCache: Notification[] = [];
+  
+  // Track subscriptions to prevent duplicates
+  private socketListenersInitialized = false;
+  private socketSubscription: Subscription | null = null;
+  private readSubscription: Subscription | null = null;
+  
+  // Track processed notification IDs to prevent duplicates
+  private processedNotificationIds = new Set<string>();
+  private readonly MAX_PROCESSED_IDS = 100;
 
-  constructor(private messagingService: MessagingService) {}
+  constructor(private messagingService: MessagingService) {
+    console.log('🔔 NotificationsWrapperService constructed');
+  }
 
   /**
-   * Get notifications for a user with pagination
-   * Backend: GET /messaging/notifications?userId=xxx&page=1&limit=20
-   * 
-   * ✅ FIXED: Pass userId as a separate query parameter
+   * Initialize Socket.IO listeners for real-time notifications
+   * Should be called once when user authenticates
    */
-  getNotifications(
-    userId: string, 
-    page: number = 1, 
-    limit: number = 20
-  ): Observable<NotificationResponse> {
-    // ✅ Create params object with all parameters
-    const params: any = {
-      page: page,
-      limit: limit
-    };
-
-    // ✅ Add userId to params - backend controller reads from req.query.userId
-    if (userId) {
-      params.userId = userId;
+  initializeSocketListeners(): void {
+    if (this.socketListenersInitialized) {
+      console.log('⚠️ Socket listeners already initialized, skipping');
+      return;
     }
+    
+    // ✅ Unsubscribe previous subscriptions if any
+    this.cleanupSocketSubscriptions();
+    
+    // ✅ Listen for new notifications
+    this.socketSubscription = this.socketService.onNewNotification()
+      .pipe(
+        filter(notification => {
+          // ✅ Deduplicate by notification ID
+          if (this.processedNotificationIds.has(notification._id)) {
+            console.log('🔄 Duplicate notification filtered:', notification._id);
+            return false;
+          }
+          return true;
+        })
+      )
+      .subscribe({
+        next: (notification) => {
+          try {
+            console.log('🔔 New notification received in service:', notification);
+            
+            // ✅ Mark as processed
+            this.processedNotificationIds.add(notification._id);
+            
+            // ✅ Limit processed IDs set size
+            if (this.processedNotificationIds.size > this.MAX_PROCESSED_IDS) {
+              const idsArray = Array.from(this.processedNotificationIds);
+              this.processedNotificationIds = new Set(idsArray.slice(-this.MAX_PROCESSED_IDS));
+            }
+    
+            // Convert to Notification model
+            const notificationObj: Notification = {
+              _id: notification._id,
+              userId: notification.userId,
+              type: notification.type as any,
+              title: notification.title,
+              content: notification.content,
+              createdAt: new Date(notification.createdAt),
+              isRead: notification.isRead,
+              isDeleted: false,
+              relatedUserId: notification.relatedUserId,
+              relatedChatId: notification.relatedChatId,
+              relatedMessageId: notification.relatedMessageId
+            };
+            
+            // ✅ Add to cache at the beginning
+            this.notificationsCache.unshift(notificationObj);
+            
+            // ✅ Limit cache size
+            if (this.notificationsCache.length > 100) {
+              this.notificationsCache = this.notificationsCache.slice(0, 100);
+            }
+            
+            // ✅ Emit to subscribers
+            this.notificationStream$.next(notificationObj);
+            
+            // ✅ Increment unread count if notification is unread
+            if (!notification.isRead) {
+              const currentCount = this.unreadCountSubject.value;
+              this.unreadCountSubject.next(currentCount + 1);
+              console.log('🔔 Unread count incremented to:', currentCount + 1);
+            }
+          } catch (error) {
+            console.error('❌ Error processing notification:', error);
+          }
+        },
+        error: (err) => {
+          console.error('❌ Error receiving real-time notification:', err);
+        }
+      });
+    
+    // ✅ Listen for notification read confirmations via Socket.IO
+    this.readSubscription = this.socketService.onNotificationMarkedRead()
+      .subscribe({
+        next: (data) => {
+          
+          // ✅ Update cache
+          const notification = this.notificationsCache.find(n => n._id === data.notificationId);
+          if (notification && !notification.isRead) {
+            notification.isRead = true;
+            
+            // ✅ Decrement unread count
+            const currentCount = this.unreadCountSubject.value;
+            if (currentCount > 0) {
+              this.unreadCountSubject.next(currentCount - 1);
+            }
+          }
+        },
+        error: (err) => {
+          console.error('❌ Error handling notification read event:', err);
+        }
+      });
+
+    this.socketListenersInitialized = true;
+  }
+
+  /**
+   * ✅ Cleanup socket subscriptions
+   */
+  private cleanupSocketSubscriptions(): void {
+    if (this.socketSubscription) {
+      this.socketSubscription.unsubscribe();
+      this.socketSubscription = null;
+    }
+    if (this.readSubscription) {
+      this.readSubscription.unsubscribe();
+      this.readSubscription = null;
+    }
+  }
+
+  /**
+   * ✅ Join notification room when user authenticates
+   */
+  joinNotificationRoom(userId: string): void {
+    if (!userId) {
+      console.warn('⚠️ Cannot join notification room: No userId provided');
+      return;
+    }
+    
+    console.log('🔔 Joining notification room for user:', userId);
+    this.socketService.joinNotifications(userId);
+    
+    // ✅ Initialize socket listeners if not already done
+    if (!this.socketListenersInitialized) {
+      this.initializeSocketListeners();
+    }
+  }
+
+  /**
+   * ✅ Get notifications (HTTP - for initial load only)
+   */
+  getNotifications(userId: string, page = 1, limit = 20): Observable<NotificationResponse> {
+    const params: any = { page, limit };
+    if (userId) params.userId = userId;
 
     return this.messagingService.getMessagingNotifications(params).pipe(
       map((response: any) => {
-        console.log('🔔 Raw notification response:', response);
-        
-        // Update unread count from response
-        if (response.unreadCount !== undefined) {
+        // ✅ Update unread count if provided by backend
+        if (response && typeof response.unreadCount !== 'undefined') {
           this.unreadCountSubject.next(response.unreadCount);
+        }
+        
+        // ✅ Update cache with fetched notifications (only on first page)
+        if (page === 1 && response.notifications) {
+          this.notificationsCache = response.notifications;
+        } else if (page > 1 && response.notifications) {
+          this.notificationsCache = [...this.notificationsCache, ...response.notifications];
         }
         
         return {
@@ -59,158 +209,181 @@ export class NotificationsWrapperService {
           hasMore: response.hasMore || false
         };
       }),
-      catchError((error) => {
-        console.error('❌ Error fetching notifications:', error);
-        throw error;
+      catchError((err) => {
+        console.error('❌ getNotifications error:', err);
+        throw err;
       })
     );
   }
 
   /**
-   * Get unread notifications count
-   * Backend: GET /messaging/notifications/unread/count?userId=xxx
-   * 
-   * ✅ FIXED: The backend endpoint might not accept userId, 
-   * so we'll use getNotifications with limit 1 to get the count
+   * ✅ Get cached notifications
    */
-  getUnreadCount(userId: string): Observable<number> {
-    return this.getNotifications(userId, 1, 1).pipe(
-      map(response => response.unreadCount)
-    );
+  getCachedNotifications(): Notification[] {
+    return [...this.notificationsCache];
   }
 
   /**
-   * Refresh unread count and update the subject
+   * ✅ Get unread count from server
+   */
+  getUnreadCount(userId: string): Observable<number> {
+    return this.getNotifications(userId, 1, 1).pipe(map(res => res.unreadCount));
+  }
+
+  /**
+   * ✅ Refresh unread count from server
    */
   refreshUnreadCount(userId: string): void {
     if (!userId) {
-      console.warn('🔔 Cannot refresh unread count: No userId provided');
+      console.warn('🔔 refreshUnreadCount called without userId');
       return;
     }
-
+    
     this.getUnreadCount(userId).subscribe({
       next: (count: number) => {
         console.log('🔔 Unread count refreshed:', count);
         this.unreadCountSubject.next(count);
       },
-      error: (error) => {
-        console.error('🔔 Error refreshing unread count:', error);
+      error: (err) => {
+        console.error('❌ refreshUnreadCount failed:', err);
       }
     });
   }
 
   /**
-   * Mark a single notification as read
-   * Backend: PATCH /messaging/notifications/:id/read
-   * 
-   * Note: Backend gets userId from req.user.id (auth middleware)
-   * or req.body.userId, so we don't need to pass it in the URL
+   * ✅ Mark notification as read
    */
   markAsRead(notificationId: string, userId: string): Observable<NotificationActionResponse> {
+    // ✅ Optimistically update cache
+    const notification = this.notificationsCache.find(n => n._id === notificationId);
+    if (notification && !notification.isRead) {
+      notification.isRead = true;
+      
+      // ✅ Optimistically decrement unread count
+      const currentCount = this.unreadCountSubject.value;
+      if (currentCount > 0) {
+        this.unreadCountSubject.next(currentCount - 1);
+      }
+    }
+    
+    // ✅ Emit socket event for real-time update
+    this.socketService.markNotificationAsRead(notificationId, userId);
+    
+    // ✅ Call HTTP endpoint to persist
     return this.messagingService.patchMessagingNotificationsIdRead(notificationId).pipe(
-      tap(() => {
-        console.log('🔔 Notification marked as read, refreshing count');
-        this.refreshUnreadCount(userId);
-      }),
       map((response: any) => ({
         success: response.success ?? true,
-        message: response.message || 'Notification marked as read',
+        message: response.message,
         data: response.data
-      })),
-      catchError((error) => {
-        console.error('❌ Error marking notification as read:', error);
-        throw error;
+      } as NotificationActionResponse)),
+      catchError(err => {
+        console.error('❌ markAsRead failed:', err);
+        
+        // ✅ Revert optimistic update
+        if (notification) {
+          notification.isRead = false;
+          const currentCount = this.unreadCountSubject.value;
+          this.unreadCountSubject.next(currentCount + 1);
+        }
+        
+        throw err;
       })
     );
   }
 
-  /**
-   * Mark all notifications as read
-   * Backend: POST /messaging/notifications/read/all
-   */
   markAllAsRead(userId: string): Observable<NotificationActionResponse> {
+    console.log('📖 Marking all notifications as read');
+    
+    this.notificationsCache.forEach(n => n.isRead = true);
+    const previousCount = this.unreadCountSubject.value;
+    this.unreadCountSubject.next(0);
+    
     return this.messagingService.postMessagingNotificationsReadAll().pipe(
-      tap(() => {
-        console.log('🔔 All notifications marked as read');
-        // Update unread count to 0 immediately
-        this.unreadCountSubject.next(0);
-      }),
       map((response: any) => ({
         success: response.success ?? true,
-        message: response.message || 'All notifications marked as read',
+        message: response.message || 'All marked',
         modifiedCount: response.modifiedCount
       })),
-      catchError((error) => {
-        console.error('❌ Error marking all as read:', error);
-        throw error;
+      catchError(err => {
+        console.error('❌ markAllAsRead failed:', err);
+        this.unreadCountSubject.next(previousCount);
+        throw err;
       })
     );
   }
 
-  /**
-   * Delete a single notification (soft delete)
-   * Backend: DELETE /messaging/notifications/:id
-   */
   deleteNotification(notificationId: string, userId: string): Observable<NotificationActionResponse> {
+    console.log('🗑️ Deleting notification:', notificationId);
+    
+    const index = this.notificationsCache.findIndex(n => n._id === notificationId);
+    let removedNotification: Notification | null = null;
+    
+    if (index !== -1) {
+      removedNotification = this.notificationsCache[index];
+      const wasUnread = !removedNotification.isRead;
+      
+      this.notificationsCache.splice(index, 1);
+      
+      if (wasUnread) {
+        const currentCount = this.unreadCountSubject.value;
+        if (currentCount > 0) {
+          this.unreadCountSubject.next(currentCount - 1);
+        }
+      }
+    }
+    
     return this.messagingService.deleteMessagingNotificationsId(notificationId).pipe(
-      tap(() => {
-        console.log('🔔 Notification deleted, refreshing count');
-        this.refreshUnreadCount(userId);
-      }),
       map((response: any) => ({
         success: response.success ?? true,
-        message: response.message || 'Notification deleted',
+        message: response.message || 'Deleted',
         data: response.data
-      })),
-      catchError((error) => {
-        console.error('❌ Error deleting notification:', error);
-        throw error;
+      } as NotificationActionResponse)),
+      catchError(err => {
+        console.error('❌ deleteNotification failed:', err);
+        
+        if (removedNotification) {
+          this.notificationsCache.splice(index, 0, removedNotification);
+          if (!removedNotification.isRead) {
+            const currentCount = this.unreadCountSubject.value;
+            this.unreadCountSubject.next(currentCount + 1);
+          }
+        }
+        
+        throw err;
       })
     );
   }
 
-  /**
-   * Clear all notifications for a user (soft delete all)
-   * Backend: POST /messaging/notifications/clear
-   */
   clearAllNotifications(userId: string): Observable<NotificationActionResponse> {
+    const previousCache = [...this.notificationsCache];
+    const previousCount = this.unreadCountSubject.value;
+    
+    this.notificationsCache = [];
+    this.unreadCountSubject.next(0);
+    
     return this.messagingService.postMessagingNotificationsClear().pipe(
-      tap(() => {
-        console.log('🔔 All notifications cleared');
-        // Update unread count to 0 immediately
-        this.unreadCountSubject.next(0);
-      }),
       map((response: any) => ({
         success: response.success ?? true,
-        message: response.message || 'All notifications cleared',
+        message: response.message || 'Cleared',
         modifiedCount: response.modifiedCount
-      })),
-      catchError((error) => {
-        console.error('❌ Error clearing notifications:', error);
-        throw error;
+      } as NotificationActionResponse)),
+      catchError(err => {
+        console.error('❌ clearAllNotifications failed:', err);
+        this.notificationsCache = previousCache;
+        this.unreadCountSubject.next(previousCount);
+        throw err;
       })
     );
   }
 
-  /**
-   * Get notifications by type
-   * Backend: GET /messaging/notifications/type/:type?userId=xxx&page=1&limit=10
-   */
   getNotificationsByType(
     userId: string,
     type: NotificationType,
-    page: number = 1,
-    limit: number = 10
+    page = 1,
+    limit = 10
   ): Observable<NotificationResponse> {
-    // ✅ Create params with userId
-    const params: any = {
-      page: page,
-      limit: limit
-    };
-
-    if (userId) {
-      params.userId = userId;
-    }
+    const params: any = { page, limit };
+    if (userId) params.userId = userId;
 
     return this.messagingService.getMessagingNotificationsTypeType(type, params).pipe(
       map((response: any) => ({
@@ -222,36 +395,25 @@ export class NotificationsWrapperService {
         totalPages: response.totalPages || 1,
         hasMore: (response.currentPage || page) < (response.totalPages || 1)
       })),
-      catchError((error) => {
-        console.error('❌ Error fetching notifications by type:', error);
-        throw error;
+      catchError(err => {
+        console.error('❌ getNotificationsByType failed:', err);
+        throw err;
       })
     );
   }
 
+  createSystemNotification(userIds: string[], title: string, content: string): Observable<any> {
+    return this.messagingService.postMessagingNotificationsSystem({ userIds, title, content });
+  }
+
   /**
-   * Create system notification (admin only)
-   * Backend: POST /messaging/notifications/system
+   * ✅ Reset service state (useful for logout)
    */
-  createSystemNotification(
-    userIds: string[],
-    title: string,
-    content: string
-  ): Observable<NotificationActionResponse> {
-    return this.messagingService.postMessagingNotificationsSystem({
-      userIds,
-      title,
-      content
-    }).pipe(
-      map((response: any) => ({
-        success: response.success ?? true,
-        message: 'System notification created',
-        data: response.data
-      })),
-      catchError((error) => {
-        console.error('❌ Error creating system notification:', error);
-        throw error;
-      })
-    );
+  resetState(): void {
+    this.cleanupSocketSubscriptions();
+    this.notificationsCache = [];
+    this.unreadCountSubject.next(0);
+    this.socketListenersInitialized = false;
+    this.processedNotificationIds.clear();
   }
 }

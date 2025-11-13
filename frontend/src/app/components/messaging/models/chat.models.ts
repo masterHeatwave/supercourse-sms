@@ -53,7 +53,7 @@ import type {
     displayName?: string;
     userType?: string;
     isOnline?: boolean;
-    lastSeen?: Date;  // ✅ Added this
+    lastSeen?: Date;  
     avatar?: string;
   }
   

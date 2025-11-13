@@ -172,8 +172,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
   
   // ✅ FIX: Change the chatType line in handleIncomingMessage to suppress warning
   private handleIncomingMessage(message: Message & { chatId: string }) {
-    console.log('📨 ChatList: Handling incoming message:', message._id);
-    console.log('📨 Message chatId:', message.chatId, 'Content:', message.content);
     
     const chatId = message.chatId;
     const existingIndex = this.chats.findIndex(c => c._id === chatId);
@@ -181,17 +179,7 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
     const senderId = message.senderId ? String(message.senderId) : null;
     const isFromCurrentUser = senderId === currentUser;
   
-    console.log('📊 Message data:', {
-      chatId,
-      content: message.content,
-      existingIndex,
-      isFromCurrentUser,
-      senderId,
-      currentUser
-    });
-  
     if (existingIndex !== -1) {
-      console.log('✅ Chat found in list, updating...');
       const oldChat = this.chats[existingIndex];
       
       // ✅ FIX: Calculate new unread count

@@ -10,8 +10,19 @@ import Session from '@components/sessions/session.model';
 import Classroom from '@components/classrooms/classroom.model';
 import Absence from '@components/absences/absence.model';
 import { Types } from 'mongoose';
+import { requestContextLocalStorage } from '@config/asyncLocalStorage';
 
 export class TaxiService {
+
+  private getUsersCollectionName(): string {
+    const tenantId = requestContextLocalStorage.getStore();
+    if (!tenantId) {
+      throw new ErrorResponse('Tenant context not available', StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+    return `${tenantId}_users`;
+  }
+
+
   async getAllTaxis(
     filters: {
       academic_year?: string;
@@ -702,7 +713,7 @@ export class TaxiService {
       const taxis = await Taxi.aggregate([
         {
           $lookup: {
-            from: 'supercourse_users',
+            from: this.getUsersCollectionName(),
             localField: 'users',
             foreignField: '_id',
             as: 'usersDetails',
@@ -814,7 +825,7 @@ export class TaxiService {
         { $match: { _id: new Types.ObjectId(taxiId) } },
         {
           $lookup: {
-            from: 'supercourse_users',
+            from: this.getUsersCollectionName(),
             localField: 'users',
             foreignField: '_id',
             as: 'usersDetails',
@@ -929,7 +940,7 @@ export class TaxiService {
       const taxis = await Taxi.aggregate([
         {
           $lookup: {
-            from: 'supercourse_users',
+            from: this.getUsersCollectionName(),
             localField: 'users',
             foreignField: '_id',
             as: 'usersDetails',

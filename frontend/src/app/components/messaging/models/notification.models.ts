@@ -1,4 +1,4 @@
-// notification.models.ts - FIXED with inline populated types
+// notification.models.ts 
 
 export enum NotificationType {
   MESSAGE = 'message',

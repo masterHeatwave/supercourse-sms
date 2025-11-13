@@ -11,9 +11,11 @@ import {
   ChatType,
 } from '../messaging.interface';
 import { Server as SocketIOServer } from 'socket.io';
+import { requestContextLocalStorage } from '@config/asyncLocalStorage';
 
 export class ChatService {
   private io: SocketIOServer | null = null;
+
 
   /**
    * Set Socket.IO instance for real-time updates
@@ -23,11 +25,19 @@ export class ChatService {
   }
 
   private getUsersCollectionName(): string {
-    return 'supercourse_users';
+    const tenantId = requestContextLocalStorage.getStore();
+    if (!tenantId) {
+      throw new ErrorResponse('Tenant context not available', StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+    return `${tenantId}_users`;
   }
 
   private getMessagesCollectionName(): string {
-    return 'supercourse_messages';
+    const tenantId = requestContextLocalStorage.getStore();
+    if (!tenantId) {
+      throw new ErrorResponse('Tenant context not available', StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+    return `${tenantId}_messages`;
   }
 
   /**

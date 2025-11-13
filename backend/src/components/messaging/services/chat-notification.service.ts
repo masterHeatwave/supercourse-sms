@@ -11,10 +11,18 @@ import {
   NotificationType,
 } from '../messaging.interface';
 import { Server as SocketIOServer } from 'socket.io';
+import { requestContextLocalStorage } from '@config/asyncLocalStorage';
 
 export class ChatNotificationService {
   private io: SocketIOServer | null = null;
 
+  private tenantId = requestContextLocalStorage.getStore();
+
+  constructor() {
+
+    this.tenantId = requestContextLocalStorage.getStore();
+
+  }
   /**
    * Set Socket.IO instance for real-time updates
    */
@@ -23,7 +31,37 @@ export class ChatNotificationService {
   }
 
   /**
-   * Create a new notification
+   * Helper: Emit notification safely
+   */
+  // In ChatNotificationService - improve the emitNotification method
+  private emitNotification(userId: string, payload: any): void {
+    if (!this.io) {
+      console.error('❌ Socket.IO instance not available in notification service');
+      return;
+    }
+  
+    // ✅ Use ONLY the user room (user is already joined via authenticate)
+    const userRoom = `user-${userId}`;
+    
+    console.log(`📢 Emitting 'newNotification' to room: ${userRoom}`, {
+      notificationId: payload._id,
+      title: payload.title
+    });
+  
+    // ✅ Emit to user room ONCE
+    this.io.to(userRoom).emit('newNotification', payload);
+    
+    // ✅ Log room info for debugging
+    const roomClients = this.io.sockets.adapter.rooms.get(userRoom)?.size || 0;
+    console.log(`👥 Room ${userRoom} has ${roomClients} client(s)`);
+    
+    if (roomClients === 0) {
+      console.warn(`⚠️ No clients in room ${userRoom} - user may be offline or not authenticated`);
+    }
+  }
+
+  /**
+   * Create a new notification and return it
    */
   async createNotification(notificationData: IChatNotificationCreateDTO): Promise<IChatNotification> {
     try {
@@ -32,11 +70,15 @@ export class ChatNotificationService {
         type: notificationData.type,
         title: notificationData.title,
         content: notificationData.content,
-        relatedUserId: notificationData.relatedUserId ? new Types.ObjectId(notificationData.relatedUserId) : undefined,
+        relatedUserId: notificationData.relatedUserId
+          ? new Types.ObjectId(notificationData.relatedUserId)
+          : undefined,
         relatedMessageId: notificationData.relatedMessageId
           ? new Types.ObjectId(notificationData.relatedMessageId)
           : undefined,
-        relatedChatId: notificationData.relatedChatId ? new Types.ObjectId(notificationData.relatedChatId) : undefined,
+        relatedChatId: notificationData.relatedChatId
+          ? new Types.ObjectId(notificationData.relatedChatId)
+          : undefined,
       });
 
       await notification.populate([
@@ -52,7 +94,7 @@ export class ChatNotificationService {
   }
 
   /**
-   * Create notification for new message with mute check
+   * Create message notifications for all recipients (with mute check if added later)
    */
   async createMessageNotificationsWithMuteCheck(
     senderId: string,
@@ -68,47 +110,25 @@ export class ChatNotificationService {
         throw new ErrorResponse(`Invalid senderId format: ${senderId}`, StatusCodes.BAD_REQUEST);
       }
 
-      const senderObjectId = new Types.ObjectId(senderId);
-
-      const sender = await User.findById(senderObjectId).select('username firstname lastname');
+      const sender = await User.findById(senderId)
+      .select('username firstname lastname') as { _id: Types.ObjectId; username?: string; firstname?: string; lastname?: string } | null;
 
       if (!sender) {
-        console.error('❌ Sender not found with user ID:', senderId);
         throw new ErrorResponse(`Sender not found: ${senderId}`, StatusCodes.NOT_FOUND);
       }
 
-      console.log('✅ Found sender:', sender.username, 'with _id:', sender._id);
-
       const chat = await Chat.findById(chatId);
-      if (!chat) {
-        console.error('❌ Chat not found:', chatId);
-        throw new ErrorResponse(`Chat not found: ${chatId}`, StatusCodes.NOT_FOUND);
-      }
+      if (!chat) throw new ErrorResponse(`Chat not found: ${chatId}`, StatusCodes.NOT_FOUND);
 
       const notifications: IChatNotification[] = [];
       const senderName = sender.username || `${sender.firstname} ${sender.lastname}`;
 
       for (const recipientId of recipientIds) {
-        if (!mongoose.Types.ObjectId.isValid(recipientId)) {
-          console.error('❌ Invalid recipientId format:', recipientId);
-          continue;
-        }
+        if (!mongoose.Types.ObjectId.isValid(recipientId)) continue;
+        if (recipientId === sender._id.toString()) continue;
 
-        const recipientObjectId = new Types.ObjectId(recipientId);
-
-        const senderActualId = sender._id ? sender._id.toString() : senderId;
-        if (recipientId === senderActualId) {
-          console.log(`⏭️ Skipping sender ${recipientId}`);
-          continue;
-        }
-
-        const recipientExists = await User.findById(recipientObjectId);
-        if (!recipientExists) {
-          console.error('❌ Recipient not found with user ID:', recipientId);
-          continue;
-        }
-
-        console.log(`📝 Creating notification for recipient: ${recipientId}`);
+        const recipientExists = await User.exists({ _id: recipientId });
+        if (!recipientExists) continue;
 
         const notificationData: IChatNotificationCreateDTO = {
           userId: recipientId,
@@ -120,32 +140,24 @@ export class ChatNotificationService {
           relatedChatId: chatId,
         };
 
-        try {
-          const notification = await this.createNotification(notificationData);
-          console.log(`✅ Created notification: ${notification._id} for user ${recipientId}`);
-          notifications.push(notification);
+        const notification = await this.createNotification(notificationData);
+        notifications.push(notification);
 
-          if (this.io) {
-            this.io.to(recipientId).emit('newNotification', {
-              _id: notification._id,
-              type: notification.type,
-              title: notification.title,
-              content: notification.content,
-              createdAt: notification.createdAt,
-              isRead: notification.isRead,
-              relatedUserId: notification.relatedUserId,
-              relatedChatId: notification.relatedChatId,
-              relatedMessageId: notification.relatedMessageId,
-            });
-          }
-        } catch (notifError) {
-          console.error(`❌ Failed to create notification for recipient ${recipientId}:`, notifError);
-        }
+        // ✅ Emit real-time notification
+        this.emitNotification(recipientId, {
+          _id: notification._id,
+          type: notification.type,
+          title: notification.title,
+          content: notification.content,
+          createdAt: notification.createdAt,
+          isRead: notification.isRead,
+          relatedUserId: notification.relatedUserId,
+          relatedChatId: notification.relatedChatId,
+          relatedMessageId: notification.relatedMessageId,
+        });
       }
 
-      console.log(
-        `🎉 Successfully created ${notifications.length} notifications (${recipientIds.length - notifications.length} were muted or skipped)`
-      );
+      console.log(`🎉 Created ${notifications.length} notifications successfully`);
       return notifications;
     } catch (error: any) {
       console.error('❌ Error in createMessageNotificationsWithMuteCheck:', error);
@@ -158,8 +170,8 @@ export class ChatNotificationService {
    */
   async getUserNotifications(
     userId: string,
-    page: number = 1,
-    limit: number = 20
+    page = 1,
+    limit = 20
   ): Promise<{
     notifications: IChatNotification[];
     totalCount: number;
@@ -172,27 +184,17 @@ export class ChatNotificationService {
       const skip = (page - 1) * limit;
       const userObjectId = new Types.ObjectId(userId);
 
-      const notifications = await ChatNotification.find({
-        userId: userObjectId,
-        isDeleted: false,
-      })
-        .populate('relatedUserId', 'username avatar firstname lastname')
-        .populate('relatedChatId', 'name type')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean();
-
-      const totalCount = await ChatNotification.countDocuments({
-        userId: userObjectId,
-        isDeleted: false,
-      });
-
-      const unreadCount = await ChatNotification.countDocuments({
-        userId: userObjectId,
-        isRead: false,
-        isDeleted: false,
-      });
+      const [notifications, totalCount, unreadCount] = await Promise.all([
+        ChatNotification.find({ userId: userObjectId, isDeleted: false })
+          .populate('relatedUserId', 'username avatar firstname lastname')
+          .populate('relatedChatId', 'name type')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        ChatNotification.countDocuments({ userId: userObjectId, isDeleted: false }),
+        ChatNotification.countDocuments({ userId: userObjectId, isRead: false, isDeleted: false }),
+      ]);
 
       return {
         notifications: notifications as IChatNotification[],
@@ -209,19 +211,15 @@ export class ChatNotificationService {
   }
 
   /**
-   * Get unread notifications count only
+   * Get unread notification count
    */
   async getUnreadNotificationCount(userId: string): Promise<number> {
     try {
-      const userObjectId = new Types.ObjectId(userId);
-
-      const unreadCount = await ChatNotification.countDocuments({
-        userId: userObjectId,
+      return await ChatNotification.countDocuments({
+        userId: new Types.ObjectId(userId),
         isRead: false,
         isDeleted: false,
       });
-
-      return unreadCount;
     } catch (error: any) {
       console.error('❌ Error getting unread count:', error);
       throw new ErrorResponse(`Error getting unread count: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR);
@@ -229,30 +227,21 @@ export class ChatNotificationService {
   }
 
   /**
-   * Mark single notification as read
+   * Mark a notification as read
    */
   async markNotificationAsRead(notificationId: string, userId: string): Promise<IChatNotification> {
     try {
-      const userObjectId = new Types.ObjectId(userId);
-      const notificationObjectId = new Types.ObjectId(notificationId);
-
       const notification = await ChatNotification.findOneAndUpdate(
         {
-          _id: notificationObjectId,
-          userId: userObjectId,
+          _id: new Types.ObjectId(notificationId),
+          userId: new Types.ObjectId(userId),
           isDeleted: false,
         },
-        {
-          isRead: true,
-          readAt: new Date(),
-        },
+        { isRead: true, readAt: new Date() },
         { new: true }
       ).populate('relatedUserId', 'username avatar firstname lastname');
 
-      if (!notification) {
-        throw new ErrorResponse('Notification not found or already deleted', StatusCodes.NOT_FOUND);
-      }
-
+      if (!notification) throw new ErrorResponse('Notification not found', StatusCodes.NOT_FOUND);
       return notification;
     } catch (error: any) {
       console.error('❌ Error marking notification as read:', error);
@@ -261,62 +250,36 @@ export class ChatNotificationService {
   }
 
   /**
-   * Mark all notifications as read for a user
+   * Mark all notifications as read
    */
   async markAllNotificationsAsRead(userId: string): Promise<{ modifiedCount: number; message: string }> {
     try {
-      const userObjectId = new Types.ObjectId(userId);
-
       const result = await ChatNotification.updateMany(
-        {
-          userId: userObjectId,
-          isRead: false,
-          isDeleted: false,
-        },
-        {
-          isRead: true,
-          readAt: new Date(),
-        }
+        { userId: new Types.ObjectId(userId), isRead: false, isDeleted: false },
+        { isRead: true, readAt: new Date() }
       );
-
-      return {
-        modifiedCount: result.modifiedCount || 0,
-        message: `${result.modifiedCount} notifications marked as read`,
-      };
+      return { modifiedCount: result.modifiedCount || 0, message: `${result.modifiedCount} marked as read` };
     } catch (error: any) {
       console.error('❌ Error marking all notifications as read:', error);
-      throw new ErrorResponse(
-        `Error marking all notifications as read: ${error.message}`,
-        StatusCodes.INTERNAL_SERVER_ERROR
-      );
+      throw new ErrorResponse(`Error marking all as read: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
 
   /**
-   * Soft delete notification
+   * Delete single notification (soft delete)
    */
   async deleteNotification(notificationId: string, userId: string): Promise<IChatNotification> {
     try {
-      const userObjectId = new Types.ObjectId(userId);
-      const notificationObjectId = new Types.ObjectId(notificationId);
-
       const notification = await ChatNotification.findOneAndUpdate(
         {
-          _id: notificationObjectId,
-          userId: userObjectId,
+          _id: new Types.ObjectId(notificationId),
+          userId: new Types.ObjectId(userId),
           isDeleted: false,
         },
-        {
-          isDeleted: true,
-          updatedAt: new Date(),
-        },
+        { isDeleted: true, updatedAt: new Date() },
         { new: true }
       );
-
-      if (!notification) {
-        throw new ErrorResponse('Notification not found or already deleted', StatusCodes.NOT_FOUND);
-      }
-
+      if (!notification) throw new ErrorResponse('Notification not found', StatusCodes.NOT_FOUND);
       return notification;
     } catch (error: any) {
       console.error('❌ Error deleting notification:', error);
@@ -325,27 +288,18 @@ export class ChatNotificationService {
   }
 
   /**
-   * Clear all notifications for a user (soft delete)
+   * Clear all notifications (soft delete)
    */
   async clearAllNotifications(userId: string): Promise<{ modifiedCount: number; message: string }> {
     try {
-      const userObjectId = new Types.ObjectId(userId);
-
       const result = await ChatNotification.updateMany(
-        { userId: userObjectId, isDeleted: false },
-        {
-          isDeleted: true,
-          updatedAt: new Date(),
-        }
+        { userId: new Types.ObjectId(userId), isDeleted: false },
+        { isDeleted: true, updatedAt: new Date() }
       );
-
-      return {
-        modifiedCount: result.modifiedCount || 0,
-        message: `${result.modifiedCount} notifications cleared`,
-      };
+      return { modifiedCount: result.modifiedCount || 0, message: `${result.modifiedCount} cleared` };
     } catch (error: any) {
-      console.error('❌ Error clearing all notifications:', error);
-      throw new ErrorResponse(`Error clearing all notifications: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR);
+      console.error('❌ Error clearing notifications:', error);
+      throw new ErrorResponse(`Error clearing all: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -355,35 +309,23 @@ export class ChatNotificationService {
   async getNotificationsByType(
     userId: string,
     type: NotificationType,
-    page: number = 1,
-    limit: number = 10
-  ): Promise<{
-    notifications: IChatNotification[];
-    totalCount: number;
-    currentPage: number;
-    totalPages: number;
-  }> {
+    page = 1,
+    limit = 10
+  ): Promise<{ notifications: IChatNotification[]; totalCount: number; currentPage: number; totalPages: number }> {
     try {
       const skip = (page - 1) * limit;
       const userObjectId = new Types.ObjectId(userId);
 
-      const notifications = await ChatNotification.find({
-        userId: userObjectId,
-        type,
-        isDeleted: false,
-      })
-        .populate('relatedUserId', 'username avatar firstname lastname')
-        .populate('relatedChatId', 'name type')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean();
-
-      const totalCount = await ChatNotification.countDocuments({
-        userId: userObjectId,
-        type,
-        isDeleted: false,
-      });
+      const [notifications, totalCount] = await Promise.all([
+        ChatNotification.find({ userId: userObjectId, type, isDeleted: false })
+          .populate('relatedUserId', 'username avatar firstname lastname')
+          .populate('relatedChatId', 'name type')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        ChatNotification.countDocuments({ userId: userObjectId, type, isDeleted: false }),
+      ]);
 
       return {
         notifications: notifications as IChatNotification[],
@@ -393,69 +335,25 @@ export class ChatNotificationService {
       };
     } catch (error: any) {
       console.error('❌ Error fetching notifications by type:', error);
-      throw new ErrorResponse(
-        `Error fetching notifications by type: ${error.message}`,
-        StatusCodes.INTERNAL_SERVER_ERROR
-      );
+      throw new ErrorResponse(`Error fetching notifications by type: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
 
   /**
-   * Create system notification (for admin messages, updates, etc.)
+   * Create system notification for one or more users
    */
   async createSystemNotification(userIds: string[], title: string, content: string): Promise<IChatNotification[]> {
     try {
       const notifications: IChatNotification[] = [];
-
       for (const userId of userIds) {
-        const notificationData: IChatNotificationCreateDTO = {
+        const notification = await this.createNotification({
           userId,
           type: NotificationType.SYSTEM,
           title,
           content,
-        };
-
-        const notification = await this.createNotification(notificationData);
+        });
         notifications.push(notification);
-
-        if (this.io) {
-          this.io.to(userId).emit('newNotification', {
-            _id: notification._id,
-            type: notification.type,
-            title: notification.title,
-            content: notification.content,
-            createdAt: notification.createdAt,
-            isRead: notification.isRead,
-          });
-        }
-      }
-
-      return notifications;
-    } catch (error: any) {
-      console.error('❌ Error creating system notification:', error);
-      throw new ErrorResponse(
-        `Error creating system notification: ${error.message}`,
-        StatusCodes.INTERNAL_SERVER_ERROR
-      );
-    }
-  }
-
-  async createWelcomeNotification(userId: string): Promise<IChatNotification> {
-    try {
-      console.log('🎉 Creating welcome notification for user:', userId);
-      
-      const notificationData: IChatNotificationCreateDTO = {
-        userId,
-        type: NotificationType.SYSTEM,
-        title: 'Welcome to Messaging!',
-        content: 'Start chatting with your colleagues and manage your conversations here.',
-      };
-  
-      const notification = await this.createNotification(notificationData);
-      
-      // Emit socket event if connected
-      if (this.io) {
-        this.io.to(userId).emit('newNotification', {
+        this.emitNotification(userId, {
           _id: notification._id,
           type: notification.type,
           title: notification.title,
@@ -464,7 +362,35 @@ export class ChatNotificationService {
           isRead: notification.isRead,
         });
       }
-  
+      return notifications;
+    } catch (error: any) {
+      console.error('❌ Error creating system notification:', error);
+      throw new ErrorResponse(`Error creating system notification: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Create a welcome notification for new users
+   */
+  async createWelcomeNotification(userId: string): Promise<IChatNotification> {
+    try {
+      console.log('🎉 Creating welcome notification for user:', userId);
+      const notification = await this.createNotification({
+        userId,
+        type: NotificationType.SYSTEM,
+        title: 'Welcome to Messaging!',
+        content: 'Start chatting with your colleagues and manage your conversations here.',
+      });
+
+      this.emitNotification(userId, {
+        _id: notification._id,
+        type: notification.type,
+        title: notification.title,
+        content: notification.content,
+        createdAt: notification.createdAt,
+        isRead: notification.isRead,
+      });
+
       return notification;
     } catch (error: any) {
       console.error('❌ Error creating welcome notification:', error);

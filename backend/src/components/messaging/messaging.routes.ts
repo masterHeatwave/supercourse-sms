@@ -21,6 +21,8 @@ const notificationService = new ChatNotificationService();
 const attachmentService = new AttachmentService();
 const reactionService = new ReactionService();
 
+
+
 // Initialize controllers
 const chatController = new ChatController(chatService);
 const messageController = new MessageController(messageService);

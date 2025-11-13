@@ -1,412 +1,550 @@
-// notifications.component.ts 
-import { Component, Input, OnInit, OnDestroy, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
+// src/app/components/messaging/notifications/notifications.component.ts
+
+import { Component, Input, OnInit, OnDestroy, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
-import { OverlayPanelModule } from 'primeng/overlaypanel';
-import { OverlayPanel } from 'primeng/overlaypanel';
+import { BadgeModule } from 'primeng/badge';
+import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
+import { ScrollPanelModule } from 'primeng/scrollpanel';
+import { RippleModule } from 'primeng/ripple';
 import { TooltipModule } from 'primeng/tooltip';
-import { NotificationsWrapperService } from '@services/messaging/notifications-wrapper.service';
-import { SocketService } from '@services/socket/socket.service'; // ✅ ADD THIS
-import { Notification } from '@components/messaging/models/notification.models';
-import { Subscription } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
-import { takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { SkeletonModule } from 'primeng/skeleton';
+import { NotificationsWrapperService } from '../../../services/messaging/notifications-wrapper.service';
+import { Subject, takeUntil, filter } from 'rxjs';
+import { Notification } from '../models/notification.models';
 
 @Component({
   selector: 'app-notifications',
   standalone: true,
-  imports: [CommonModule, BadgeModule, ButtonModule, OverlayPanelModule, TooltipModule],
+  imports: [
+    CommonModule,
+    ButtonModule,
+    BadgeModule,
+    OverlayPanelModule,
+    ScrollPanelModule,
+    RippleModule,
+    TooltipModule,
+    SkeletonModule
+  ],
   templateUrl: './notifications.component.html',
   styleUrls: ['./notifications.component.css']
 })
-export class NotificationsComponent implements OnInit, OnDestroy, OnChanges {
-  @ViewChild('notificationPanel') notificationPanel!: OverlayPanel;
+export class NotificationsComponent implements OnInit, OnDestroy {
   @Input() currentUserId: string = '';
-  
-  unreadCount = 0;
+  @ViewChild('notificationPanel') notificationPanel!: OverlayPanel;
+
+  // ✅ Notifications state
   notifications: Notification[] = [];
-  loading = false;
-  hasMore = false;
-  currentPage = 1;
+  unreadCount = 0;
+  isLoading = false;
   error: string | null = null;
   
-  private subscriptions: Subscription[] = [];
-  private destroy$ = new Subject<void>(); 
+  // ✅ Pagination
+  currentPage = 1;
+  totalPages = 1;
+  hasMore = false;
+  
+  // ✅ Lifecycle management
+  private destroy$ = new Subject<void>();
+  
+  // ✅ Flags
+  private hasLoadedInitialNotifications = false;
+
+  private isComponentInitialized = false;
 
   constructor(
     private notificationsService: NotificationsWrapperService,
-    private socketService: SocketService, 
-    private http: HttpClient
-  ) {}
-
-  get badgeValue(): string {
-    return this.unreadCount > 0 ? this.unreadCount.toString() : '';
-  }
-
-  isPopulatedUser(relatedUserId: any): boolean {
-    return relatedUserId && typeof relatedUserId === 'object' && 'username' in relatedUserId;
-  }
-
-  isPopulatedChat(relatedChatId: any): boolean {
-    return relatedChatId && typeof relatedChatId === 'object' && 'name' in relatedChatId;
-  }
-
-  getRelatedUsername(relatedUserId: any): string {
-    if (this.isPopulatedUser(relatedUserId)) {
-      return relatedUserId.username || 'Unknown User';
-    }
-    return 'Unknown User';
-  }
-
-  getRelatedChatName(relatedChatId: any): string {
-    if (this.isPopulatedChat(relatedChatId)) {
-      return relatedChatId.name || 'Unknown Chat';
-    }
-    return 'Unknown Chat';
+    private cdr: ChangeDetectorRef
+  ) {
+    console.log('🔔 NotificationsComponent constructed');
   }
 
   ngOnInit(): void {
-    console.log('🔔 NotificationsComponent initialized with userId:', this.currentUserId);
     
-    // Subscribe to unread count updates
-    const unreadSub = this.notificationsService.unreadCount$.subscribe(
-      (count: number) => {
-        this.unreadCount = count;
-        console.log('🔔 Unread count updated:', count);
-      }
-    );
-    this.subscriptions.push(unreadSub);
-  
-    if (this.currentUserId) {
-      this.refreshData();
-      this.createWelcomeNotificationIfNeeded();
-      this.setupSocketListeners(); // ✅ ADD THIS
-    } else {
-      console.warn('⚠️ NotificationsComponent: No currentUserId provided!');
+    if (!this.currentUserId) {
+      console.error('❌ NotificationsComponent: No currentUserId provided');
+      return;
     }
-  }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['currentUserId']) {
-      console.log('🔔 UserId changed:', changes['currentUserId'].currentValue);
-      
-      if (this.currentUserId && !changes['currentUserId'].firstChange) {
-        this.refreshData();
-        this.setupSocketListeners(); // ✅ Re-setup sockets with new userId
-      } else if (!this.currentUserId) {
-        this.notifications = [];
-        this.unreadCount = 0;
-      }
+    // ✅ Prevent multiple initializations
+    if (this.isComponentInitialized) {
+      return;
     }
+
+    // ✅ STEP 1: Join notification room via Socket.IO
+    this.joinNotificationRoom();
+
+    // ✅ STEP 2: Setup real-time listeners
+    this.setupRealtimeListeners();
+
+    // ✅ STEP 3: Load initial notifications (HTTP - one time only)
+    this.loadInitialNotifications();
+    
+    this.isComponentInitialized = true;
   }
 
   ngOnDestroy(): void {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
-    this.destroy$.next(); // ✅ Clean up socket subscriptions
+    console.log('🧹 NotificationsComponent destroyed');
+    this.destroy$.next();
     this.destroy$.complete();
   }
 
-  // ✅ NEW: Set up Socket.IO listeners for real-time notifications
-  private setupSocketListeners(): void {
-    if (!this.currentUserId) {
-      console.warn('🔔 Cannot setup socket listeners: No userId');
-      return;
-    }
+  // ==========================================
+  // ✅ INITIALIZATION
+  // ==========================================
 
-    console.log('🔔 Setting up socket listeners for notifications...');
-
-    // Listen for new notifications
-    this.socketService.on('newNotification')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((notification: any) => {
-        console.log('🔔 Socket: New notification received', notification);
-        
-        // Add notification to the top of the list
-        this.notifications.unshift(notification as Notification);
-        
-        // Increment unread count
-        this.unreadCount++;
-        
-        // Show a toast or alert if needed
-        this.showNotificationToast(notification);
-      });
-
-    // Listen for notification read events
-    this.socketService.on('notificationRead')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((data: any) => {
-        console.log('🔔 Socket: Notification marked as read', data);
-        
-        const notification = this.notifications.find(n => n._id === data.notificationId);
-        if (notification && !notification.isRead) {
-          notification.isRead = true;
-          notification.readAt = new Date().toISOString();
-          this.unreadCount = Math.max(0, this.unreadCount - 1);
-        }
-      });
-
-    // Listen for notification deleted events
-    this.socketService.on('notificationDeleted')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((data: any) => {
-        console.log('🔔 Socket: Notification deleted', data);
-        
-        this.notifications = this.notifications.filter(n => n._id !== data.notificationId);
-      });
-
-    console.log('✅ Socket listeners set up for notifications');
+  /**
+   * ✅ Join notification room via Socket.IO
+   */
+  private joinNotificationRoom(): void {
+    console.log('🔔 Joining notification room for user:', this.currentUserId);
+    this.notificationsService.joinNotificationRoom(this.currentUserId);
   }
 
-  // ✅ NEW: Show notification toast (optional)
-  private showNotificationToast(notification: any): void {
-    // You can integrate with PrimeNG Toast here
-    console.log('🔔 New notification:', notification.title);
-    
-    // Example: Play notification sound
-    // this.playNotificationSound();
-  }
+  /**
+   * ✅ Setup real-time Socket.IO listeners
+   */
+  private setupRealtimeListeners(): void {
 
-  private refreshData(): void {
-    if (!this.currentUserId) {
-      console.warn('🔔 Cannot refresh notifications - no userId');
-      return;
-    }
-    
-    console.log('🔔 Refreshing notification data for user:', this.currentUserId);
-    this.notificationsService.refreshUnreadCount(this.currentUserId);
-    this.loadNotifications(1);
-  }
-  
-  onPanelShow(): void {
-    this.error = null;
-    
-    if (!this.currentUserId) {
-      console.warn('🔔 No userId when opening notifications panel');
-      this.error = 'User not authenticated';
-      return;
-    }
-    
-    console.log('🔔 Notification panel opened for user:', this.currentUserId);
-    this.notificationsService.refreshUnreadCount(this.currentUserId);
-    
-    if (this.notifications.length === 0) {
-      this.loadNotifications();
-    }
-  }
-
-  toggleNotificationPanel(event: Event): void {
-    this.notificationPanel.toggle(event);
-  }
-
-  onPanelHide(): void {
-    console.log('🔔 Notification panel closed');
-  }
-
-  loadNotifications(page: number = 1): void {
-    if (!this.currentUserId) {
-      this.error = 'User ID not available';
-      console.error('🔔 Cannot load notifications: No userId');
-      return;
-    }
-  
-    this.loading = true;
-    this.error = null;
-    
-    console.log(`🔔 Loading notifications - Page: ${page}, UserId: ${this.currentUserId}`);
-    
-    this.notificationsService.getNotifications(this.currentUserId, page, 20).subscribe({
-      next: (response) => {
-        console.log('🔔 Notifications loaded:', response);
-        
-        if (response.success) {
-          if (page === 1) {
-            this.notifications = response.notifications;
-          } else {
-            this.notifications.push(...response.notifications);
-          }
+    // ✅ Listen for NEW NOTIFICATIONS via Socket.IO
+    this.notificationsService.realTimeNotifications$
+      .pipe(
+        takeUntil(this.destroy$),
+        filter(notification => !!notification) // Only process valid notifications
+      )
+      .subscribe({
+        next: (notification: Notification) => {
           
-          this.hasMore = response.hasMore;
-          this.currentPage = response.currentPage;
-          this.unreadCount = response.unreadCount;
-        } else {
-          this.error = 'Failed to load notifications';
+          // ✅ Verify this notification is for current user
+          if (notification.userId === this.currentUserId) {
+            // ✅ Add to the TOP of notifications array
+            this.notifications = [notification, ...this.notifications];
+            
+            // ✅ Trigger change detection
+            this.cdr.detectChanges();
+          } else {
+            console.warn('⚠️ Received notification for different user:', notification.userId);
+          }
+        },
+        error: (err) => {
+          console.error('❌ Error in real-time notification stream:', err);
         }
-        this.loading = false;
-      },
-      error: (error: any) => {
-        console.error('🔔 Error loading notifications:', error);
-        this.error = 'Failed to load notifications. Please try again.';
-        this.loading = false;
-      }
-    });
+      });
+
+    // ✅ Subscribe to UNREAD COUNT changes
+    this.notificationsService.unreadCount$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (count: number) => {
+          console.log('🔔 Unread count updated:', count);
+          this.unreadCount = count;
+          this.cdr.detectChanges();
+        }
+      });
+
+    console.log('✅ Real-time listeners setup complete');
   }
 
-  // ... rest of your methods (markAsRead, deleteNotification, etc.) remain the same ...
+  /**
+   * ✅ Load initial notifications (HTTP - one time only on component init)
+   */
+  private loadInitialNotifications(): void {
+    if (this.hasLoadedInitialNotifications) {
+      return;
+    }
 
+    this.isLoading = true;
+    this.error = null;
+
+    this.notificationsService.getNotifications(this.currentUserId, 1, 20)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          console.log('✅ Initial notifications loaded:', response);
+          
+          this.notifications = response.notifications || [];
+          this.unreadCount = response.unreadCount || 0;
+          this.currentPage = response.currentPage || 1;
+          this.totalPages = response.totalPages || 1;
+          this.hasMore = response.hasMore || false;
+          this.isLoading = false;
+          this.hasLoadedInitialNotifications = true;
+          
+          this.cdr.detectChanges();
+        },
+        error: (error: any) => {
+          console.error('❌ Error loading initial notifications:', error);
+          this.error = 'Failed to load notifications. Please try again.';
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  // ==========================================
+  // ✅ DATA LOADING (HTTP - for pagination only)
+  // ==========================================
+
+  /**
+   * ✅ Load more notifications (pagination)
+   */
   loadMore(): void {
-    if (this.hasMore && !this.loading) {
-      console.log('🔔 Loading more notifications...');
-      this.loadNotifications(this.currentPage + 1);
+    if (this.hasMore && !this.isLoading) {
+      
+      this.isLoading = true;
+      const nextPage = this.currentPage + 1;
+
+      this.notificationsService.getNotifications(this.currentUserId, nextPage, 20)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            
+            // ✅ Append to existing notifications
+            this.notifications = [...this.notifications, ...(response.notifications || [])];
+            
+            this.currentPage = response.currentPage || nextPage;
+            this.totalPages = response.totalPages || 1;
+            this.hasMore = response.hasMore || false;
+            this.isLoading = false;
+            
+            this.cdr.detectChanges();
+          },
+          error: (error: any) => {
+            console.error('❌ Error loading more notifications:', error);
+            this.isLoading = false;
+            this.cdr.detectChanges();
+          }
+        });
     }
   }
 
-  markAsRead(notificationId: string, event?: Event): void {
-    if (event) event.stopPropagation();
-    const notification = this.notifications.find(n => n._id === notificationId);
-    if (!notification || notification.isRead) return;
-    if (!this.currentUserId) return;
-    
-    this.notificationsService.markAsRead(notificationId, this.currentUserId).subscribe({
-      next: (response) => {
-        if (response.success) {
-          notification.isRead = true;
-          notification.readAt = new Date().toISOString();
-        }
-      },
-      error: (error: any) => console.error('🔔 Error marking notification as read:', error)
-    });
-  }
-  
-  markAllAsRead(): void {
-    if (this.unreadCount === 0 || !this.currentUserId) return;
-    
-    this.notificationsService.markAllAsRead(this.currentUserId).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.notifications.forEach(n => {
-            if (!n.isRead) {
-              n.isRead = true;
-              n.readAt = new Date().toISOString();
-            }
-          });
-        }
-      },
-      error: (error: any) => console.error('🔔 Error marking all as read:', error)
-    });
+  /**
+   * ✅ Refresh notifications list (reload from server)
+   */
+  refreshNotifications(): void {
+    console.log('🔄 Refreshing notifications');
+    this.hasLoadedInitialNotifications = false;
+    this.currentPage = 1;
+    this.loadInitialNotifications();
   }
 
+  /**
+   * ✅ Retry loading after error
+   */
+  retryLoading(): void {
+    console.log('🔄 Retrying notification load');
+    this.error = null;
+    this.loadInitialNotifications();
+  }
+
+  // ==========================================
+  // ✅ NOTIFICATION ACTIONS
+  // ==========================================
+
+  /**
+   * ✅ Mark notification as read
+   */
+  markAsRead(notificationId: string, event: Event): void {
+    event.stopPropagation();
+
+    console.log('📖 Marking notification as read:', notificationId);
+
+    const notification = this.notifications.find(n => n._id === notificationId);
+    if (!notification || notification.isRead) {
+      console.log('ℹ️ Notification already read or not found');
+      return;
+    }
+
+    // ✅ Call service - it handles both socket emission and HTTP persistence
+    this.notificationsService.markAsRead(notificationId, this.currentUserId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          console.log('✅ Notification marked as read successfully');
+          // Note: The service already updated the cache and unread count optimistically
+          this.cdr.detectChanges();
+        },
+        error: (error: any) => {
+          console.error('❌ Error marking notification as read:', error);
+          // Note: The service already reverted optimistic changes
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  /**
+   * ✅ Mark all notifications as read
+   */
+  markAllAsRead(): void {
+    if (this.unreadCount === 0) {
+      console.log('ℹ️ No unread notifications to mark');
+      return;
+    }
+
+    this.notificationsService.markAllAsRead(this.currentUserId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          // Note: Service already updated cache optimistically
+          this.cdr.detectChanges();
+        },
+        error: (error: any) => {
+          console.error('❌ Error marking all as read:', error);
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  /**
+   * ✅ Delete single notification
+   */
   deleteNotification(event: Event, notificationId: string): void {
     event.stopPropagation();
-    if (!this.currentUserId) return;
-    
-    this.notificationsService.deleteNotification(notificationId, this.currentUserId).subscribe({  
-      next: (response) => {  
-        if (response.success) {
+
+    this.notificationsService.deleteNotification(notificationId, this.currentUserId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          console.log('✅ Notification deleted');
+          
+          // ✅ Remove from local array
           this.notifications = this.notifications.filter(n => n._id !== notificationId);
-          this.notificationsService.refreshUnreadCount(this.currentUserId);
-          if (this.notifications.length === 0) this.loadNotifications(1);
+          
+          this.cdr.detectChanges();
+        },
+        error: (error: any) => {
+          console.error('❌ Error deleting notification:', error);
+          this.cdr.detectChanges();
         }
-      },
-      error: (error: any) => console.error('🔔 Error deleting notification:', error)
-    });
+      });
   }
 
+  /**
+   * ✅ Clear all notifications
+   */
   clearAllNotifications(): void {
-    if (this.notifications.length === 0 || !this.currentUserId) return;
-    
-    this.notificationsService.clearAllNotifications(this.currentUserId).subscribe({  
-      next: (response) => {
-        if (response.success) {
+    if (this.notifications.length === 0) {
+      console.log('ℹ️ No notifications to clear');
+      return;
+    }
+
+    console.log('🗑️ Clearing all notifications');
+
+    this.notificationsService.clearAllNotifications(this.currentUserId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          console.log('✅ All notifications cleared');
+          
+          // ✅ Clear local array
           this.notifications = [];
-          this.notificationPanel.hide();
+          
+          this.cdr.detectChanges();
+        },
+        error: (error: any) => {
+          console.error('❌ Error clearing notifications:', error);
+          this.cdr.detectChanges();
         }
-      },
-      error: (error: any) => console.error('🔔 Error clearing all notifications:', error)
-    });
+      });
   }
 
+  /**
+   * ✅ Handle notification click
+   */
+  onNotificationClick(notification: Notification): void {
+    console.log('👆 Notification clicked:', notification._id);
+
+    // ✅ Mark as read if unread
+    if (!notification.isRead) {
+      this.markAsRead(notification._id, new Event('click'));
+    }
+
+    // ✅ Navigate to related chat if exists
+    if (notification.relatedChatId) {
+      console.log('📱 Navigating to chat:', notification.relatedChatId);
+      // TODO: Emit event to parent component to open chat
+      // this.navigateToChat.emit(notification.relatedChatId);
+    }
+
+    // ✅ Close panel
+    if (this.notificationPanel) {
+      this.notificationPanel.hide();
+    }
+  }
+
+  // ==========================================
+  // ✅ PANEL CONTROLS
+  // ==========================================
+
+  /**
+   * ✅ Toggle notification panel
+   */
+  toggleNotificationPanel(event: Event): void {
+    if (this.notificationPanel) {
+      this.notificationPanel.toggle(event);
+    }
+  }
+
+  /**
+   * ✅ Panel show handler
+   */
+  onPanelShow(): void {
+    console.log('📖 Notification panel opened');
+    // Real-time updates are already active, no need to refresh
+  }
+
+  /**
+   * ✅ Panel hide handler
+   */
+  onPanelHide(): void {
+    console.log('📕 Notification panel closed');
+  }
+
+  // ==========================================
+  // ✅ UI HELPERS
+  // ==========================================
+
+  /**
+   * Get notification icon based on type
+   */
   getNotificationIcon(type: string): string {
     const icons: { [key: string]: string } = {
-      message: 'pi pi-envelope',
-      mention: 'pi pi-at',
-      system: 'pi pi-cog',
-      chat_invite: 'pi pi-users',
-      user_online: 'pi pi-circle-fill text-green-500',
-      user_offline: 'pi pi-circle text-gray-400'
+      'MESSAGE': 'pi pi-envelope',
+      'SYSTEM': 'pi pi-info-circle',
+      'MENTION': 'pi pi-at',
+      'REACTION': 'pi pi-heart',
+      'CHAT': 'pi pi-comments',
+      'USER': 'pi pi-user',
     };
     return icons[type] || 'pi pi-bell';
   }
 
+  /**
+   * Get notification icon color based on type
+   */
   getNotificationIconColor(type: string): string {
     const colors: { [key: string]: string } = {
-      message: '#3B82F6',
-      mention: '#F59E0B',
-      system: '#6B7280',
-      chat_invite: '#10B981',
-      user_online: '#22C55E',
-      user_offline: '#9CA3AF'
+      'MESSAGE': '#3b82f6',
+      'SYSTEM': '#8b5cf6',
+      'MENTION': '#f59e0b',
+      'REACTION': '#ef4444',
+      'CHAT': '#10b981',
+      'USER': '#6366f1',
     };
-    return colors[type] || '#6B7280';
+    return colors[type] || '#6b7280';
   }
 
-  formatTime(dateString: string | Date): string {
-    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+  /**
+   * Format timestamp relative to now
+   */
+  formatTime(date: Date | string): string {
     const now = new Date();
-    const diffInMilliseconds = now.getTime() - date.getTime();
-    const diffInMinutes = Math.floor(diffInMilliseconds / (1000 * 60));
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    const diffInDays = Math.floor(diffInHours / 24);
+    const notificationDate = typeof date === 'string' ? new Date(date) : date;
+    const diffMs = now.getTime() - notificationDate.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
     
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    if (diffInDays === 1) return 'Yesterday';
-    if (diffInDays < 7) return `${diffInDays}d ago`;
-    return date.toLocaleDateString();
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return `${weeks}w ago`;
+    }
+
+    return notificationDate.toLocaleDateString();
   }
 
-  onNotificationClick(notification: Notification): void {
-    if (!notification.isRead) this.markAsRead(notification._id);
-    this.handleNotificationAction(notification);
+  /**
+   * Get short preview of notification content
+   */
+  getShortContent(content: string, maxLength: number = 60): string {
+    if (content.length <= maxLength) return content;
+    return content.substring(0, maxLength) + '...';
   }
 
-  private handleNotificationAction(notification: Notification): void {
-    // Handle navigation based on notification type
-    console.log('🔔 Notification clicked:', notification);
+  /**
+   * Check if there are any notifications
+   */
+  hasNotifications(): boolean {
+    return this.notifications.length > 0;
   }
 
-  retryLoading(): void {
-    this.error = null;
-    this.loadNotifications(1);
+  /**
+   * Check if there are any unread notifications
+   */
+  hasUnreadNotifications(): boolean {
+    return this.unreadCount > 0;
   }
 
+  /**
+   * Get badge display value
+   */
+  get badgeValue(): string {
+    if (this.unreadCount === 0) return '';
+    if (this.unreadCount > 99) return '99+';
+    return this.unreadCount.toString();
+  }
+
+  /**
+   * Get empty state message
+   */
+  getEmptyStateMessage(): string {
+    return this.isLoading 
+      ? 'Loading notifications...' 
+      : 'No notifications yet';
+  }
+
+  /**
+   * Track by function for ngFor optimization
+   */
   trackByNotificationId(index: number, notification: Notification): string {
     return notification._id;
   }
 
-  private createWelcomeNotificationIfNeeded(): void {
-    if (!this.currentUserId) return;
-    
-    this.notificationsService.getNotifications(this.currentUserId, 1, 1).subscribe({
-      next: (response) => {
-        if (response.totalCount === 0) {
-          this.createWelcomeNotification();
-        }
-      },
-      error: (error) => console.error('❌ Error checking notifications:', error)
-    });
+  /**
+   * Type guard for populated user
+   */
+  isPopulatedUser(relatedUserId: any): boolean {
+    return relatedUserId && typeof relatedUserId === 'object' && 'username' in relatedUserId;
   }
 
-  private createWelcomeNotification(): void {
-    const baseUrl = this.getBaseUrl();
-    
-    this.http.post(`${baseUrl}/messaging/notifications/welcome`, {
-      userId: this.currentUserId
-    }).subscribe({
-      next: () => this.refreshData(),
-      error: (error) => console.error('❌ Error creating welcome notification:', error)
-    });
-  }
-
-  private getBaseUrl(): string {
-    if (typeof window !== 'undefined') {
-      const isDev = window.location.hostname === 'localhost';
-      return isDev 
-        ? 'http://localhost:3193/v1'
-        : 'https://api-sms.supercourse.dd.softwebpages.com/v1';
+  /**
+   * Get related username
+   */
+  getRelatedUsername(relatedUserId: any): string {
+    if (this.isPopulatedUser(relatedUserId)) {
+      return relatedUserId.username || 'Unknown User';
     }
-    return 'http://localhost:3193/v1';
+    return '';
+  }
+
+  /**
+   * Type guard for populated chat
+   */
+  isPopulatedChat(relatedChatId: any): boolean {
+    return relatedChatId && typeof relatedChatId === 'object' && ('name' in relatedChatId || 'type' in relatedChatId);
+  }
+
+  /**
+   * Get related chat name
+   */
+  getRelatedChatName(relatedChatId: any): string {
+    if (this.isPopulatedChat(relatedChatId)) {
+      return relatedChatId.name || `${relatedChatId.type} chat` || 'Chat';
+    }
+    return '';
+  }
+
+  /**
+   * Check if loading
+   */
+  get loading(): boolean {
+    return this.isLoading;
   }
 }
