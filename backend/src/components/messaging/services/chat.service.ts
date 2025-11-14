@@ -331,12 +331,10 @@ export class ChatService {
         ]);
 
         if (existingChats.length > 0) {
-          console.log(`📨 Found existing ${type} chat:`, existingChats[0]._id);
           return existingChats[0];
         }
       }
 
-      console.log(`📨 Creating new ${type} chat...`);
       const chatData: any = {
         participants: participantObjectIds,
         type,
@@ -351,7 +349,6 @@ export class ChatService {
       });
 
       const chat = await Chat.create(chatData);
-      console.log('📨 Created new chat:', chat._id);
 
       const populatedChats = await Chat.aggregate([
         { $match: { _id: chat._id } },
@@ -417,11 +414,10 @@ export class ChatService {
    */
   async resetUnreadCount(chatId: string, userId: string): Promise<IChat> {
     try {
-      console.log(`🔄 Resetting unread count for chat ${chatId}, user ${userId}`);
 
       const chat = await Chat.findById(chatId);
-      if (!chat) {
-        throw new ErrorResponse('Chat not found', StatusCodes.NOT_FOUND);
+        if (!chat) {
+          throw new ErrorResponse('Chat not found', StatusCodes.NOT_FOUND);
       }
 
       const userIdStr = userId.toString();
@@ -436,8 +432,6 @@ export class ChatService {
 
       await chat.save();
 
-      console.log(`✅ Reset unread count for user ${userId} in chat ${chatId}`);
-
       return chat;
     } catch (error: any) {
       console.error('❌ Error resetting unread count:', error);
@@ -451,7 +445,6 @@ export class ChatService {
    */
     async updateChat(chatId: string, updates: any, userId?: string): Promise<any> {
       try {
-        console.log('📝 Updating chat:', chatId, 'updates:', updates);
     
         const chat = await Chat.findById(chatId);
         if (!chat) {

@@ -143,6 +143,13 @@
     background: var(--surface-100) !important;
     color: var(--text-color) !important;
   }
+
+  ::ng-deep .p-button:focus,
+  ::ng-deep .p-button:focus-visible {
+    box-shadow: none !important;
+    outline: none !important;
+    border: none !important;
+  }
   
   /* ==========================================
      BADGE

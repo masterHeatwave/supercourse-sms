@@ -62,7 +62,7 @@ export class MessagingWrapperService {
       attachments: message.attachments?.map((att: any) => this.convertAttachmentDates(att)) || []
     };
   }
-
+  
   private convertAttachmentDates(attachment: any): Attachment {
     return {
       ...attachment,
@@ -261,9 +261,10 @@ export class MessagingWrapperService {
   // ========== USER & CLASS METHODS FOR NEW CHAT DIALOG ==========
   
 
-getUsers(): Observable<any[]> {
+getUsers(limit: number = 1000): Observable<any[]> {
   
-  return this.usersApi.getUsers().pipe(
+  return this.usersApi.getUsers({ limit: limit.toString() }).pipe(
+    
     tap((response: any) => {
     }),
     map((response: any) => {
@@ -282,11 +283,8 @@ getUsers(): Observable<any[]> {
         console.warn('⚠️ No users array found in response');
       }
       
-      console.log('✅ Raw extracted users (first 2):', users.slice(0, 2));
-      
       // Transform users with proper ObjectId handling
       const transformedUsers = users.map(user => {
-        console.log('🔍 Raw user _id structure:', user._id);
         
         // Extract the actual ID string from the ObjectId format
         let userId: string;
@@ -308,15 +306,13 @@ getUsers(): Observable<any[]> {
         
         const transformed = {
           _id: userId,
-          user: userId, // Use the extracted ID
+          user: userId,
           username: user.username,
-          userType: user.user_type || user.userType || 'user',
+          userType: user.user_type,
           email: user.email,
           firstname: user.firstname,
           lastname: user.lastname
         };
-        
-        console.log('🔍 Transformed user ID:', transformed._id);
         return transformed;
       });
       
@@ -351,8 +347,7 @@ getClasses(): Observable<any[]> {
           classes = response.classes;
         }
       }
-      
-      console.log('✅ Processed classes:', classes.length);
+    
       
       // Transform class users with proper ObjectId handling
       const transformedClasses = classes.map(classItem => {
@@ -373,7 +368,7 @@ getClasses(): Observable<any[]> {
             _id: userId,
             user: userId,
             username: user.username,
-            userType: user.userType || user.user_type || 'user',
+            userType: user.user_type,
             email: user.email,
             firstname: user.firstname,
             lastname: user.lastname

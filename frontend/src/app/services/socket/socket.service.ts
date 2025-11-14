@@ -101,7 +101,6 @@ export class SocketService implements OnDestroy {
     this.isBrowser = isPlatformBrowser(this.platformId);
     
     if (this.isBrowser) {
-      console.log('🌐 Running in browser - initializing socket');
       
       // ✅ Subscribe to auth state to get tenantId
       this.store.select(selectAuthState).subscribe({
@@ -208,7 +207,6 @@ export class SocketService implements OnDestroy {
 
     // ========== AUTHENTICATION EVENTS ==========
     this.socket.on('authenticated', (data: any) => {
-      console.log('✅ Socket authenticated for user:', data.userId, 'tenant:', data.tenantId);
       this._isAuthenticated.next(true);
 
       // Ensure we store the current userId and join the notifications room
@@ -217,7 +215,6 @@ export class SocketService implements OnDestroy {
         try {
           // Ask the server to put this socket in the notifications room for this user
           this.socket.emit('joinNotifications', data.userId);
-          console.log(`🔔 Requested to join notifications for user ${data.userId}`);
         } catch (err) {
           console.warn('⚠️ Failed to emit joinNotifications:', err);
         }
@@ -328,8 +325,6 @@ export class SocketService implements OnDestroy {
       reject(new Error('TenantId not available'));
       return;
     }
-
-    console.log('🔐 Authenticating with userId:', userId, 'tenantId:', this.tenantId);
 
     const onAuthenticated = (data: any) => {
       console.log('✅ Authentication successful:', data);

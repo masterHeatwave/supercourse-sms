@@ -419,31 +419,6 @@
   }
   
   /* ==============================================
-     UTILITY OVERRIDES FOR PRIMENG COMPONENTS
-     ============================================== */
-  ::ng-deep .p-button.p-button-rounded {
-    border-radius: 50%;
-  }
-  
-  ::ng-deep .p-button.p-button-text {
-    background: transparent;
-    border-color: transparent;
-  }
-  
-  ::ng-deep .p-button.p-button-text:not(:disabled):hover {
-    background: var(--surface-100);
-  }
-  
-  ::ng-deep .p-button.p-button-outlined {
-    border: 1px solid var(--primary-500);
-    color: var(--primary-500);
-  }
-  
-  ::ng-deep .p-button.p-button-outlined:hover {
-    background: var(--primary-50);
-  }
-  
-  /* ==============================================
      DARK MODE SUPPORT (Optional)
      ============================================== */
   @media (prefers-color-scheme: dark) {
