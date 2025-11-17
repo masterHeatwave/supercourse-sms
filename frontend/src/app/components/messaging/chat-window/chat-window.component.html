@@ -30,7 +30,7 @@
         </div>
         <span class="text-sm text-500">{{ getChatSubtitle() }}</span>
         <div *ngIf="typingFrom && !isSentUser(typingFrom)" class="text-xs text-primary">
-          {{ getTypingUserName() }} is typing...
+          {{ getTypingUserName() }} {{ 'messages.is_typing' | translate }}
         </div>
       </div>
     </div>
@@ -39,7 +39,7 @@
       icon="pi pi-ellipsis-v" 
       [rounded]="true" 
       [text]="true"
-      pTooltip="More options"
+      [pTooltip]="'messages.more_options' | translate"
       tooltipPosition="bottom"
       (onClick)="showChatMenu($event, contextMenu)">
     </p-button>
@@ -97,7 +97,7 @@
                 [text]="true"
                 size="small"
                 class="action-btn"
-                pTooltip="Reply"
+                [pTooltip]="'messages.reply' | translate"
                 tooltipPosition="top"
                 (onClick)="startReply(msg)"
                 [style]="{'width': '28px', 'height': '28px'}">
@@ -110,7 +110,7 @@
                 [text]="true"
                 size="small"
                 class="action-btn"
-                pTooltip="Delete"
+                [pTooltip]="'messages.delete' | translate"
                 tooltipPosition="top"
                 (onClick)="deleteMessage(msg)"
                 [style]="{'width': '28px', 'height': '28px'}">
@@ -216,7 +216,7 @@
             <div class="typing-dot bg-600"></div>
             <div class="typing-dot bg-600"></div>
           </div>
-          <span class="text-xs text-600">{{ getTypingUserName() }} is typing</span>
+          <span class="text-xs text-600">{{ getTypingUserName() }} {{ 'messages.is_typing' | translate }}</span>
         </div>
       </div>
 
@@ -226,8 +226,8 @@
         <div class="flex align-items-center gap-2 p-3 surface-100 border-round-2xl">
           <i class="pi pi-spin pi-spinner text-primary"></i>
           <div class="flex flex-column">
-            <span class="text-sm font-medium text-primary">Uploading files...</span>
-            <span class="text-xs text-500">{{ uploadingFiles.length }} file(s) selected</span>
+            <span class="text-sm font-medium text-primary">{{ 'messages.uploading_files' | translate }}</span>
+            <span class="text-xs text-500">{{ uploadingFiles.length }} {{ 'messages.files_selected' | translate }}</span>
           </div>
         </div>
       </div>
@@ -241,7 +241,7 @@
       <i class="pi pi-reply text-blue-600"></i>
       <div class="flex flex-column">
         <span class="text-xs font-medium text-blue-800">
-          Replying to {{ getReplyToSenderName(replyingToMessage) }}
+          {{ 'messages.replying_to' | translate }} {{ getReplyToSenderName(replyingToMessage) }}
         </span>
         <span class="text-xs text-blue-600 overflow-hidden text-overflow-ellipsis" 
               style="max-width: 300px; white-space: nowrap;">
@@ -253,7 +253,7 @@
       [rounded]="true" 
       [text]="true" 
       size="small"
-      pTooltip="Cancel reply"
+      [pTooltip]="'messages.cancel_reply' | translate"
       (onClick)="cancelReply()">
     </p-button>
     </div>
@@ -279,7 +279,7 @@
           [(ngModel)]="newMessage"
           (input)="onMessageInput()" 
           (keydown)="handleKeydown($event)"
-          placeholder="Type your message...">
+          [placeholder]="'messages.type_message' | translate">
         </textarea>
       </div>
       
@@ -288,6 +288,7 @@
         icon="pi pi-send" 
         [rounded]="true"
         [disabled]="!newMessage || !newMessage.trim()"
+        [pTooltip]="'messages.send_message' | translate"
         (onClick)="sendMessage()">
       </p-button>
     </div>

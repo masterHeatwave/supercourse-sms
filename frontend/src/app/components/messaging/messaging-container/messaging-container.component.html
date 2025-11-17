@@ -15,7 +15,7 @@
   <div class="messaging-header">
     <!-- Left: Title and Close Button -->
     <div class="header-left">
-      <h3>Messages</h3>
+      <h3>{{ 'messages.title' | translate }}</h3>
       <button 
         pButton 
         icon="pi pi-times" 
@@ -64,11 +64,12 @@
         (deleteChat)="onDeleteChat($event)">
       </app-chat-window>
       
+      
       <ng-template #noChatSelected>
         <div class="no-chat-selected">
           <div class="icon">💬</div>
-          <p class="title">Select a conversation</p>
-          <p class="subtitle">Choose a conversation to start chatting</p>
+          <p class="title">{{ 'messages.noChat.select' | translate }}</p>
+          <p class="subtitle">{{ 'messages.noChat.subtitle' | translate }}</p>
         </div>
       </ng-template>
     </div>

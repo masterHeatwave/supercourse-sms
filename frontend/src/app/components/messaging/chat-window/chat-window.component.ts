@@ -21,6 +21,7 @@ import { CardModule } from 'primeng/card';
 import { MenuItem } from 'primeng/api';
 import { Menu } from 'primeng/menu';
 import { ScrollPanel } from 'primeng/scrollpanel';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 
 @Component({
@@ -29,7 +30,7 @@ import { ScrollPanel } from 'primeng/scrollpanel';
   imports: [
     CommonModule, FormsModule, AvatarModule, ChipModule, ButtonModule, 
     ScrollPanelModule, TooltipModule, TagModule, MenuModule, CardModule, AttachmentComponent,
-    InputTextareaModule
+    InputTextareaModule, TranslateModule
   ],
   templateUrl: './chat-window.component.html',
   styleUrls: ['./chat-window.component.css']

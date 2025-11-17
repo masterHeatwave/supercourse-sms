@@ -12,6 +12,7 @@ import { MessagingWrapperService } from '../../../services/messaging/messaging-w
 import { Chat } from '../models/chat.models';
 import { Store } from '@ngrx/store';
 import { selectAuthState } from '@store/auth/auth.selectors';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 export interface NewChatData {
   participants: string[];
@@ -59,6 +60,7 @@ interface Class {
     TreeSelectModule,
     ButtonModule,
     InputTextModule,
+    TranslateModule,
     TagModule
   ],
   templateUrl: './new-chat-dialog.component.html',
@@ -85,6 +87,7 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
   private userBranchId: string = '';
   private isActive: boolean = false;
   private userClassIds: string[] = []; // Track user's class memberships
+  private translate: TranslateService = inject(TranslateService);
 
   store = inject(Store);
 
@@ -94,13 +97,6 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
   constructor(private apiService: MessagingWrapperService) {
     this.store.select(selectAuthState).subscribe({
       next: (authState: any) => {
-        console.log('🏢 Auth State:', {
-          role: authState.currentRoleTitle,
-          branch: authState.currentBranchId,
-          userId: authState.userId,
-          isActive: authState.is_active
-        });
-        
         
         this.userRole = authState.currentRoleTitle?.toLowerCase() || '';
         this.userBranchId = authState.currentBranchId || '';
@@ -237,8 +233,6 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
           userType: user.userType,
           branchId: user.branchId || ''
         }));
-
-        console.log(`📊 Final user count: ${this.users.length}`);
         this.isLoadingUsers = false;
         this.buildRecipientTreeIfReady();
       },
@@ -260,7 +254,6 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
     // ✅ Use limit parameter (1000 classes max)
     this.apiService.getClasses().subscribe({
       next: (response: any) => {
-        console.log('✅ Classes loaded:', response.length);
 
         // ✅ Filter classes based on role and membership
         this.classes = response
@@ -448,9 +441,14 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
 
   getChatTypeInfo(): string {
     const count = this.getSelectedUserCount();
-    if (count === 0) return 'Select users to start chatting';
-    if (count === 1) return 'Direct conversation with 1 person';
-    return `Group conversation with ${count} people`;
+  
+    if (count === 0)
+      return this.translate.instant('messages.chat_type.none');
+  
+    if (count === 1)
+      return this.translate.instant('messages.chat_type.single');
+  
+    return this.translate.instant('messages.chat_type.group', { count });
   }
 
   getSelectedUserCount(): number {

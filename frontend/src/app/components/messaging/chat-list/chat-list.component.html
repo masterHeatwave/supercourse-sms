@@ -10,7 +10,7 @@
           pInputText 
           type="text" 
           [(ngModel)]="query" 
-          placeholder="Search conversations..."
+          placeholder="{{ 'messages.search_conversations' | translate }}"
           class="w-full border-round-3xl"
         />
       </span>
@@ -26,7 +26,7 @@
             styleClass="p-button-text p-button-rounded"
             [class.p-button-info]="getActiveFiltersCount() > 0"
             [outlined]="getActiveFiltersCount() === 0"
-            pTooltip="Filter chats"
+            [pTooltip]="'messages.filter_chats' | translate"
             tooltipPosition="bottom"
             (onClick)="filterPanel.toggle($event)">
           </p-button>
@@ -37,17 +37,17 @@
             icon="pi pi-filter-slash"
             styleClass="p-button-text p-button-rounded p-button-sm"
             [outlined]="true"
-            pTooltip="Clear all filters"
+            [pTooltip]="'messages.clear_filters' | translate"
             tooltipPosition="bottom"
             (onClick)="clearAllFilters()">
           </p-button>
         </div>
         
-        <p-button 
-          label="+ New Chat"
+        <p-button
+          [label]="'+' + ' ' + ( 'messages.new_chat' | translate )"
           styleClass="p-button-sm border-round-3xl"
           (onClick)="onNewChatClick()"
-          pTooltip="Start new conversation">
+          [pTooltip]="'messages.start_new_conversation' | translate">
         </p-button>
       </div>
     </div>
@@ -186,14 +186,14 @@
         <div class="flex gap-2">
           <p-button 
             *ngIf="getActiveFiltersCount() > 0"
-            label="Clear Filters"
+            [label]="'messages.clear_filters' | translate"
             icon="pi pi-filter-slash"
             styleClass="p-button-outlined"
             (onClick)="clearAllFilters()">
           </p-button>
           <p-button 
             *ngIf="!query && getActiveFiltersCount() === 0"
-            label="Start New Chat"
+            [label]="'messages.new_chat' | translate"
             icon="pi pi-plus"
             styleClass="p-button-outlined"
             (onClick)="onNewChatClick()">
@@ -212,10 +212,10 @@
   
   <div class="flex flex-column gap-4">
     <div class="flex justify-content-between align-items-center">
-      <h4 class="m-0 text-900">Filter Conversations</h4>
+      <h4 class="m-0 text-900">{{ 'messages.filter_conversations' | translate }}</h4>
       <p-button 
         *ngIf="getActiveFiltersCount() > 0"
-        label="Clear All"
+        [label]="'messages.clear_filters' | translate"
         styleClass="p-button-text p-button-sm"
         icon="pi pi-times"
         (onClick)="clearAllFilters()">
@@ -229,7 +229,7 @@
       
       <!-- Time Filters -->
       <div>
-        <h5 class="mb-2 text-700">Time Period</h5>
+        <h5 class="mb-2 text-700">{{ 'messages.time_period' | translate }}</h5>
         <div class="flex flex-column gap-2">
           <div class="flex align-items-center">
             <p-checkbox 
@@ -238,7 +238,7 @@
               inputId="recent"
               (onChange)="applyFilters()">
             </p-checkbox>
-            <label for="recent" class="ml-2 cursor-pointer">Recent (last 2 days)</label>
+            <label for="recent" class="ml-2 cursor-pointer">{{ 'messages.recent_chats' | translate }}</label>
           </div>
         </div>
       </div>
@@ -247,7 +247,7 @@
 
       <!-- Status Filters -->
       <div>
-        <h5 class="mb-2 text-700">Read Status</h5>
+        <h5 class="mb-2 text-700">{{ 'messages.read_status' | translate }}</h5>
         <div class="flex flex-column gap-2">
           <div class="flex align-items-center">
             <p-checkbox 
@@ -256,7 +256,7 @@
               inputId="unread"
               (onChange)="applyFilters()">
             </p-checkbox>
-            <label for="unread" class="ml-2 cursor-pointer">Unread messages</label>
+            <label for="unread" class="ml-2 cursor-pointer">{{ 'messages.unread_messages' | translate }}</label>
           </div>
           <div class="flex align-items-center">
             <p-checkbox 
@@ -265,7 +265,7 @@
               inputId="read"
               (onChange)="applyFilters()">
             </p-checkbox>
-            <label for="read" class="ml-2 cursor-pointer">Read messages</label>
+            <label for="read" class="ml-2 cursor-pointer">{{ 'messages.read_messages' | translate }}</label>
           </div>
         </div>
       </div>
@@ -274,7 +274,7 @@
 
       <!-- Special Categories -->
       <div>
-        <h5 class="mb-2 text-700">Categories</h5>
+        <h5 class="mb-2 text-700">{{ 'messages.categories' | translate }}</h5>
         <div class="flex flex-column gap-2">
           <div class="flex align-items-center">
             <p-checkbox 
@@ -285,7 +285,7 @@
             </p-checkbox>
             <label for="favorites" class="ml-2 cursor-pointer">
               <i class="pi pi-star-fill text-yellow-500 mr-1"></i>
-              Favorites
+              {{ 'messages.favorites' | translate }}
             </label>
           </div>
           <div class="flex align-items-center">
@@ -297,7 +297,7 @@
             </p-checkbox>
             <label for="archived" class="ml-2 cursor-pointer">
               <i class="pi pi-inbox mr-1"></i>
-              Archived
+              {{ 'messages.archived' | translate }}
             </label>
           </div>
         </div>
@@ -307,7 +307,7 @@
 
       <!-- Sorting -->
       <div>
-        <h5 class="mb-2 text-700">Sort Order</h5>
+        <h5 class="mb-2 text-700">{{ 'messages.sort_order' | translate }}</h5>
         <div class="flex flex-column gap-2">
           <div class="flex align-items-center">
             <p-checkbox 
@@ -318,7 +318,7 @@
             </p-checkbox>
             <label for="alphabetical" class="ml-2 cursor-pointer">
               <i class="pi pi-sort-alpha-down mr-1"></i>
-              Alphabetical
+              {{ 'messages.alphabetical' | translate }}
             </label>
           </div>
         </div>

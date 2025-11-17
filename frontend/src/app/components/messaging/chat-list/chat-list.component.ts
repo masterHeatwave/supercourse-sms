@@ -25,6 +25,7 @@ import { MessagingWrapperService } from '../../../services/messaging/messaging-w
 import { SocketService } from '../../../services/socket/socket.service';
 import { takeUntil, filter, take } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 interface ChatFilters {
   recent: boolean;
@@ -55,6 +56,7 @@ interface ChatFilters {
     TagModule,
     OverlayPanelModule,
     CheckboxModule,
+    TranslateModule,
     NewChatDialogComponent
   ],
   templateUrl: './chat-list.component.html',
@@ -95,7 +97,8 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private chatMenuService: ChatMenuService,
     private api: MessagingWrapperService,
-    private socketService: SocketService
+    private socketService: SocketService,
+    private translate: TranslateService,
   ) {}
   ngOnInit(): void {
     console.log('🚀 ChatListComponent initialized with userId:', this.currentUserId);

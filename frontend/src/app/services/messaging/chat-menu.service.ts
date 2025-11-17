@@ -8,6 +8,7 @@ import { Chat } from '../../components/messaging/models/chat.models';
 import { MessagingWrapperService } from './messaging-wrapper.service';
 import { SocketService } from '../socket/socket.service';
 import { AuthStoreService } from './auth-store.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 export interface ChatMenuActions {
   onChatUpdated?: (chat: Chat, updates: any) => void;
@@ -22,6 +23,7 @@ export class ChatMenuService {
   private api = inject(MessagingWrapperService);
   private socket = inject(SocketService);
   private authService = inject(AuthStoreService);
+  private translate = inject(TranslateService);
   
   // Track chats being deleted/updated to prevent duplicates
   private deletingChats = new Set<string>();
@@ -37,43 +39,60 @@ export class ChatMenuService {
     const currentUserId = this.authService.getCurrentUserIDSync();
     const isDeleting = this.deletingChats.has(chat._id);
     const isUpdating = this.updatingChats.has(chat._id);
+    const hasUnread = (chat.unreadCount?.[currentUserId] || 0) > 0;
 
     return [
       {
-        label: (chat.unreadCount?.[currentUserId] || 0) > 0 ? 'Mark as Read' : 'Mark as Unread',
-        icon: (chat.unreadCount?.[currentUserId] || 0) > 0 ? 'pi pi-check-circle' : 'pi pi-circle',
+        label: this.translate.instant(
+          hasUnread ? 'messages.actions.mark_as_read' : 'messages.actions.mark_as_unread'
+        ),
+        icon: hasUnread ? 'pi pi-check-circle' : 'pi pi-circle',
         command: () => this.toggleReadStatus(chat, actions),
         disabled: isDeleting || isUpdating
       },
       {
-        label: chat.isStarred ? 'Remove from Favorites' : 'Add to Favorites',
+        label: this.translate.instant(
+          chat.isStarred 
+            ? 'messages.actions.remove_from_favorites' 
+            : 'messages.actions.add_to_favorites'
+        ),
         icon: chat.isStarred ? 'pi pi-star-fill' : 'pi pi-star',
         command: () => this.toggleFavorite(chat, actions),
         disabled: isDeleting || isUpdating
       },
       {
-        label: chat.isPinned ? 'Unpin Chat' : 'Pin Chat',
+        label: this.translate.instant(
+          chat.isPinned ? 'messages.actions.unpin_chat' : 'messages.actions.pin_chat'
+        ),
         icon: chat.isPinned ? 'pi pi-thumbtack' : 'pi pi-thumbtack',
         command: () => this.togglePin(chat, actions),
         disabled: isDeleting || isUpdating
       },
       {
-        label: chat.isMuted ? 'Unmute' : 'Mute',
+        label: this.translate.instant(
+          chat.isMuted ? 'messages.actions.unmute' : 'messages.actions.mute'
+        ),
         icon: chat.isMuted ? 'pi pi-volume-up' : 'pi pi-volume-off',
         command: () => this.toggleMute(chat, actions),
         disabled: isDeleting || isUpdating
       },
       {
-        label: chat.isArchived ? 'Unarchive' : 'Archive',
+        label: this.translate.instant(
+          chat.isArchived ? 'messages.actions.unarchive' : 'messages.actions.archive'
+        ),
         icon: chat.isArchived ? 'pi pi-inbox' : 'pi pi-folder',
-        command: () => chat.isArchived ? this.unarchiveChat(chat, actions) : this.archiveChat(chat, actions),
+        command: () => chat.isArchived 
+          ? this.unarchiveChat(chat, actions) 
+          : this.archiveChat(chat, actions),
         disabled: isDeleting || isUpdating
       },
       {
         separator: true
       },
       {
-        label: isDeleting ? 'Deleting...' : 'Delete Chat',
+        label: this.translate.instant(
+          isDeleting ? 'messages.actions.deleting' : 'messages.actions.delete_chat'
+        ),
         icon: isDeleting ? 'pi pi-spin pi-spinner' : 'pi pi-trash',
         styleClass: 'text-red-500',
         command: () => this.confirmDeleteChat(chat, actions),

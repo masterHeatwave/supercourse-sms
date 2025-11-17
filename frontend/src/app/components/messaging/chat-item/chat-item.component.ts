@@ -12,7 +12,7 @@ import { Chat } from '../models/chat.models';
 })
 export class ChatItemComponent {
   @Input() chat!: Chat;
-  @Input() currentUserId: string = ''; // ✅ Now receives from parent
+  @Input() currentUserId: string = ''; 
   @Output() clicked = new EventEmitter<Chat>();
 
   onClick(): void {

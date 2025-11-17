@@ -132,6 +132,7 @@
   
   .reply-bar {
     animation: slide-in 0.3s ease-out;
+    margin-bottom: 20px !important;
     background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
     border-top: 2px solid #3b82f6 !important;
     box-shadow: 0 -2px 8px rgba(59, 130, 246, 0.1) !important;

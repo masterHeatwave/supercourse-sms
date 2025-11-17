@@ -18,6 +18,8 @@ import { MenuItem } from 'primeng/api';
 import { TabMenuModule } from "primeng/tabmenu";
 import { SocketService } from '@services/socket/socket.service';
 import { NotificationsWrapperService } from '@services/messaging/notifications-wrapper.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { combineLatest } from 'rxjs';
 
 @Component({
   selector: 'app-messaging-container',
@@ -29,6 +31,7 @@ import { NotificationsWrapperService } from '@services/messaging/notifications-w
     ChatWindowComponent,
     SidebarModule,
     ButtonModule,
+    TranslateModule,
     NotificationsComponent,
     TabMenuModule
   ],
@@ -63,6 +66,7 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private messagingWrapper: MessagingWrapperService,
     private socketService: SocketService,
+    private translate: TranslateService,
     private notificationsService: NotificationsWrapperService 
   ) {
     console.log('🏗️ MessagingContainerComponent constructed');
@@ -92,20 +96,17 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
    * ✅ Initialize tab menu items
    */
   private initializeTabMenu(): void {
-    this.items = [
-      { 
-        label: 'Chats', 
-        icon: 'pi pi-comments',
-        command: () => this.onTabChange('chats')
-      },
-      { 
-        label: 'Files', 
-        icon: 'pi pi-file',
-        command: () => this.onTabChange('files')
-      }
-    ];
-
-    this.activeItem = this.items[0];
+    combineLatest([
+      this.translate.stream('messages.tabs.chats'),
+      this.translate.stream('messages.tabs.files')
+    ]).subscribe(([chats, files]) => {
+      this.items = [
+        { label: chats,  icon: 'pi pi-comments', command: () => this.onTabChange('chats') },
+        { label: files, icon: 'pi pi-file',      command: () => this.onTabChange('files') }
+      ];
+  
+      this.activeItem = this.items[0];
+    });
   }
 
   /**
@@ -137,7 +138,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
    * ✅ Reset component state (useful for user change or logout)
    */
   private resetComponentState(): void {
-    console.log('🔄 Resetting component state');
     this.chats = [];
     this.selectedChat = null;
     this.hasLoadedInitialChats = false;
@@ -157,8 +157,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('🔐 Ensuring socket authentication for user:', this.currentUserId);
-
     this.socketService.isAuthenticated$
       .pipe(
         takeUntil(this.destroy$),
@@ -166,13 +164,10 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
       )
       .subscribe(isAuthenticated => {
         if (!isAuthenticated && this.socketService.isConnected()) {
-          console.log('🔐 Socket connected but not authenticated, authenticating...');
           this.authenticateSocket();
         } else if (isAuthenticated) {
-          console.log('✅ Socket already authenticated');
           this.onSocketAuthenticated();
         } else {
-          console.log('⏳ Socket not connected yet, waiting...');
           this.waitForSocketConnection();
         }
       });
@@ -184,7 +179,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
   private authenticateSocket(): void {
     this.socketService.authenticate(this.currentUserId)
       .then(() => {
-        console.log('✅ Socket authentication successful');
         this.onSocketAuthenticated();
       })
       .catch(error => {
@@ -202,7 +196,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
    * ✅ Wait for socket connection before authenticating
    */
   private waitForSocketConnection(): void {
-    console.log('⏳ Waiting for socket connection...');
     
     this.socketService.connectionStatus$
       .pipe(
@@ -211,7 +204,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
         take(1)
       )
       .subscribe(() => {
-        console.log('✅ Socket connected, now authenticating');
         this.authenticateSocket();
       });
   }
@@ -220,7 +212,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
    * ✅ Called when socket is authenticated
    */
   private onSocketAuthenticated(): void {
-    console.log('🎉 Socket authenticated, setting up real-time features');
     
     // ✅ Setup socket listeners for real-time updates
     this.setupSocketListeners();
@@ -252,7 +243,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (message: any) => {
-          console.log('📨 New message received in container:', message);
           this.handleNewMessage(message);
         },
         error: (err) => {
@@ -281,7 +271,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data: any) => {
-          console.log('📖 Message read event:', data);
           this.handleMessageRead(data);
         },
         error: (err) => {
@@ -293,7 +282,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data: any) => {
-          console.log('💬 Chat updated event:', data);
           this.handleChatUpdate(data);
         },
         error: (err) => {
@@ -305,7 +293,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data: any) => {
-          console.log('⌨️ Typing event:', data);
           this.handleTypingIndicator(data);
         },
         error: (err) => {
@@ -325,7 +312,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
    * ✅ Handle new message event
    */
   private handleNewMessage(message: any): void {
-    console.log('📨 Handling new message:', message._id);
     
     const chatIndex = this.chats.findIndex(c => c._id === message.chatId);
     
@@ -349,9 +335,7 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
       this.chats.splice(chatIndex, 1);
       this.chats.unshift(chat);
       
-      console.log('✅ Chat list updated with new message');
     } else {
-      console.log('⚠️ Chat not found in list, reloading chats...');
       this.loadChats();
     }
   }
@@ -383,7 +367,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
    * ✅ Handle message read event
    */
   private handleMessageRead(data: any): void {
-    console.log('📖 Handling message read event:', data);
     
     const chat = this.chats.find(c => c._id === data.chatId);
     if (chat && chat.unreadCount) {
@@ -399,12 +382,10 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
    * ✅ Handle chat update event
    */
   private handleChatUpdate(data: any): void {
-    console.log('💬 Handling chat update:', data);
     
     const chat = this.chats.find(c => c._id === data.chatId);
     if (chat) {
       Object.assign(chat, data.updates);
-      console.log('✅ Chat updated in list:', chat._id);
     }
   }
 
@@ -412,7 +393,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
    * ✅ Handle typing indicator event
    */
   private handleTypingIndicator(data: any): void {
-    console.log('⌨️ Handling typing indicator:', data);
     // You can show typing indicators in chat list if needed
   }
 
@@ -541,22 +521,18 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
   // ==========================================
 
   show(): void {
-    console.log('👁️ Showing messaging panel');
     this.isVisible = true;
     
     if (this.currentUserId && !this.hasLoadedInitialChats) {
-      console.log('📞 Loading chats on panel open');
       this.loadChats();
     }
   }
 
   hide(): void {
-    console.log('👁️ Hiding messaging panel');
     this.isVisible = false;
   }
 
   toggle(): void {
-    console.log('👁️ Toggling messaging panel');
     if (this.isVisible) {
       this.hide();
     } else {
@@ -573,12 +549,10 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
   // ==========================================
 
   onSelectChat(chat: Chat): void {
-    console.log('💬 Chat selected:', chat._id);
     this.selectedChat = chat;
   }
 
   onChatCreated(chatData: any): void {
-    console.log('💬 Chat created:', chatData);
     this.loadChats();
     
     this.messageService.add({
@@ -590,7 +564,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
   }
 
   onChatUpdated(event: { chat: Chat; updates: any }): void {
-    console.log('💬 Chat updated:', event);
     
     const index = this.chats.findIndex(c => c._id === event.chat._id);
     if (index !== -1) {
@@ -606,7 +579,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
   }
 
   onDeleteChat(chat: Chat): void {
-    console.log('💬 Chat deleted:', chat._id);
     
     this.chats = this.chats.filter(c => c._id !== chat._id);
     

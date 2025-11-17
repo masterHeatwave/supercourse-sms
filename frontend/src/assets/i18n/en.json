@@ -769,5 +769,73 @@
         "registration_date": "Registration date"
       }
     }
+  },
+  "messages": {
+      "title": "Messages",
+      "new_chat": "New Chat",
+      "start_new_conversation": "Start a new conversation",
+      "search_conversations": "Search conversations...",
+        "tabs": {
+            "chats": "Chats",
+            "files": "Files"
+     },
+     "filter_chats": "Filter chats",
+     "clear_filters": "Clear filters",
+     "filter_conversations": "Filter conversations",
+     "time_period": "Time Period",
+     "read_status": "Read Status",
+     "recent_chats": "Recent Chats",
+     "unread_messages": "Unread messages",
+     "read_messages": "Read messages",
+     "categories": "Categories",
+     "favorites": "Favorites",
+     "archived": "Archived",
+     "sort_order": "Sort order",
+     "alphabetical": "Alphabetical (A-Z)",
+     "cancel_reply": "Cancel reply",
+     "type_message": "Type your message...",
+     "replying_to": "Replying to",
+     "uploading_files": "Uploading files...",
+     "files_selected": "files selected",
+     "is_typing": "is typing...",
+     "more_options": "More options",
+     "reply": "Απάντηση",
+     "delete": "Διαγραφή",
+     "send_message": "Send Message",
+     "attach_files": "Attach Files",
+     "actions": {
+      "mark_as_read": "Mark as Read",
+      "mark_as_unread": "Mark as Unread",
+      "add_to_favorites": "Add to Favorites",
+      "remove_from_favorites": "Remove from Favorites",
+      "pin_chat": "Pin Chat",
+      "unpin_chat": "Unpin Chat",
+      "mute": "Mute",
+      "unmute": "Unmute",
+      "archive": "Archive",
+      "unarchive": "Unarchive",
+      "delete_chat": "Delete Chat",
+      "deleting": "Deleting..."
+    },
+     "new_chat_dialog": {
+        "start_new_conversation": "Start a new conversation",
+        "select_recipients": "Select recipients",
+        "categories_available": "{{count}} categories available",
+        "select_users": "Select one or more users to start a conversation",
+        "group_name": "Group Name (optional)",
+        "enter_group_name": "Enter group name",
+        "cancel_chat_dialog": "Cancel",
+        "create_chat_dialog": "Create",
+        "selected_users": "Selected users"
+      },
+      "chat_type": {
+        "none": "Select users to start chatting",
+        "single": "Direct conversation with 1 person",
+        "group": "Group conversation with 2 or more people"
+    },
+     "noChat": {
+      "select": "Select a conversation",
+      "subtitle": "Choose a conversation to start chatting"
+    }
   }
 }

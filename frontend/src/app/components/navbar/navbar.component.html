@@ -17,7 +17,7 @@
           pButton 
           icon="pi pi-comment" 
           class="p-button-text p-button-rounded"
-          pTooltip="Messages"
+          [pTooltip]="'messages.title' | translate"
           tooltipPosition="bottom"
           (click)="openMessaging()"
           style="font-size: 1.5rem">
