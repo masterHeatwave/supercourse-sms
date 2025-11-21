@@ -6,7 +6,7 @@ import AcademicYear from '@components/academic/academic-years.model';
 import AcademicPeriod from '@components/academic/academic-periods.model';
 import AcademicSubperiod from '@components/academic/academic-subperiods.model';
 import User from '@components/users/user.model';
-import Session from '@components/sessions/session.model';
+import Session, { SessionSchema } from '@components/sessions/session.model';
 import Classroom from '@components/classrooms/classroom.model';
 import Absence from '@components/absences/absence.model';
 import { Types } from 'mongoose';
@@ -352,36 +352,151 @@ export class TaxiService {
   }
 
   async createTaxi(taxiData: ITaxiCreateDTO) {
+    // Validation
     const academicYear = await AcademicYear.findById(taxiData.academic_year);
     if (!academicYear) {
-      console.error('Academic year not found:', taxiData.academic_year);
       throw new ErrorResponse('Academic year not found', StatusCodes.NOT_FOUND);
     }
-
+  
     const academicPeriod = await AcademicPeriod.findById(taxiData.academic_period);
     if (!academicPeriod) {
-      console.error('Academic period not found:', taxiData.academic_period);
       throw new ErrorResponse('Academic period not found', StatusCodes.NOT_FOUND);
     }
-
+  
     if (taxiData.users && taxiData.users.length > 0) {
       const foundUsers = await User.find({ _id: { $in: taxiData.users } });
       if (foundUsers.length !== taxiData.users.length) {
-        console.error('User count mismatch. Expected:', taxiData.users.length, 'Found:', foundUsers.length);
         throw new ErrorResponse('One or more users not found', StatusCodes.NOT_FOUND);
       }
     }
-
+  
+    // Create taxi
     const taxi: ITaxi = await Taxi.create(taxiData);
-
-    // Update users' taxis arrays if users were provided
+    console.log('✅ Taxi created:', taxi._id, taxi.name);
+  
+    // Update users
     if (taxiData.users && taxiData.users.length > 0) {
-      await User.updateMany({ _id: { $in: taxiData.users } }, { $addToSet: { taxis: taxi._id } });
+      await User.updateMany(
+        { _id: { $in: taxiData.users } },
+        { $addToSet: { taxis: taxi._id } }
+      );
+      console.log('✅ Updated users with taxi reference');
     }
-
+  
+    // ✅ Create group chat for this class
+    try {
+      const classChat = await this.createClassGroupChat(taxi, taxiData.users || []);
+      if (classChat) {
+        console.log('✅ Group chat created successfully for class:', {
+          chatId: classChat._id,
+          className: taxi.name,
+          participantCount: (taxiData.users || []).length
+        });
+      }
+    } catch (error) {
+      // IMPORTANT: Log but don't throw - taxi creation succeeded
+      console.error('⚠️ Warning: Group chat creation failed (non-critical):', error);
+      // Could send notification to admin about failed chat creation
+    }
+  
     const populatedTaxi = await this.getTaxiById(taxi.id);
     return populatedTaxi;
   }
+
+  private async createClassGroupChat(taxi: any, userIds: string[]): Promise<any> {
+    try {
+      console.log('📊 Creating group chat for class:', taxi.name);
+  
+      // Remove duplicates
+      const participants = Array.from(new Set(userIds));
+  
+      // Validation: Need at least 2 participants
+      if (participants.length < 2) {
+        console.warn(
+          `⚠️ Class "${taxi.name}" has ${participants.length} participants. ` +
+          `Skipping chat creation (minimum 2 required).`
+        );
+        return null;
+      }
+  
+      console.log(`📋 Creating chat with ${participants.length} participants`);
+  
+      // Convert participant strings to ObjectId
+      const participantObjectIds = participants.map(
+        id => new Types.ObjectId(id)
+      );
+  
+      // Import Chat model
+      const Chat = require('../messaging/models/chat.model').default;
+  
+      // Prepare chat data
+      const chatData: any = {
+        participants: participantObjectIds,
+        type: 'group', // This is always a group chat
+        name: this.formatChatName(taxi), // e.g., "Biology 101 - Advanced"
+        taxiId: taxi._id, // Link to this taxi
+        sessions: [], // Will be populated as sessions are created
+        classMetadata: {
+          subject: taxi.subject || '',
+          level: taxi.level || '',
+          branch: taxi.branch || '',
+        },
+        lastMessageContent: this.getWelcomeMessage(taxi),
+        lastMessagedAt: new Date(),
+        unreadCount: new Map(),
+        
+        // Global settings (not per-user)
+        isStarred: false,
+        isPinned: true, // Automatically pin class chats
+        isMuted: false,
+        isArchived: false,
+      };
+  
+      // Initialize unread count for all participants
+      participantObjectIds.forEach(participantId => {
+        chatData.unreadCount.set(participantId.toString(), 0);
+      });
+  
+      // Create the chat
+      const classChat = await Chat.create(chatData);
+  
+      console.log('✅ Class group chat created:', {
+        chatId: classChat._id,
+        name: classChat.name,
+        participants: classChat.participants.length,
+        taxiId: classChat.taxiId,
+      });
+  
+      return classChat;
+    } catch (error: any) {
+      console.error('❌ Error in createClassGroupChat:', {
+        error: error.message,
+        taxiName: taxi.name,
+        stack: error.stack,
+      });
+      throw error;
+    }
+  }
+
+  private formatChatName(taxi: any): string {
+    let name = taxi.name || 'Class';
+    
+    if (taxi.level) {
+      name += ` - ${taxi.level}`;
+    }
+    
+    if (taxi.subject) {
+      name += ` (${taxi.subject})`;
+    }
+    
+    return name;
+  }
+
+  private getWelcomeMessage(taxi: any): string {
+    return `Welcome to ${taxi.name}! 📚 This is the class group chat. ` +
+           `Share materials, ask questions, and collaborate here.`;
+  }
+  
 
   async updateTaxi(id: string, taxiData: ITaxiUpdateDTO) {
     const taxiDoc = await Taxi.findById(id);

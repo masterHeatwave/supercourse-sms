@@ -2,8 +2,8 @@
 
 import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Subject } from 'rxjs';
-import { takeUntil, finalize, filter, take } from 'rxjs/operators';
+import { of, Subject } from 'rxjs';
+import { takeUntil, finalize, filter, take, switchMap, tap, map, catchError } from 'rxjs/operators';
 import { AuthStoreService } from '@services/messaging/auth-store.service';
 import { ChatListComponent } from '../chat-list/chat-list.component';
 import { ChatWindowComponent } from '../chat-window/chat-window.component';
@@ -20,6 +20,7 @@ import { SocketService } from '@services/socket/socket.service';
 import { NotificationsWrapperService } from '@services/messaging/notifications-wrapper.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { combineLatest } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-messaging-container',
@@ -60,6 +61,7 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
   // ✅ Flags
   private hasLoadedInitialChats = false;
   private socketListenersInitialized = false;
+  cdr: any;
 
   constructor(
     private authStore: AuthStoreService, 
@@ -67,9 +69,11 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
     private messagingWrapper: MessagingWrapperService,
     private socketService: SocketService,
     private translate: TranslateService,
-    private notificationsService: NotificationsWrapperService 
+    private notificationsService: NotificationsWrapperService, 
+    private activatedRoute: ActivatedRoute,
+
   ) {
-    console.log('🏗️ MessagingContainerComponent constructed');
+
   }
 
   ngOnInit(): void {
@@ -80,6 +84,8 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
     
     // ✅ Subscribe to user authentication changes
     this.subscribeToAuthChanges();
+
+    this.handleClassChatNavigation();
   }
 
   ngOnDestroy(): void {
@@ -448,6 +454,107 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
     }
   }
 
+  private handleClassChatNavigation(): void {
+    this.activatedRoute.queryParams
+      .pipe(
+        takeUntil(this.destroy$),
+        filter(params => !!params['taxiId'])
+      )
+      .subscribe(params => {
+        const taxiId = params['taxiId'];
+        const sessionId = params['sessionId'];
+  
+        console.log('📍 [MessagingContainer] Class chat navigation triggered:', {
+          taxiId,
+          sessionId
+        });
+  
+        // Ensure the messaging container is visible
+        this.isVisible = true;
+  
+        // Load and select the class chat
+        this.loadAndSelectClassChat(taxiId, sessionId);
+      });
+  }
+  
+  private loadAndSelectClassChat(taxiId: string, sessionId?: string): void {
+    console.log('📡 [MessagingContainer] Loading class chat for taxi:', taxiId);
+  
+    // Use observable chain to ensure proper sequencing
+    this.ensureChatsLoaded().pipe(
+      switchMap(() => this.messagingWrapper.getClassChat(taxiId)),
+      takeUntil(this.destroy$),
+      finalize(() => {
+        console.log('✅ [MessagingContainer] Class chat load attempt completed');
+      })
+    ).subscribe({
+      next: (chat) => {
+        console.log('✅ [MessagingContainer] Class chat loaded successfully:', {
+          chatId: chat._id,
+          name: chat.name,
+          participants: chat.participantsDetails?.length || 0
+        });
+  
+        this.selectChat(chat);
+  
+        // ✅ Store session ID for later use
+        if (sessionId) {
+          sessionStorage.setItem('scrollToSession', sessionId);
+          console.log('💾 Session ID stored for later scroll:', sessionId);
+        }
+      },
+      error: (error) => {
+        console.error('❌ [MessagingContainer] Error loading class chat:', error.message);
+        
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error.message || 'Failed to load class chat',
+          life: 5000
+        });
+      }
+    });
+  }
+
+  private selectChat(chat: Chat): void {
+    // Add to chat list if not already there
+    const chatExists = this.chats.some(c => c._id === chat._id);
+    if (!chatExists) {
+      this.chats.unshift(chat);
+      console.log('➕ Chat added to list');
+    }
+  
+    // Select the chat
+    this.selectedChat = chat;
+    console.log('✅ Chat selected:', chat._id);
+  }
+  
+  /**
+   * ✅ Ensure chats are loaded before proceeding (returns Observable)
+   */
+  private ensureChatsLoaded() {
+    if (this.chats.length > 0 || this.hasLoadedInitialChats) {
+      console.log('✅ Chats already loaded, proceeding...');
+      return of(true);
+    }
+    
+    console.log('📞 Loading chats before class chat...');
+    return this.messagingWrapper.getUserChats(this.currentUserId).pipe(
+      tap(chats => {
+        this.chats = chats;
+        this.hasLoadedInitialChats = true;
+        console.log(`✅ Loaded ${chats.length} chat(s) for class chat selection`);
+      }),
+      map(() => true),
+      catchError(error => {
+        console.error('❌ Error loading chats:', error);
+        // Even if chats fail to load, we can still try to load the class chat
+        return of(true);
+      })
+    );
+  }
+
+
   // ==========================================
   // ✅ DATA LOADING (HTTP)
   // ==========================================
@@ -515,6 +622,7 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
         }
       });
   }
+
 
   // ==========================================
   // ✅ UI CONTROLS

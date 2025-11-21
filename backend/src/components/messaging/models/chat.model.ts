@@ -69,6 +69,23 @@ const ChatSchema: Schema<IChat> = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    taxiId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Taxi',
+      default: null,
+      index: true,
+    },
+    sessionId: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Session',
+      }
+    ],
+    classMetadata: {
+      subject: String,
+      level: String,
+      branch: String,
+    },
   },
   {
     timestamps: true,
@@ -77,8 +94,6 @@ const ChatSchema: Schema<IChat> = new mongoose.Schema(
   }
 );
 
-// ❌ REMOVE all getUserSettings and updateUserSettings methods
-// Keep the schema simple
 
 // ==================== INDEXES ====================
 ChatSchema.index({ participants: 1, type: 1 });
@@ -125,6 +140,17 @@ ChatSchema.statics.findDirectChat = async function (
     type: ChatType.DIRECT,
     participants: { $all: participants },
     $expr: { $eq: [{ $size: '$participants' }, participants.length] },
+  })
+    .populate('participants', 'firstname lastname email avatar username isOnline lastSeen')
+    .exec();
+};
+
+ChatSchema.statics.findClassChat = async function (
+  taxiId: string | mongoose.Types.ObjectId
+): Promise<IChat | null> {
+  return await this.findOne({
+    taxiId,
+    type: ChatType.GROUP,
   })
     .populate('participants', 'firstname lastname email avatar username isOnline lastSeen')
     .exec();
