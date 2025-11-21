@@ -243,8 +243,8 @@ export class ChatService {
         { $sort: { lastMessagedAt: -1 } },
       ]);
   
-      console.log(`📨 Found ${chats.length} chats for user ${userId}`);
       return chats;
+
     } catch (error: any) {
       console.error('❌ Error in getUserChats:', error);
       throw new ErrorResponse(`Failed to get user chats: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR);
@@ -261,7 +261,6 @@ export class ChatService {
     forceNew: boolean = false
   ): Promise<any> {
     try {
-      console.log('🔍 Creating or getting chat for participants:', participants, 'type:', type, 'forceNew:', forceNew);
 
       const participantObjectIds = participants.map((id) => new Types.ObjectId(id));
 
@@ -527,14 +526,6 @@ export class ChatService {
     
         const chatData = populatedChats[0];
     
-        console.log('📊 Saved chat settings:', {
-          isStarred: chatData.isStarred,
-          isPinned: chatData.isPinned,
-          isMuted: chatData.isMuted,
-          isArchived: chatData.isArchived,
-          participantsCount: chatData.participantsDetails?.length || 0
-        });
-    
         // Convert Map to plain object for unreadCount
         const unreadCountObj: Record<string, number> = {};
         if (chatData.unreadCount && typeof chatData.unreadCount === 'object') {
@@ -559,8 +550,6 @@ export class ChatService {
           isMuted: chatData.isMuted,
           isArchived: chatData.isArchived,
         };
-    
-        console.log('📤 Response participants count:', response.participantsDetails.length);
     
         // ✅ Emit the FULL updated chat to all participants via Socket.IO
         if (this.io) {
@@ -592,14 +581,6 @@ export class ChatService {
       if (!chat) {
         throw new ErrorResponse('Chat not found', StatusCodes.NOT_FOUND);
       }
-
-      console.log('📋 Chat to delete:', {
-        _id: chat._id,
-        type: chat.type,
-        name: chat.name,
-        participants: chat.participants,
-      });
-
       const deletedMessages = await Message.deleteMany({
         chatId: new Types.ObjectId(chatId),
       });
@@ -625,6 +606,154 @@ export class ChatService {
     } catch (error: any) {
       console.error('❌ Error deleting chat:', error);
       throw new ErrorResponse(`Failed to delete chat: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getChatWithSessions(taxiId: string): Promise<any> {
+    try {
+      if (!Types.ObjectId.isValid(taxiId)) {
+        throw new ErrorResponse('Invalid taxi ID format', StatusCodes.BAD_REQUEST);
+      }
+  
+      const chats = await Chat.aggregate([
+        { $match: { taxiId: new Types.ObjectId(taxiId), type: 'group' } },
+        {
+          $lookup: {
+            from: this.getUsersCollectionName(),
+            localField: 'participants',
+            foreignField: '_id',
+            as: 'participantsDetails',
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            taxiId: 1,
+            sessions: 1,
+            classMetadata: 1,
+            participants: 1,
+            participantsDetails: 1,
+            lastMessageContent: 1,
+            lastMessagedAt: 1,
+          },
+        },
+      ]);
+  
+      if (!chats.length) {
+        throw new ErrorResponse('Class chat not found', StatusCodes.NOT_FOUND);
+      }
+  
+      return chats[0];
+    } catch (error: any) {
+      console.error('❌ Error in getChatWithSessions:', error);
+      throw error;
+    }
+  }
+  
+
+  async getChatByTaxiId(taxiId: string): Promise<any> {
+    try {
+      console.log('🔍 [ChatService] Finding chat for taxi:', taxiId);
+  
+      // Validate input
+      if (!taxiId) {
+        throw new ErrorResponse('Taxi ID is required', StatusCodes.BAD_REQUEST);
+      }
+  
+      if (!Types.ObjectId.isValid(taxiId)) {
+        console.warn('⚠️ Invalid taxiId format:', taxiId);
+        throw new ErrorResponse('Invalid taxi ID format', StatusCodes.BAD_REQUEST);
+      }
+  
+      // Use simple findOne first for efficiency
+      const chat = await Chat.findOne({
+        taxiId: new Types.ObjectId(taxiId),
+        type: 'group',
+      }).populate('participants', 'firstname lastname email avatar username isOnline lastSeen');
+  
+      if (!chat) {
+        console.warn('⚠️ No class chat found for taxi:', taxiId);
+        throw new ErrorResponse('Class chat not found', StatusCodes.NOT_FOUND);
+      }
+  
+      console.log('✅ [ChatService] Chat found:', {
+        chatId: chat._id,
+        name: chat.name,
+        participants: chat.participants?.length || 0,
+      });
+  
+      // Now populate with aggregation for full details
+      const fullChats = await Chat.aggregate([
+        { $match: { _id: chat._id } },
+        {
+          $lookup: {
+            from: this.getUsersCollectionName(),
+            localField: 'participants',
+            foreignField: '_id',
+            as: 'participantsDetails',
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            participants: 1,
+            type: 1,
+            name: 1,
+            taxiId: 1,
+            sessions: 1,
+            classMetadata: 1,
+            lastMessageContent: 1,
+            lastMessagedAt: 1,
+            unreadCount: 1,
+            isStarred: 1,
+            isPinned: 1,
+            isMuted: 1,
+            isArchived: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            participantsDetails: {
+              $map: {
+                input: '$participantsDetails',
+                as: 'user',
+                in: {
+                  _id: '$$user._id',
+                  userId: '$$user._id',
+                  username: '$$user.username',
+                  email: '$$user.email',
+                  firstname: '$$user.firstname',
+                  lastname: '$$user.lastname',
+                  userType: '$$user.user_type',
+                  isOnline: '$$user.isOnline',
+                  lastSeen: '$$user.lastSeen',
+                  avatar: '$$user.avatar',
+                  displayName: {
+                    $let: {
+                      vars: {
+                        usernameParts: { $split: ['$$user.username', '@'] },
+                      },
+                      in: { $arrayElemAt: ['$$usernameParts', 0] },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      ]);
+  
+      if (!fullChats || fullChats.length === 0) {
+        throw new ErrorResponse('Failed to populate chat details', StatusCodes.INTERNAL_SERVER_ERROR);
+      }
+  
+      return fullChats[0];
+    } catch (error: any) {
+      console.error('❌ [ChatService] Error in getChatByTaxiId:', {
+        error: error.message,
+        taxiId,
+        stack: error.stack,
+      });
+      throw error;
     }
   }
 

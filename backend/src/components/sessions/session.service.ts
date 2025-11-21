@@ -25,6 +25,7 @@ import { IAdvancedResultsOptions } from '@plugins/advancedResults.interface';
 import jwt from 'jsonwebtoken';
 import { config } from '@config/config';
 import { IUser } from '@components/users/user.interface';
+import { Types } from 'mongoose';
 
 export class SessionService {
   // Helper method to determine if a session should be recurring
@@ -467,6 +468,72 @@ export class SessionService {
         isRecurring: false,
         warnings: overlapValidation.warnings,
       };
+    }
+  }
+
+  async linkSessionToClassChat(sessionId: string): Promise<any> {
+    try {
+      console.log('🔗 Attempting to link session to class chat:', sessionId);
+  
+      // Get the session with taxi populated
+      const session = await SessionSchema.findById(sessionId)
+        .populate('taxi', '_id name subject level branch');
+  
+      if (!session) {
+        console.warn('⚠️ Session not found:', sessionId);
+        throw new ErrorResponse('Session not found', StatusCodes.NOT_FOUND);
+      }
+  
+      // Get taxi ID
+      const taxiId = session.taxi._id;
+  
+      // Import Chat model dynamically
+      const Chat = require('../messaging/models/chat.model').default;
+  
+      // Find the class group chat
+      const classChat = await Chat.findOne({
+        taxiId: new Types.ObjectId(taxiId),
+        type: 'group',
+      });
+  
+      if (!classChat) {
+        console.warn(
+          `⚠️ No class group chat found for taxi ${taxiId}. ` +
+          `Session will not be linked.`
+        );
+        return null;
+      }
+  
+      console.log('✅ Found class chat:', classChat._id);
+  
+      // Check if session already linked
+      if (classChat.sessions && classChat.sessions.includes(sessionId)) {
+        console.log('ℹ️ Session already linked to chat');
+        return classChat;
+      }
+  
+      // Add session to chat
+      if (!classChat.sessions) {
+        classChat.sessions = [];
+      }
+  
+      classChat.sessions.push(new Types.ObjectId(sessionId));
+      await classChat.save();
+  
+      console.log('✅ Session linked to class chat:', {
+        chatId: classChat._id,
+        sessionId: sessionId,
+        totalSessionsInChat: classChat.sessions.length,
+      });
+  
+      return classChat;
+    } catch (error: any) {
+      console.error('❌ Error linking session to class chat:', {
+        error: error.message,
+        sessionId,
+      });
+      // Don't throw - session creation should succeed even if linking fails
+      return null;
     }
   }
 

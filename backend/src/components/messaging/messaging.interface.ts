@@ -1,5 +1,5 @@
 // src/components/messaging/messaging.interface.ts
-import { Document, Types } from 'mongoose';
+import mongoose, { Document, Types } from 'mongoose';
 
 // ==================== ENUMS ====================
 
@@ -64,8 +64,9 @@ export interface IChat extends Document {
   createdAt: Date;
   updatedAt: Date;
   lastMessage: string;
-  
-  // ❌ REMOVE userSettings: Map<string, IUserChatSettings>;
+  taxiId: Types.ObjectId;
+  sessionId: Types.ObjectId;
+  classMetadata: Map<string, any>;
   
   // Instance methods (keep only unread count ones)
   resetUnreadCountForUser(userId: string): void;

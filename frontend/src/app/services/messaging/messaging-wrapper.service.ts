@@ -1,6 +1,6 @@
 // services/messaging/messaging-wrapper.service.ts 
 import { Injectable, inject } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap, take, tap } from 'rxjs/operators';
 import { MessagingService } from '../../gen-api/messaging/messaging.service';
 import { UsersService } from '../../gen-api/users/users.service';
@@ -38,6 +38,7 @@ export class MessagingWrapperService {
   private convertChatDates(chat: any): Chat {
     return {
       ...chat,
+      _id: chat._id,
       lastMessageDate: new Date(chat.lastMessageDate || chat.updatedAt),
       createdAt: chat.createdAt ? new Date(chat.createdAt) : undefined,
       updatedAt: chat.updatedAt ? new Date(chat.updatedAt) : undefined,
@@ -97,7 +98,7 @@ export class MessagingWrapperService {
     );
   }
 
-  getMessages(chatId: string, limit?: number): Observable<Message[]> {
+  getMessages(chatId: string, limit: number = 1000): Observable<Message[]> {
     const params: any = { chatId };
     if (limit) params.limit = limit.toString();
     
@@ -328,7 +329,6 @@ getUsers(limit: number = 1000): Observable<any[]> {
 }
   
 getClasses(): Observable<any[]> {
-  console.log('🔍 Fetching classes from TaxisService...');
   
   const baseUrl = this.getBaseUrl();
   return this.http.get<any>(`${baseUrl}/taxis/messaging`).pipe(
@@ -399,6 +399,46 @@ getClasses(): Observable<any[]> {
     catchError((error: any) => {
       console.error('❌ Error in getClasses:', error);
       return of([]);
+    })
+  );
+}
+
+getClassChat(taxiId: string): Observable<Chat> {
+  console.log('📡 [MessagingWrapper] Fetching class chat for taxi:', taxiId);
+
+  if (!taxiId) {
+    return throwError(() => new Error('Taxi ID is required'));
+  }
+
+  const baseUrl = this.getBaseUrl();
+  
+  return this.http.get<any>(`${baseUrl}/messaging/chats/class/${taxiId}`).pipe(
+    tap((response: any) => {
+      console.log('✅ [MessagingWrapper] Class chat response:', response);
+    }),
+    map((response: any) => {
+      // Handle both wrapped and direct responses
+      const chat = response.data || response;
+      
+      if (!chat) {
+        throw new Error('No chat data received from server');
+      }
+
+      console.log('✅ [MessagingWrapper] Chat fetched successfully:', chat._id);
+      return this.convertChatDates(chat);
+    }),
+    catchError((error: any) => {
+      console.error('❌ [MessagingWrapper] Error fetching class chat:', error);
+      
+      // Provide meaningful error message
+      if (error.status === 404) {
+        return throwError(() => new Error('Class chat not found'));
+      }
+      if (error.status === 400) {
+        return throwError(() => new Error('Invalid taxi ID format'));
+      }
+      
+      return throwError(() => new Error(`Failed to fetch class chat: ${error.message}`));
     })
   );
 }

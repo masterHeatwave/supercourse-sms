@@ -20,6 +20,8 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ColorDotComponent } from '@components/labels/color-dot/color-dot.component';
 import { OutlineButtonComponent } from '@components/buttons/outline-button/outline-button.component';
 import { ConfirmDialogComponent } from '@components/confirm-dialog/confirm-dialog.component';
+import { MessagingWrapperService } from '@services/messaging/messaging-wrapper.service';
+import { MessagingContainerComponent } from '@components/messaging/messaging-container/messaging-container.component';
 
 interface SessionStudent {
   id: string;
@@ -36,20 +38,24 @@ interface SessionMaterial {
 @Component({
   selector: 'app-single-session',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardModule, ButtonModule, TagModule, TableModule, TooltipModule, ToastModule, DialogModule, RadioButtonModule, SpinnerComponent, TranslateModule, ColorDotComponent, OutlineButtonComponent, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, CardModule, ButtonModule, TagModule, TableModule, TooltipModule, ToastModule, DialogModule, RadioButtonModule, SpinnerComponent, TranslateModule, ColorDotComponent, OutlineButtonComponent, ConfirmDialogComponent, MessagingContainerComponent],
   templateUrl: './single-session.component.html',
   styleUrl: './single-session.component.scss',
   providers: [MessageService]
 })
+
 export class SingleSessionComponent implements OnInit {
   @ViewChild('confirmDlg') confirmDlgRef: any;
   @ViewChild('absenceConfirmDlg') absenceConfirmDlgRef: any;
+  @ViewChild(MessagingContainerComponent) messagingContainer!: MessagingContainerComponent;
+
   #route = inject(ActivatedRoute);
   #router = inject(Router);
   #sessionsService = inject(SessionsService);
   #absencesService = inject(AbsencesService);
   #messageService = inject(MessageService);
   #translate = inject(TranslateService);
+  #messagingWrapper = inject(MessagingWrapperService);
 
   sessionId: string | null = null;
   session: Session | null = null;
@@ -439,12 +445,50 @@ export class SingleSessionComponent implements OnInit {
   }
 
   openChat() {
-    // Implementation for opening chat
-    this.#messageService.add({
-      severity: 'info',
-      summary: this.#translate.instant('sessions.chat.title'),
-      detail: this.#translate.instant('sessions.chat.opening')
-    });
+    if (!this.session) {
+      console.error('❌ No session data available');
+      this.showError(this.#translate.instant('sessions.errors.no_session_data'));
+      return;
+    }
+  
+    const taxiId = this.session.taxi?.id;
+    if (!taxiId) {
+      console.error('❌ No taxi ID found in session');
+      this.showError(this.#translate.instant('sessions.errors.no_class_found'));
+      return;
+    }
+  
+    console.log('💬 Opening class chat for taxi:', taxiId);
+  
+    // Show the messaging container first
+    this.messagingContainer.show();
+  
+    // Then load and select the class chat
+    this.#messagingWrapper.getClassChat(taxiId)
+      .subscribe({
+        next: (chat) => {
+          console.log('✅ Class chat loaded successfully:', chat._id);
+          
+          // Select the chat in the messaging container
+          this.messagingContainer.selectedChat = chat;
+          
+          // Add to chat list if not already there
+          const chatExists = this.messagingContainer.chats.some(c => c._id === chat._id);
+          if (!chatExists) {
+            this.messagingContainer.chats.unshift(chat);
+          }
+          
+          this.#messageService.add({
+            severity: 'success',
+            summary: this.#translate.instant('sessions.chat.opened'),
+            detail: this.#translate.instant('sessions.chat.opened_successfully')
+          });
+        },
+        error: (error) => {
+          console.error('❌ Error opening class chat:', error);
+          this.showError(this.#translate.instant('sessions.errors.chat_open_failed'));
+        }
+      });
   }
 
   downloadFiles() {

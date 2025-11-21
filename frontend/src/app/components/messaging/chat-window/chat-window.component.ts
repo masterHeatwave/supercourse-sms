@@ -84,6 +84,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
 
   ngOnInit() {
     this.setupGlobalSocketSubscriptions();
+    this.setupSessionScrollListener();
   }
 
   ngAfterViewInit() {
@@ -93,6 +94,81 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
   ngOnChanges(changes: SimpleChanges) {
     if (changes['chat'] && changes['chat'].currentValue) {
       this.switchToChat();
+    }
+  }
+
+  private setupSessionScrollListener(): void {
+    window.addEventListener('scrollToSession', (event: any) => {
+      const { sessionId, timestamp } = event.detail;
+      console.log('📍 Scroll to session event received:', {
+        sessionId,
+        timestamp
+      });
+
+      this.scrollToSessionInMessages(sessionId, timestamp);
+    });
+  }
+
+  /**
+   * ✅ NEW: Find and scroll to messages from a specific session
+   */
+  private scrollToSessionInMessages(sessionId: string, timestamp?: number): void {
+    console.log('🔍 Looking for messages from session:', sessionId);
+
+    if (!this.messages || this.messages.length === 0) {
+      console.warn('⚠️ No messages found to scroll to');
+      return;
+    }
+
+    let targetIndex = 0;
+
+    if (timestamp) {
+      // Find message closest to the timestamp
+      const targetDate = new Date(timestamp);
+      let closestDistance = Infinity;
+      let closestIndex = 0;
+
+      this.messages.forEach((msg, idx) => {
+        const msgDate = new Date(msg.timestamp);
+        const distance = Math.abs(msgDate.getTime() - targetDate.getTime());
+
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestIndex = idx;
+        }
+      });
+
+      targetIndex = closestIndex;
+    }
+
+    // Scroll to the target message
+    setTimeout(() => {
+      this.scrollToMessageIndex(targetIndex);
+    }, 300);
+  }
+
+  /**
+   * ✅ NEW: Scroll to a specific message by index
+   */
+  private scrollToMessageIndex(index: number): void {
+    try {
+      const messageElements = document.querySelectorAll('app-chat-window .message-item');
+      
+      if (messageElements.length > index) {
+        const targetElement = messageElements[index] as HTMLElement;
+        
+        // Highlight the message temporarily
+        targetElement.classList.add('highlight-message');
+        setTimeout(() => {
+          targetElement.classList.remove('highlight-message');
+        }, 3000);
+
+        // Scroll into view
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        console.log('✅ Scrolled to message index:', index);
+      }
+    } catch (error) {
+      console.error('Error scrolling to message:', error);
     }
   }
 
@@ -387,6 +463,8 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
   
     this.cdr.detectChanges();
     setTimeout(() => this.scrollToBottom(), 50);
+
+    this.loadChatMessages();
   }
 
   private updateMessageDeliveryStatus(data: { messageId: string; userId: string; deliveredAt: Date }) {
@@ -983,5 +1061,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     
     this.globalSubs.forEach(s => s.unsubscribe());
     this.cleanupChatSpecificSubscriptions();
+    window.removeEventListener('scrollToSession', null as any);
   }
 }

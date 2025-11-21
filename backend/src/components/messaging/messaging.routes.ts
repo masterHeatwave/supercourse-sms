@@ -47,6 +47,8 @@ router.get('/chats/:chatId', authorize(), chatController.getChatById);
 router.post('/chats/:chatId/reset-unread', authorize(), chatController.resetUnreadCount);
 router.patch('/chats/:chatId', authorize(), chatController.updateChatSettings);
 router.delete('/chats/:chatId', authorize(), chatController.deleteChatById);
+router.get('/chats/class/:taxiId', authorize(), chatController.getChatByTaxiId);
+router.get('/chats/:chatId/with-sessions', authorize(), chatController.getChatWithSessions);
 
 // ==================== MESSAGE ROUTES ====================
 router.post('/messages', authorize(), messageController.sendMessage);
