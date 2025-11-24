@@ -1,3 +1,48 @@
+/* ==============================================
+   Z-INDEX FIX: TreeSelect Panel Layering
+   ============================================== */
+
+/* Prevent TreeSelect from blocking interactivity */
+::ng-deep .p-treeselect-panel {
+  z-index: 1001 !important; /* High but not blocking dialog close */
+}
+
+/* Ensure dialog is on top */
+::ng-deep .p-dialog {
+  z-index: 1002 !important;
+}
+
+/* Dialog mask overlay */
+::ng-deep .p-dialog-mask {
+  z-index: 1001 !important;
+}
+
+/* TreeSelect input - ensure it doesn't block */
+::ng-deep .p-treeselect {
+  z-index: auto !important; /* Don't set explicit z-index on input */
+}
+
+/* Remove any pointer-events blocking from panel */
+::ng-deep .p-treeselect-panel {
+  pointer-events: auto !important;
+}
+
+/* Optional: Add transition for smooth panel opening */
+::ng-deep .p-treeselect-panel {
+  animation: treeselect-open 0.15s ease-out !important;
+}
+
+@keyframes treeselect-open {
+  from {
+    opacity: 0;
+    transform: scaleY(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
 ::ng-deep .p-treeselect-panel {
   min-width: 100% !important;
 }

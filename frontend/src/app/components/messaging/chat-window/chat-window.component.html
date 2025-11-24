@@ -29,9 +29,9 @@
           </p-tag>
         </div>
         <span class="text-sm text-500">{{ getChatSubtitle() }}</span>
-        <div *ngIf="typingFrom && !isSentUser(typingFrom)" class="text-xs text-primary">
+        <!-- <div *ngIf="typingFrom && !isSentUser(typingFrom)" class="text-xs text-primary">
           {{ getTypingUserName() }} {{ 'messages.is_typing' | translate }}
-        </div>
+        </div> -->
       </div>
     </div>
     
@@ -207,31 +207,37 @@
         </div>
       </div>
       
+      <div #scrollContainer class="messages-container">
       <!-- Typing Indicator -->
-      <div *ngIf="typingFrom && !isSentUser(typingFrom)" 
-           class="flex justify-content-start">
-        <div class="flex align-items-center gap-2 p-2 surface-100 border-round-2xl">
-          <div class="flex gap-1">
-            <div class="typing-dot bg-600"></div>
-            <div class="typing-dot bg-600"></div>
-            <div class="typing-dot bg-600"></div>
-          </div>
+          <div *ngIf="typingFrom && !isSentUser(typingFrom)" 
+            class="typing-indicator-container"
+            [@typingTrigger]="typingFrom">
+            <div class="flex align-items-center gap-2 p-2 surface-100 border-round-2xl">
+              <div class="flex gap-1">
+                <div class="typing-dot bg-600"></div>
+                <div class="typing-dot bg-600"></div>
+                <div class="typing-dot bg-600"></div>
+            </div>
           <span class="text-xs text-600">{{ getTypingUserName() }} {{ 'messages.is_typing' | translate }}</span>
         </div>
       </div>
-
-      <!-- Upload Progress Indicator -->
+      
+      <!-- Upload Progress Indicator - FIXED -->
       <div *ngIf="isUploadingAttachments" 
-           class="flex justify-content-start">
+          class="upload-progress-container">
         <div class="flex align-items-center gap-2 p-3 surface-100 border-round-2xl">
           <i class="pi pi-spin pi-spinner text-primary"></i>
-          <div class="flex flex-column">
-            <span class="text-sm font-medium text-primary">{{ 'messages.uploading_files' | translate }}</span>
-            <span class="text-xs text-500">{{ uploadingFiles.length }} {{ 'messages.files_selected' | translate }}</span>
-          </div>
+            <div class="flex flex-column">
+              <span class="text-sm font-medium text-primary">{{ 'messages.uploading_files' | translate }}</span>
+              <span class="text-xs text-500">{{ uploadingFiles.length }} {{ 'messages.files_selected' | translate }}</span>
+            </div>
         </div>
       </div>
-    </div>
+
+      <!-- Spacer to prevent input overlap -->
+        <div class="typing-spacer"></div>
+        </div>
+      </div>
   </p-scrollPanel>
 
   <!-- Reply Context Bar -->
@@ -260,37 +266,39 @@
   </div>
 
   <!-- Message Input Area -->
-  <div class="message-input p-3 border-top-1 surface-border bg-white">
-    <div class="flex align-items-end gap-2">
-      <!-- Attachment Button -->
-      <app-attachment
-        [chatId]="chat._id"
-        [disabled]="isUploadingAttachments"
-        (uploadStart)="onUploadStart($event)"
-        (uploadComplete)="onUploadComplete($event)"
-        (uploadError)="onUploadError($event)">
-      </app-attachment>
-      
-      <!-- Message Input - PLAIN TEXTAREA -->
-      <div class="flex-1">
-        <textarea 
-          class="w-full p-inputtext"
-          rows="1"
-          [(ngModel)]="newMessage"
-          (input)="onMessageInput()" 
-          (keydown)="handleKeydown($event)"
-          [placeholder]="'messages.type_message' | translate">
-        </textarea>
+  <div class="message-input-container">
+    <div class="message-input p-3 border-top-1 surface-border bg-white">
+      <div class="flex align-items-end gap-2">
+        <!-- Attachment Button -->
+        <app-attachment
+          [chatId]="chat._id"
+          [disabled]="isUploadingAttachments"
+          (uploadStart)="onUploadStart($event)"
+          (uploadComplete)="onUploadComplete($event)"
+          (uploadError)="onUploadError($event)">
+        </app-attachment>
+        
+        <!-- Message Input -->
+        <div class="flex-1">
+          <textarea 
+            class="w-full p-inputtext"
+            rows="1"
+            [(ngModel)]="newMessage"
+            (input)="onMessageInput()" 
+            (keydown)="handleKeydown($event)"
+            [placeholder]="'messages.type_message' | translate">
+          </textarea>
+        </div>
+        
+        <!-- Send Button -->
+        <p-button 
+          icon="pi pi-send" 
+          [rounded]="true"
+          [disabled]="!newMessage || !newMessage.trim()"
+          [pTooltip]="'messages.send_message' | translate"
+          (onClick)="sendMessage()">
+        </p-button>
       </div>
-      
-      <!-- Send Button -->
-      <p-button 
-        icon="pi pi-send" 
-        [rounded]="true"
-        [disabled]="!newMessage || !newMessage.trim()"
-        [pTooltip]="'messages.send_message' | translate"
-        (onClick)="sendMessage()">
-      </p-button>
     </div>
   </div>
 </div>

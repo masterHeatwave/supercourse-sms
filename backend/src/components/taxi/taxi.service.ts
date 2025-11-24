@@ -405,8 +405,6 @@ export class TaxiService {
 
   private async createClassGroupChat(taxi: any, userIds: string[]): Promise<any> {
     try {
-      console.log('📊 Creating group chat for class:', taxi.name);
-  
       // Remove duplicates
       const participants = Array.from(new Set(userIds));
   
@@ -418,8 +416,6 @@ export class TaxiService {
         );
         return null;
       }
-  
-      console.log(`📋 Creating chat with ${participants.length} participants`);
   
       // Convert participant strings to ObjectId
       const participantObjectIds = participants.map(
@@ -493,10 +489,8 @@ export class TaxiService {
   }
 
   private getWelcomeMessage(taxi: any): string {
-    return `Welcome to ${taxi.name}! 📚 This is the class group chat. ` +
-           `Share materials, ask questions, and collaborate here.`;
+    return `Welcome to ${taxi.name}! 📚 This is the class group chat. `;
   }
-  
 
   async updateTaxi(id: string, taxiData: ITaxiUpdateDTO) {
     const taxiDoc = await Taxi.findById(id);

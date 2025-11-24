@@ -41,7 +41,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
   @Output() chatUpdated = new EventEmitter<{chat: Chat, updates: any}>();
   @Output() deleteChat = new EventEmitter<Chat>();
 
-  @ViewChild('scrollPanel') scrollPanel!: ScrollPanel;
+  @ViewChild('scrollPanel', { static: false }) scrollPanel!: ScrollPanel;
 
   // ✅ Inject services using inject()
   private api = inject(MessagingWrapperService);  
@@ -94,17 +94,13 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
   ngOnChanges(changes: SimpleChanges) {
     if (changes['chat'] && changes['chat'].currentValue) {
       this.switchToChat();
+      this.scrollToBottom();
     }
   }
 
   private setupSessionScrollListener(): void {
     window.addEventListener('scrollToSession', (event: any) => {
       const { sessionId, timestamp } = event.detail;
-      console.log('📍 Scroll to session event received:', {
-        sessionId,
-        timestamp
-      });
-
       this.scrollToSessionInMessages(sessionId, timestamp);
     });
   }
@@ -165,11 +161,15 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
 
         // Scroll into view
         targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        console.log('✅ Scrolled to message index:', index);
       }
     } catch (error) {
       console.error('Error scrolling to message:', error);
     }
+  }
+
+  onTypingIndicatorChange(): void {
+    // This is called when typingFrom changes
+    this.scrollToBottom();
   }
 
   // ========== SOCKET MANAGEMENT ==========
@@ -224,8 +224,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     // Only update if the reader is not the current user (we're the sender)
     if (data.userId === this.currentUserId) return;
     
-    console.log(`📖 Updating ${data.messageIds.length} messages as read by user ${data.userId}`);
-    
     let updatedCount = 0;
     
     this.messages.forEach(msg => {
@@ -244,7 +242,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     });
     
     if (updatedCount > 0) {
-      console.log(`✅ Updated ${updatedCount} messages to read status`);
       this.cdr.detectChanges();
     }
   }
@@ -282,13 +279,11 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
   }
 
   private async finalizeChatSwitch() {
-    console.log('=== Finalizing chat switch for:', this.chat._id);
     if (!this.chat?._id) return;
     
     // ✅ FIXED: Wait for socket to be ready before joining
     try {
       await this.socket.waitForConnection();
-      console.log('✅ Socket ready, joining chat:', this.chat._id);
       
       const joined = this.socket.joinChat(this.chat._id);
       if (!joined) {
@@ -526,6 +521,9 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
 
     if (data.isTyping) {
       this.typingFrom = data.userId;
+      this.cdr.detectChanges();
+      setTimeout(() => this.scrollToBottom(), 50);
+    
       setTimeout(() => {
         if (this.typingFrom === data.userId) {
           this.typingFrom = null;
