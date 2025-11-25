@@ -1,249 +1,312 @@
-/* ==============================================
-   Z-INDEX FIX: TreeSelect Panel Layering
-   ============================================== */
+/* ============================================================
+   1. DIALOG CONTAINER & LAYOUT
+   ============================================================ */
 
-/* Prevent TreeSelect from blocking interactivity */
-::ng-deep .p-treeselect-panel {
-  z-index: 1001 !important; /* High but not blocking dialog close */
-}
-
-/* Ensure dialog is on top */
-::ng-deep .p-dialog {
-  z-index: 1002 !important;
-}
-
-/* Dialog mask overlay */
-::ng-deep .p-dialog-mask {
-  z-index: 1001 !important;
-}
-
-/* TreeSelect input - ensure it doesn't block */
-::ng-deep .p-treeselect {
-  z-index: auto !important; /* Don't set explicit z-index on input */
-}
-
-/* Remove any pointer-events blocking from panel */
-::ng-deep .p-treeselect-panel {
-  pointer-events: auto !important;
-}
-
-/* Optional: Add transition for smooth panel opening */
-::ng-deep .p-treeselect-panel {
-  animation: treeselect-open 0.15s ease-out !important;
-}
-
-@keyframes treeselect-open {
-  from {
-    opacity: 0;
-    transform: scaleY(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scaleY(1);
-  }
-}
-
-::ng-deep .p-treeselect-panel {
-  min-width: 100% !important;
-}
-
-::ng-deep .p-tree .p-tree-container .p-treenode .p-treenode-content {
-  padding: 0.5rem;
-}
-
-::ng-deep .p-tree .p-tree-container .p-treenode .p-treenode-label {
-  font-size: 0.9rem;
-}
-
-::ng-deep .p-treeselect-panel .p-tree .p-treenode .p-treenode-content .p-checkbox {
-  margin-right: 0.5rem;
-}
-
-::ng-deep .p-treeselect-panel .p-tree .p-treenode .p-treenode-content .p-treenode-icon {
-  margin-right: 0.5rem;
-  font-size: 0.875rem;
-}
-
-/* ========== FIXED: Only target tree select wrapper and its tree ========== */
-
-/* Remove blue background from the wrapper itself */
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper {
-  background: #ffffff !important; /* Force white background */
-}
-
-/* Remove all blue from tree nodes inside the wrapper - be specific */
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content {
-  background: transparent !important;
-  color: #495057 !important;
-}
-
-/* Remove focus states - only for tree select content */
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content.p-focus {
-  background: transparent !important;
-  color: #495057 !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content:focus {
-  background: transparent !important;
-  color: #495057 !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-/* Remove highlight/selection blue */
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content.p-highlight {
-  background: #e9ecef !important; /* Light gray instead of blue */
-  color: #495057 !important; /* Dark text */
-}
-
-/* Hover state */
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content:hover {
-  background: #f8f9fa !important; /* Light gray on hover */
-  color: #495057 !important;
-}
-
-/* Remove focus from interactive elements within tree select */
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content .p-tree-toggler.p-focus,
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content .p-tree-toggler:focus {
-  background: transparent !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content .p-checkbox .p-checkbox-box.p-focus {
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-/* Remove ripple effects within tree select */
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content .p-ripple {
-  background: transparent !important;
-}
-
-/* Remove focus from TreeSelect input */
-::ng-deep .p-treeselect:not(.p-disabled).p-focus {
-  box-shadow: none !important;
-  border-color: #ced4da !important;
-}
-
-/* ========== Safe nuclear option - only for tree select ========== */
-/* Add this if the blue persists in tree select */
-
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper,
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree,
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode,
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content {
-  background: transparent !important;
-}
-
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper .p-tree .p-treenode .p-treenode-content * {
-  background: transparent !important;
-  color: #495057 !important;
-}
-
-/* Force remove any blue backgrounds only in tree select */
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper [class*="p-focus"],
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper [class*="p-highlight"],
-::ng-deep .p-treeselect-panel .p-treeselect-items-wrapper [class*="p-ripple"] {
-  background: transparent !important;
-  background-color: transparent !important;
-}
-
-/* ========== Rest of your existing styles ========== */
-
-.field {
-  margin-bottom: 1rem;
-}
-
-.field:last-child {
-  margin-bottom: 0;
-}
-
-.text-green-500 {
-  color: #22c55e !important;
-}
-
-.text-400 {
-  color: #9ca3af !important;
-}
-
-.bg-primary-50 {
-  background-color: #eff6ff !important;
-}
-
-.border-primary-200 {
-  border-color: #bfdbfe !important;
-}
-
-.text-primary-600 {
-  color: #2563eb !important;
-}
-
-.text-primary-700 {
-  color: #1d4ed8 !important;
-}
-
-/* Responsive adjustments */
-@media (max-width: 600px) {
-  ::ng-deep .p-dialog {
-    width: 95% !important;
-    max-width: 95% !important;
-    margin: 1rem auto;
+   ::ng-deep .p-dialog {
+    z-index: 1001 !important;
+    animation: dialog-appear 0.15s ease-out !important;
   }
   
+  ::ng-deep .p-dialog-mask {
+    z-index: 1000 !important;
+    animation: dialog-fade-in 0.15s linear !important;
+  }
+  
+  /* Ensure dialog is above all other elements */
+  ::ng-deep .p-dialog-content {
+    z-index: 1002 !important;
+  }
+  
+  ::ng-deep .p-dialog-header {
+    z-index: 1003 !important;
+  }
+  
+  ::ng-deep .p-dialog-footer {
+    z-index: 1003 !important;
+  }
+  
+  /* ============================================================
+     2. FORM FIELDS - BASIC STYLING
+     ============================================================ */
+  
+  .field {
+    margin-bottom: 1rem;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  /* Label styling */
+  label {
+    font-weight: 500 !important;
+    color: #374151 !important;
+  }
+  
+  /* ============================================================
+     3. INFO BOX STYLING
+     ============================================================ */
+  
+  .bg-primary-50 {
+    background-color: #eff6ff !important;
+    border-color: #bfdbfe !important;
+  }
+  
+  .text-primary-600 {
+    color: #2563eb !important;
+  }
+  
+  .text-primary-700 {
+    color: #1d4ed8 !important;
+  }
+  
+  /* ============================================================
+     4. TREESELECT WRAPPER - FIXED POSITIONING
+     ============================================================ */
+  
+  .recipient-wrapper {
+    position: relative;
+    z-index: 997 !important;
+  }
+  
+  /* ============================================================
+     5. TREESELECT PANEL - CONTAINED WITHIN DIALOG
+     ============================================================ */
+  
+  /* Panel itself */
   ::ng-deep .p-treeselect-panel {
+    z-index: 998 !important; /* Below dialog but accessible */
+    max-width: 500px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    animation: panel-appear 0.2s ease-out !important;
+  }
+  
+  /* Panel wrapper background */
+  ::ng-deep .p-treeselect-items-wrapper {
+    background: #ffffff !important;
+    padding: 0 !important;
+  }
+  
+  /* ============================================================
+     6. TREE NODES STYLING
+     ============================================================ */
+  
+  /* Container */
+  ::ng-deep .p-tree-container {
+    background: #ffffff !important;
+  }
+  
+  /* Individual tree nodes */
+  ::ng-deep .p-tree .p-treenode .p-treenode-content {
+    padding: 0.5rem !important;
+    background: transparent !important;
+    color: #1f2937 !important;
+    transition: all 0.2s ease !important;
+    border-radius: 4px !important;
+  }
+  
+  /* Tree node label */
+  ::ng-deep .p-tree .p-treenode .p-treenode-label {
+    font-size: 0.9rem !important;
+    color: #1f2937 !important;
+  }
+  
+  /* ============================================================
+     7. INTERACTIVE STATES - FOCUS, HOVER, HIGHLIGHT
+     ============================================================ */
+  
+  /* Hover state */
+  ::ng-deep .p-tree .p-treenode .p-treenode-content:hover {
+    background: #f3f4f6 !important;
+    color: #111827 !important;
+  }
+  
+  /* Focus state */
+  ::ng-deep .p-tree .p-treenode .p-treenode-content.p-focus {
+    background: #e5e7eb !important;
+    color: #111827 !important;
+    box-shadow: inset 0 0 0 1px #d1d5db !important;
+    outline: none !important;
+  }
+  
+  /* Focus outline cleanup */
+  ::ng-deep .p-tree .p-treenode .p-treenode-content:focus {
+    outline: none !important;
+  }
+  
+  /* Highlight/Selection state */
+  ::ng-deep .p-tree .p-treenode .p-treenode-content.p-highlight {
+    background: #dbeafe !important;
+    color: #1e40af !important;
+    border-radius: 4px !important;
+  }
+  
+  /* ============================================================
+     8. CHECKBOX & INTERACTIVE ELEMENTS
+     ============================================================ */
+  
+  /* Checkbox */
+  ::ng-deep .p-tree .p-treenode .p-treenode-content .p-checkbox {
+    margin-right: 0.5rem !important;
+  }
+  
+  ::ng-deep .p-tree .p-treenode .p-treenode-content .p-checkbox .p-checkbox-box.p-focus {
+    box-shadow: none !important;
+    outline: none !important;
+  }
+  
+  /* Tree toggler (expand/collapse) */
+  ::ng-deep .p-tree .p-treenode .p-treenode-content .p-tree-toggler {
+    margin-right: 0.5rem !important;
+    color: #6b7280 !important;
+  }
+  
+  ::ng-deep .p-tree .p-treenode .p-treenode-content .p-tree-toggler.p-focus,
+  ::ng-deep .p-tree .p-treenode .p-treenode-content .p-tree-toggler:focus {
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+  
+  /* Icon */
+  ::ng-deep .p-tree .p-treenode .p-treenode-content .p-treenode-icon {
+    margin-right: 0.5rem !important;
+    font-size: 0.875rem !important;
+    color: #9ca3af !important;
+  }
+  
+  /* Remove ripple effects */
+  ::ng-deep .p-tree .p-treenode .p-treenode-content .p-ripple {
+    background: transparent !important;
+  }
+  
+  /* ============================================================
+     9. SCROLLBAR STYLING
+     ============================================================ */
+  
+  ::ng-deep .p-tree-container {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+    
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+      
+      &:hover {
+        background: #94a3b8;
+      }
+    }
+  }
+  
+  /* ============================================================
+     10. TREESELECT INPUT FIELD
+     ============================================================ */
+  
+  ::ng-deep .p-treeselect {
     width: 100% !important;
-    left: 0 !important;
+    z-index: 1001; /* Don't set explicit z-index on input */
   }
-}
-
-/* Animation for dialog */
-::ng-deep .p-dialog-mask.p-component-overlay {
-  animation: p-dialog-fadein 0.15s linear;
-}
-
-::ng-deep .p-dialog {
-  animation: p-dialog-scale 0.15s linear;
-}
-
-@keyframes p-dialog-fadein {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes p-dialog-scale {
-  from { 
-    transform: scale(0.95);
-    opacity: 0;
+  
+  /* Remove blue focus box from input */
+  ::ng-deep .p-treeselect:not(.p-disabled).p-focus {
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.1) !important;
+    border-color: #3b82f6 !important;
   }
-  to { 
-    transform: scale(1);
-    opacity: 1;
+  
+  /* ============================================================
+     11. TAGS/CHIPS DISPLAY
+     ============================================================ */
+  
+  ::ng-deep .p-tag {
+    background-color: #e5e7eb !important;
+    color: #1f2937 !important;
+    font-size: 0.875rem !important;
+    padding: 0.375rem 0.75rem !important;
   }
-}
-
-/* Custom scrollbar for tree select */
-::ng-deep .p-treeselect-panel .p-tree-container {
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f1f5f9;
-}
-
-::ng-deep .p-treeselect-panel .p-tree-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-::ng-deep .p-treeselect-panel .p-tree-container::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 3px;
-}
-
-::ng-deep .p-treeselect-panel .p-tree-container::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
-}
-
-::ng-deep .p-treeselect-panel .p-tree-container::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
+  
+  /* ============================================================
+     12. ANIMATIONS
+     ============================================================ */
+  
+  @keyframes dialog-appear {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes dialog-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes panel-appear {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* ============================================================
+     13. RESPONSIVE DESIGN
+     ============================================================ */
+  
+  @media (max-width: 768px) {
+    ::ng-deep .p-dialog {
+      width: 95% !important;
+      max-width: 95% !important;
+    }
+    
+    ::ng-deep .p-treeselect-panel {
+      max-width: 100% !important;
+      width: 95% !important;
+    }
+  }
+  
+  /* ============================================================
+     14. ACCESSIBILITY
+     ============================================================ */
+  
+  /* Reduce motion for accessible users */
+  @media (prefers-reduced-motion: reduce) {
+    ::ng-deep .p-dialog,
+    ::ng-deep .p-dialog-mask,
+    ::ng-deep .p-treeselect-panel {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+  
+  /* High contrast mode */
+  @media (prefers-contrast: high) {
+    ::ng-deep .p-tree .p-treenode .p-treenode-content {
+      border: 1px solid #6b7280 !important;
+    }
+    
+    ::ng-deep .p-tree .p-treenode .p-treenode-content.p-highlight {
+      border-width: 2px !important;
+    }
+  }

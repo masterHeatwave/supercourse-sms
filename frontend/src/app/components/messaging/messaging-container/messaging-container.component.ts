@@ -534,16 +534,12 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
    */
   private ensureChatsLoaded() {
     if (this.chats.length > 0 || this.hasLoadedInitialChats) {
-      console.log('✅ Chats already loaded, proceeding...');
       return of(true);
     }
-    
-    console.log('📞 Loading chats before class chat...');
     return this.messagingWrapper.getUserChats(this.currentUserId).pipe(
       tap(chats => {
         this.chats = chats;
         this.hasLoadedInitialChats = true;
-        console.log(`✅ Loaded ${chats.length} chat(s) for class chat selection`);
       }),
       map(() => true),
       catchError(error => {
@@ -563,7 +559,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
    * ✅ Load chats from server
    */
   private loadChats(): void {
-    console.log('📞 loadChats() called');
     
     if (!this.currentUserId) {
       console.error('❌ Cannot load chats: No user ID available');
@@ -582,13 +577,11 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
     }
 
     this.isLoading = true;
-    console.log('📞 Calling messagingWrapper.getUserChats()...');
 
     this.messagingWrapper.getUserChats(this.currentUserId)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {
-          console.log('✅ getUserChats() finalized');
           this.isLoading = false;
         })
       )
@@ -598,7 +591,7 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
           this.hasLoadedInitialChats = true;
           
           if (chats.length === 0) {
-            console.log('ℹ️ No chats found for this user');
+
             this.messageService.add({
               severity: 'info',
               summary: 'No Conversations',
