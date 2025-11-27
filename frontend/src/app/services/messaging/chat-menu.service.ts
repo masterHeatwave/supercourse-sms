@@ -136,7 +136,6 @@ export class ChatMenuService {
       const newIsStarred = !chat.isStarred;
       const updates = { isStarred: newIsStarred };
       
-      console.log(newIsStarred ? '⭐ Added to favorites:' : '☆ Removed from favorites:', chat._id);
       
       this.updateChatAndNotify(chat, updates, actions);
     });
@@ -149,7 +148,6 @@ export class ChatMenuService {
       const newIsPinned = !chat.isPinned;
       const updates = { isPinned: newIsPinned };
       
-      console.log(newIsPinned ? '📌 Pinned chat:' : '📍 Unpinned chat:', chat._id);
       
       this.updateChatAndNotify(chat, updates, actions);
     });
@@ -162,7 +160,6 @@ export class ChatMenuService {
       const newIsMuted = !chat.isMuted;
       const updates = { isMuted: newIsMuted };
       
-      console.log(newIsMuted ? '🔇 Muted chat:' : '🔊 Unmuted chat:', chat._id);
       
       this.updateChatAndNotify(chat, updates, actions);
     });
@@ -174,7 +171,6 @@ export class ChatMenuService {
   
       const updates = { isArchived: true };
       
-      console.log('📦 Archived chat:', chat._id);
       
       this.updateChatAndNotify(chat, updates, actions);
     });
@@ -186,8 +182,6 @@ export class ChatMenuService {
   
       const updates = { isArchived: false };
       
-      console.log('📂 Unarchived chat:', chat._id);
-      
       this.updateChatAndNotify(chat, updates, actions);
     });
   }
@@ -198,7 +192,6 @@ export class ChatMenuService {
   confirmDeleteChat(chat: Chat, actions: ChatMenuActions = {}): void {
     // Prevent duplicate deletion attempts
     if (this.deletingChats.has(chat._id)) {
-      console.log('Chat deletion already in progress for:', chat._id);
       return;
     }
 
@@ -213,7 +206,6 @@ export class ChatMenuService {
    * Delete a chat - delegates to parent component
    */
   deleteChat(chat: Chat, actions: ChatMenuActions = {}): void {
-    console.log('🗑️ ChatMenuService requesting deletion for:', chat._id);
     
     // Just emit to parent component to handle the deletion
     if (actions.onChatDeleted) {
@@ -248,7 +240,6 @@ export class ChatMenuService {
    */
   private updateChatAndNotify(chat: Chat, updates: any, actions: ChatMenuActions): void {
     if (this.updatingChats.has(chat._id)) {
-      console.log('⚠️ Chat update already in progress for:', chat._id);
       return;
     }
   
@@ -261,12 +252,10 @@ export class ChatMenuService {
       actions.onChatUpdated(chat, updates);
     }
     
-    console.log('📤 Sending update to API:', { chatId: chat._id, updates });
     
     // ✅ SIMPLIFIED: Don't pass userId
     this.api.updateChat(chat._id, updates).subscribe({
       next: (updatedChat) => {
-        console.log('✅ Chat updated successfully:', updatedChat);
         
         Object.assign(chat, updatedChat);
         this.updatingChats.delete(chat._id);

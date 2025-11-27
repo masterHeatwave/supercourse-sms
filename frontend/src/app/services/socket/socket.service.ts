@@ -105,7 +105,6 @@ export class SocketService implements OnDestroy {
       // ✅ Subscribe to auth state to get tenantId
       this.store.select(selectAuthState).subscribe({
         next: (authState: any) => {
-          console.log('🏢 TenantId (customerContext):', authState.customerContext);
           this.tenantId = authState.customerContext;
         }
       });
@@ -130,7 +129,6 @@ export class SocketService implements OnDestroy {
         filter(userId => !!userId)
       )
       .subscribe(userId => {
-        console.log('👤 User ID changed, re-authenticating socket:', userId);
         this.currentUserId = userId;
         
         if (this.socket?.connected && !this._isAuthenticated.value) {
@@ -146,11 +144,8 @@ export class SocketService implements OnDestroy {
     }
 
     try {
-      console.log('🔧 Initializing SocketService');
-      console.log('🔧 SOCKET_URL:', SOCKET_URL);
       
       const cleanUrl = SOCKET_URL.replace(/\/$/, '');
-      console.log('🔧 Clean Socket URL:', cleanUrl);
       
       this.socket = io(cleanUrl, {
         withCredentials: true,
@@ -175,8 +170,6 @@ export class SocketService implements OnDestroy {
   
     // ========== CONNECTION EVENTS ==========
     this.socket.on('connect', () => {
-      console.log('✅ Connected to Socket.IO server');
-      console.log('📡 Socket ID:', this.socket.id);
       
       this.connectionStatus.next(true);
       this.reconnectAttempts = 0;
@@ -184,10 +177,8 @@ export class SocketService implements OnDestroy {
       this.authService.getCurrentUserID$()
         .pipe(take(1))
         .subscribe(userId => {
-          console.log('🔍 Attempting to authenticate with userId:', userId);
           
           if (userId) {
-            console.log('🔐 Auto-authenticating user:', userId);
             this.authenticate(userId);
           } else {
             console.warn('⚠️ No userId available for authentication');
@@ -196,7 +187,6 @@ export class SocketService implements OnDestroy {
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('❌ Disconnected from server:', reason);
       this.connectionStatus.next(false);
       this._isAuthenticated.next(false);
       
@@ -229,16 +219,13 @@ export class SocketService implements OnDestroy {
     // ========== NOTIFICATION EVENTS ==========
 
     this.socket.on('notificationsJoined', (data: { userId: string; timestamp: Date }) => {
-      console.log('🔔 Successfully joined notifications room:', data);
     });
     
     this.socket.on('newNotification', (notification: NotificationEvent) => {
-      console.log('🔔 New notification (single global listener):', notification);
       this.notifications$.next(notification);
     });
 
     this.socket.on('notificationMarkedRead', (data: { notificationId: string }) => {
-      console.log('📖 Notification marked as read:', data);
       this.notificationMarkedRead$.next(data);
     });
 
@@ -274,7 +261,6 @@ export class SocketService implements OnDestroy {
     }
 
     return new Promise((resolve, reject) => {
-      console.log('🔐 Authenticating socket for user:', userId);
       
       if (this._isAuthenticated.value) {
         resolve();
@@ -290,7 +276,6 @@ export class SocketService implements OnDestroy {
             take(1)
           )
           .subscribe(() => {
-            console.log('✅ Socket connected, proceeding with authentication');
             this.performAuthentication(userId, resolve, reject);
           });
         
@@ -327,7 +312,6 @@ export class SocketService implements OnDestroy {
     }
 
     const onAuthenticated = (data: any) => {
-      console.log('✅ Authentication successful:', data);
       this.socket.off('authenticationError', onAuthError);
       resolve();
     };
@@ -376,7 +360,6 @@ export class SocketService implements OnDestroy {
 
     return new Observable<NotificationEvent>(observer => {
       const handler = (notification: NotificationEvent) => {
-        console.log('🔔 Notification event emitted to subscribers:', notification);
         observer.next(notification);
       };
       
@@ -398,7 +381,6 @@ export class SocketService implements OnDestroy {
       return;
     }
     
-    console.log('📖 Marking notification as read:', notificationId);
     this.socket.emit('markNotificationRead', { notificationId, userId });
   }
 
@@ -439,12 +421,10 @@ export class SocketService implements OnDestroy {
 
     return new Promise((resolve, reject) => {
       if (this.isConnected()) {
-        console.log('✅ Socket already connected and authenticated');
         resolve();
         return;
       }
       
-      console.log('⏳ Waiting for socket connection and authentication...');
       
       let attempts = 0;
       const maxAttempts = timeoutMs / 100;
@@ -453,7 +433,6 @@ export class SocketService implements OnDestroy {
         attempts++;
         
         if (this.isConnected()) {
-          console.log(`✅ Socket ready after ${attempts} attempts (${attempts * 100}ms)`);
           resolve();
           return;
         }
@@ -468,8 +447,6 @@ export class SocketService implements OnDestroy {
         
         if (attempts % 10 === 0) {
           console.log(`⏳ Still waiting for socket... (${attempts * 100}ms elapsed)`);
-          console.log(`   - Connected: ${this.socket?.connected}`);
-          console.log(`   - Authenticated: ${this._isAuthenticated.value}`);
         }
         
         setTimeout(checkConnection, 100);
@@ -488,8 +465,6 @@ export class SocketService implements OnDestroy {
       console.warn('⚠️ Cannot join chat, socket not connected/authenticated');
       return false;
     }
-    
-    console.log('🚪 Joining chat room:', chatId);
     return this.emit('joinChat', chatId);
   }
 
@@ -497,8 +472,6 @@ export class SocketService implements OnDestroy {
     if (!this.isBrowser || !this.socket?.connected) {
       return false;
     }
-    
-    console.log('🚪 Leaving chat room:', chatId);
     return this.emit('leaveChat', chatId);
   }
 
@@ -756,7 +729,6 @@ export class SocketService implements OnDestroy {
         return false;
       }
       
-      console.log(`📤 Emitting event: ${eventName}`, data);
       this.socket.emit(eventName, data);
       return true;
     } catch (error) {
@@ -789,7 +761,6 @@ export class SocketService implements OnDestroy {
     if (!this.isBrowser) return;
 
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      console.log('🔄 Attempting to reconnect...');
       this.socket?.connect();
     }
   }
@@ -820,7 +791,6 @@ export class SocketService implements OnDestroy {
     if (!this.isBrowser) return;
 
     try {
-      console.log('🔌 Manually disconnecting socket');
       if (this.socket) {
         this.socket.disconnect();
         this.connectionStatus.next(false);
@@ -832,7 +802,6 @@ export class SocketService implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    console.log('🧹 SocketService cleanup');
     this.destroy$.next();
     this.destroy$.complete();
     this.disconnect();

@@ -144,7 +144,7 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
     window.setTimeout(() => {
       this.forceCleanupOverlays();
       this.cdr.detectChanges();
-    }, 350);
+    }, 300);
   }
 
   /**
@@ -153,22 +153,13 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
    */
   private forceCleanupOverlays(): void {
     try {
-      console.log('🧹 [Dialog] Starting aggressive overlay cleanup');
 
       // ✅ Priority 1: Target all possible PrimeNG overlay selectors
       const selectors = [
         '.p-dialog-mask',           // Dialog backdrop
-        '.p-component-overlay',     // Generic PrimeNG overlays
         '.p-treeselect-panel',      // TreeSelect dropdown panel
-        '.p-treeselect-items-wrapper', // TreeSelect wrapper (THE KEY ONE)
-        '.p-treenode-content',    // Tree node content wrappers
-        '.p-dropdown-panel',        // Dropdown panels
-        '.p-overlaypanel',          // Overlay panels
-        '.p-menu-overlay',          // Menu overlays
         '.p-tooltip',               // Tooltip overlays
-        '.p-overlay',               // Generic overlays
-        '.p-sidebar-mask',          // Sidebar masks
-        '.cdk-overlay-pane'         // Angular CDK overlays
+        '.p-overlay'               // Generic overlays
       ];
 
       // ✅ Remove each overlay element
@@ -244,7 +235,6 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
         console.warn('⚠️ Could not force layout recalculation:', e);
       }
 
-      console.log('✅ [Dialog] Overlay cleanup completed');
     } catch (error) {
       console.error('❌ [Dialog] Error during overlay cleanup:', error);
     }
@@ -261,12 +251,8 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
 
           // Check for hidden or disconnected overlays
           const overlays = this.document.querySelectorAll(
-            '.p-dialog-mask, .p-treeselect-panel, .p-treeselect-items-wrapper, .p-treenode-content, .p-component-overlay'
+            '.p-dialog-mask, .p-treeselect-panel,  p-tooltip, .p-overlay,'
           );
-
-          if (overlays.length > 0) {
-            console.log(`Found ${overlays.length} potential lingering overlays`);
-          }
 
           overlays.forEach((overlay: any) => {
             const isHidden =
@@ -283,7 +269,6 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
                 } else if (overlay.remove && typeof overlay.remove === 'function') {
                   overlay.remove();
                 }
-                console.log('🗑️ Removed lingering overlay');
               } catch (e) {
                 console.warn('⚠️ Could not remove lingering overlay:', e);
               }
@@ -368,7 +353,6 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
       }
     });
 
-    console.log(`✅ Filtered to ${filtered.length} users for role "${currentRole}"`);
     return filtered;
   }
 
@@ -379,11 +363,9 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
     }
 
     this.isLoadingUsers = true;
-    console.log('📥 Loading users...');
 
     this.apiService.getUsers(1000).subscribe({
       next: (response: any) => {
-        console.log(`✅ Loaded ${response.length} total users`);
 
         const activeUsers = response.filter((u: any) => u.is_active !== false);
         const filtered = this.filterUsersByRole(activeUsers);
@@ -410,11 +392,9 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
 
   private loadClasses() {
     this.isLoadingClasses = true;
-    console.log('📥 Loading classes...');
 
     this.apiService.getClasses().subscribe({
       next: (response: any) => {
-        console.log(`✅ Loaded ${response.length} total classes`);
 
         this.classes = response
           .filter((c: any) => this.canAccessClass(c))
@@ -428,7 +408,6 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
             teachers: classItem.teachers || []
           }));
 
-        console.log(`✅ Filtered to ${this.classes.length} accessible classes`);
         this.isLoadingClasses = false;
         this.buildRecipientTreeIfReady();
       },
@@ -475,7 +454,6 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
   }
 
   private buildRecipientTree() {
-    console.log('🌳 Building recipient tree...');
 
     const makeUserNode = (user: User | UserInTaxi): TreeNode => ({
       key: (user.user || user._id).toString(),
@@ -558,7 +536,6 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
       ...(classNodes.length > 0 ? [classesParentNode] : [])
     ];
 
-    console.log(`✅ Tree built with ${this.recipientTree.length} root nodes`);
   }
 
   private extractDisplayName(username: string): string {
@@ -637,7 +614,6 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
   }
 
   onCancel() {
-    console.log('❌ Dialog cancelled');
     this.forceCleanupOverlays();
     this.hide();
   }
@@ -664,19 +640,12 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
       chatName = names.join(', ') + (actualUsers.length > 3 ? '...' : '');
     }
 
-    console.log('📤 Creating chat:', {
-      type: chatType,
-      participants: allParticipants.length,
-      name: chatName
-    });
-
     this.apiService.createChat({
       participants: allParticipants,
       type: chatType,
       name: chatName
     }).subscribe({
       next: (createdChat: any) => {
-        console.log('✅ Chat created successfully:', createdChat);
         this.chatCreated.emit({
           participants: allParticipants,
           type: chatType,

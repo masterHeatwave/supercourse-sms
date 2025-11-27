@@ -109,7 +109,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
    * ✅ Find and scroll to messages from a specific session
    */
   private scrollToSessionInMessages(sessionId: string, timestamp?: number): void {
-    console.log('🔍 Looking for messages from session:', sessionId);
 
     if (!this.messages || this.messages.length === 0) {
       console.warn('⚠️ No messages found to scroll to');

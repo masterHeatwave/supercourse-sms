@@ -38,7 +38,7 @@ export class NotificationsWrapperService {
   private readonly MAX_PROCESSED_IDS = 100;
 
   constructor(private messagingService: MessagingService) {
-    console.log('🔔 NotificationsWrapperService constructed');
+
   }
 
   /**
@@ -47,7 +47,6 @@ export class NotificationsWrapperService {
    */
   initializeSocketListeners(): void {
     if (this.socketListenersInitialized) {
-      console.log('⚠️ Socket listeners already initialized, skipping');
       return;
     }
     
@@ -60,7 +59,6 @@ export class NotificationsWrapperService {
         filter(notification => {
           // ✅ Deduplicate by notification ID
           if (this.processedNotificationIds.has(notification._id)) {
-            console.log('🔄 Duplicate notification filtered:', notification._id);
             return false;
           }
           return true;
@@ -69,7 +67,6 @@ export class NotificationsWrapperService {
       .subscribe({
         next: (notification) => {
           try {
-            console.log('🔔 New notification received in service:', notification);
             
             // ✅ Mark as processed
             this.processedNotificationIds.add(notification._id);
@@ -110,7 +107,6 @@ export class NotificationsWrapperService {
             if (!notification.isRead) {
               const currentCount = this.unreadCountSubject.value;
               this.unreadCountSubject.next(currentCount + 1);
-              console.log('🔔 Unread count incremented to:', currentCount + 1);
             }
           } catch (error) {
             console.error('❌ Error processing notification:', error);
@@ -169,7 +165,6 @@ export class NotificationsWrapperService {
       return;
     }
     
-    console.log('🔔 Joining notification room for user:', userId);
     this.socketService.joinNotifications(userId);
     
     // ✅ Initialize socket listeners if not already done
@@ -241,7 +236,6 @@ export class NotificationsWrapperService {
     
     this.getUnreadCount(userId).subscribe({
       next: (count: number) => {
-        console.log('🔔 Unread count refreshed:', count);
         this.unreadCountSubject.next(count);
       },
       error: (err) => {
@@ -292,7 +286,6 @@ export class NotificationsWrapperService {
   }
 
   markAllAsRead(userId: string): Observable<NotificationActionResponse> {
-    console.log('📖 Marking all notifications as read');
     
     this.notificationsCache.forEach(n => n.isRead = true);
     const previousCount = this.unreadCountSubject.value;
@@ -313,7 +306,6 @@ export class NotificationsWrapperService {
   }
 
   deleteNotification(notificationId: string, userId: string): Observable<NotificationActionResponse> {
-    console.log('🗑️ Deleting notification:', notificationId);
     
     const index = this.notificationsCache.findIndex(n => n._id === notificationId);
     let removedNotification: Notification | null = null;

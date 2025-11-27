@@ -101,7 +101,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
     private translate: TranslateService,
   ) {}
   ngOnInit(): void {
-    console.log('🚀 ChatListComponent initialized with userId:', this.currentUserId);
     
     // Set up Socket.IO listeners for real-time updates
     this.setupSocketListeners();
@@ -115,7 +114,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
     this.socketService.onNewMessage()
       .pipe(takeUntil(this.destroy$))
       .subscribe((message: Message & { chatId: string }) => {
-        console.log('📨 ChatList: New message received via socket', message);
         this.handleIncomingMessage(message);
       });
   
@@ -123,7 +121,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
     this.socketService.onChatUpdated()
       .pipe(takeUntil(this.destroy$))
       .subscribe((event: any) => {
-        console.log('🔄 ChatList: Chat updated via socket', event);
         this.handleChatUpdate(event);
       });
   
@@ -131,7 +128,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
     this.socketService.onUserOnline()
       .pipe(takeUntil(this.destroy$))
       .subscribe((userId: string) => {
-        console.log('🟢 ChatList: User online', userId);
         this.updateUserOnlineStatus(userId, true);
       });
   
@@ -139,7 +135,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
     this.socketService.onUserOffline()
       .pipe(takeUntil(this.destroy$))
       .subscribe((userId: string) => {
-        console.log('🔴 ChatList: User offline', userId);
         this.updateUserOnlineStatus(userId, false);
       });
   
@@ -147,7 +142,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
     this.socketService.onTyping()
       .pipe(takeUntil(this.destroy$))
       .subscribe((data: { userId: string; chatId: string; isTyping: boolean }) => {
-        console.log('⌨️ ChatList: User typing', data);
         // Handle typing indicator if needed
       });
   }
@@ -248,13 +242,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
       const oldChat = this.chats[chatIndex];
       const isSelected = this.selectedChat?._id === chatId;
   
-      console.log('📊 Old chat before update:', {
-        _id: oldChat._id,
-        type: oldChat.type,
-        hasParticipantsDetails: !!oldChat.participantsDetails,
-        participantCount: oldChat.participantsDetails?.length || 0,
-        name: this.getChatName(oldChat)
-      });
   
       // ✅ Start with a copy of the old chat to preserve all properties
       const updatedChat: Chat = {
@@ -279,11 +266,9 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
       }
       if (updates.hasOwnProperty('participantsDetails')) {
         updatedChat.participantsDetails = updates.participantsDetails;
-        console.log('✅ Updated participantsDetails:', updatedChat.participantsDetails);
       }
       if (updates.hasOwnProperty('type')) {
         updatedChat.type = updates.type;
-        console.log('✅ Updated type:', updatedChat.type);
       }
       if (updates.hasOwnProperty('updatedAt')) {
         updatedChat.updatedAt = new Date(updates.updatedAt);

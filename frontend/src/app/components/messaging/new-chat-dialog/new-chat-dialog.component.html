@@ -48,6 +48,8 @@
           [scrollHeight]="'400px'"
           [emptyMessage]="getEmptyMessage()">
           
+          <!-- (onHide)="visible=false" -->
+          
           <ng-template pTemplate="header">
             <div class="text-sm text-600 p-2">
               {{ 'messages.new_chat_dialog.select_users' | translate }}

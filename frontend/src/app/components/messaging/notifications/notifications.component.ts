@@ -141,8 +141,6 @@ export class NotificationsComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         }
       });
-
-    console.log('✅ Real-time listeners setup complete');
   }
 
   /**
@@ -160,7 +158,6 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          console.log('✅ Initial notifications loaded:', response);
           
           this.notifications = response.notifications || [];
           this.unreadCount = response.unreadCount || 0;
@@ -222,7 +219,6 @@ export class NotificationsComponent implements OnInit, OnDestroy {
    * ✅ Refresh notifications list (reload from server)
    */
   refreshNotifications(): void {
-    console.log('🔄 Refreshing notifications');
     this.hasLoadedInitialNotifications = false;
     this.currentPage = 1;
     this.loadInitialNotifications();
@@ -247,11 +243,8 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   markAsRead(notificationId: string, event: Event): void {
     event.stopPropagation();
 
-    console.log('📖 Marking notification as read:', notificationId);
-
     const notification = this.notifications.find(n => n._id === notificationId);
     if (!notification || notification.isRead) {
-      console.log('ℹ️ Notification already read or not found');
       return;
     }
 
@@ -260,7 +253,6 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          console.log('✅ Notification marked as read successfully');
           // Note: The service already updated the cache and unread count optimistically
           this.cdr.detectChanges();
         },
@@ -277,7 +269,6 @@ export class NotificationsComponent implements OnInit, OnDestroy {
    */
   markAllAsRead(): void {
     if (this.unreadCount === 0) {
-      console.log('ℹ️ No unread notifications to mark');
       return;
     }
 
@@ -305,7 +296,6 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          console.log('✅ Notification deleted');
           
           // ✅ Remove from local array
           this.notifications = this.notifications.filter(n => n._id !== notificationId);
@@ -324,17 +314,13 @@ export class NotificationsComponent implements OnInit, OnDestroy {
    */
   clearAllNotifications(): void {
     if (this.notifications.length === 0) {
-      console.log('ℹ️ No notifications to clear');
       return;
     }
-
-    console.log('🗑️ Clearing all notifications');
 
     this.notificationsService.clearAllNotifications(this.currentUserId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          console.log('✅ All notifications cleared');
           
           // ✅ Clear local array
           this.notifications = [];
@@ -352,7 +338,6 @@ export class NotificationsComponent implements OnInit, OnDestroy {
    * ✅ Handle notification click
    */
   onNotificationClick(notification: Notification): void {
-    console.log('👆 Notification clicked:', notification._id);
 
     // ✅ Mark as read if unread
     if (!notification.isRead) {
@@ -361,7 +346,6 @@ export class NotificationsComponent implements OnInit, OnDestroy {
 
     // ✅ Navigate to related chat if exists
     if (notification.relatedChatId) {
-      console.log('📱 Navigating to chat:', notification.relatedChatId);
       // TODO: Emit event to parent component to open chat
       // this.navigateToChat.emit(notification.relatedChatId);
     }
@@ -389,16 +373,14 @@ export class NotificationsComponent implements OnInit, OnDestroy {
    * ✅ Panel show handler
    */
   onPanelShow(): void {
-    console.log('📖 Notification panel opened');
     // Real-time updates are already active, no need to refresh
   }
 
-  /**
-   * ✅ Panel hide handler
-   */
   onPanelHide(): void {
-    console.log('📕 Notification panel closed');
+    // No action needed on hide
+
   }
+
 
   // ==========================================
   // ✅ UI HELPERS

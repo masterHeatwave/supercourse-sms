@@ -78,7 +78,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    console.log('🚀 MessagingContainerComponent ngOnInit started');
 
     // ✅ Initialize tab menu
     this.initializeTabMenu();
@@ -91,7 +90,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
   
 
   ngOnDestroy(): void {
-    console.log('🧹 MessagingContainerComponent destroyed');
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -127,7 +125,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
         filter(userId => !!userId)
       )
       .subscribe(userId => {
-        console.log('👤 User ID changed:', userId);
         
         const hasChanged = userId !== this.currentUserId;
         this.currentUserId = userId;
@@ -235,7 +232,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
    */
   private setupSocketListeners(): void {
     if (this.socketListenersInitialized) {
-      console.log('⚠️ Socket listeners already initialized, skipping');
       return;
     }
 
@@ -244,7 +240,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('🔌 Setting up socket listeners for user:', this.currentUserId);
 
     // ✅ 1. Listen for NEW MESSAGES (for chat list updates)
     this.socketService.onNewMessage()
@@ -309,7 +304,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
       });
 
     this.socketListenersInitialized = true;
-    console.log('✅ Socket listeners setup complete');
   }
 
   // ==========================================
@@ -353,7 +347,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
    * Note: The NotificationsComponent handles adding it to the notification list
    */
   private handleNewNotification(notification: any): void {
-    console.log('🔔 Handling new notification for toast:', notification.title);
     
     // ✅ Show toast notification
     // this.messageService.add({
@@ -381,7 +374,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
       const currentCount = (chat.unreadCount as any)[this.currentUserId] || 0;
       if (currentCount > 0) {
         (chat.unreadCount as any)[this.currentUserId] = Math.max(0, currentCount - 1);
-        console.log('✅ Chat unread count updated');
       }
     }
   }
@@ -451,7 +443,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
       }
     } else if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission().then(permission => {
-        console.log('🔔 Notification permission:', permission);
       });
     }
   }
@@ -466,11 +457,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
         const taxiId = params['taxiId'];
         const sessionId = params['sessionId'];
   
-        console.log('📍 [MessagingContainer] Class chat navigation triggered:', {
-          taxiId,
-          sessionId
-        });
-  
         // Ensure the messaging container is visible
         this.isVisible = true;
   
@@ -480,29 +466,21 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
   }
   
   private loadAndSelectClassChat(taxiId: string, sessionId?: string): void {
-    console.log('📡 [MessagingContainer] Loading class chat for taxi:', taxiId);
   
     // Use observable chain to ensure proper sequencing
     this.ensureChatsLoaded().pipe(
       switchMap(() => this.messagingWrapper.getClassChat(taxiId)),
       takeUntil(this.destroy$),
       finalize(() => {
-        console.log('✅ [MessagingContainer] Class chat load attempt completed');
       })
     ).subscribe({
       next: (chat) => {
-        console.log('✅ [MessagingContainer] Class chat loaded successfully:', {
-          chatId: chat._id,
-          name: chat.name,
-          participants: chat.participantsDetails?.length || 0
-        });
   
         this.selectChat(chat);
   
         // ✅ Store session ID for later use
         if (sessionId) {
           sessionStorage.setItem('scrollToSession', sessionId);
-          console.log('💾 Session ID stored for later scroll:', sessionId);
         }
       },
       error: (error) => {
@@ -523,12 +501,10 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
     const chatExists = this.chats.some(c => c._id === chat._id);
     if (!chatExists) {
       this.chats.unshift(chat);
-      console.log('➕ Chat added to list');
     }
   
     // Select the chat
     this.selectedChat = chat;
-    console.log('✅ Chat selected:', chat._id);
   }
   
   /**
@@ -601,7 +577,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
               life: 4000
             });
           } else {
-            console.log(`✅ Loaded ${chats.length} chat(s)`);
           }
         },
         error: (error) => {
@@ -623,134 +598,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
   // ✅ UI CONTROLS
   // ==========================================
 
-/**
- * ✅ CRITICAL FIX: Comprehensive cleanup of ALL PrimeNG overlays
- */
-  private forceCleanupOverlays(): void {
-    try {
-      // Priority 1: Remove dialog masks and overlays
-      const selectors = [
-        '.p-dialog-mask',           // Dialog backdrop
-        '.p-component-overlay',     // Generic PrimeNG overlays
-        '.p-treeselect-panel',      // TreeSelect dropdown
-        '.p-treeselect-items-wrapper', // TreeSelect wrapper
-        '.p-dropdown-panel',        // Dropdown panels
-        '.p-overlaypanel',          // Overlay panels
-        '.p-menu-overlay',          // Menu overlays
-        '.p-tooltip',               // Tooltip overlays
-        '.p-overlay',               // Generic overlays
-        '.p-sidebar-mask',          // Sidebar mask
-        '.cdk-overlay-pane'         // Angular CDK overlays
-      ];
-
-      selectors.forEach(selector => {
-        const elements = document.querySelectorAll(selector);
-        elements.forEach((el: any) => {
-          try {
-            // Remove element from DOM
-            if (el.parentNode) {
-              el.parentNode.removeChild(el);
-            } else {
-              el.remove?.();
-            }
-          } catch (e) {
-            console.warn(`⚠️ Could not remove ${selector}:`, e);
-          }
-        });
-      });
-
-      // Priority 2: Reset body scroll state
-      try {
-        this.document.body.style.overflow = '';
-        this.document.body.style.position = '';
-        this.document.body.style.width = '';
-        
-        // Remove all overflow-related classes
-        const overflowClasses = [
-          'p-overflow-hidden',
-          'messaging-overlay-guard',
-          'cdk-overlay-pane-container'
-        ];
-        
-        overflowClasses.forEach(cls => {
-          this.document.body.classList.remove(cls);
-        });
-      } catch (e) {
-        console.warn('⚠️ Could not reset body styles:', e);
-      }
-
-      // Priority 3: Clean up any remaining pointer events blocks
-      try {
-        const allElements = document.querySelectorAll('[style*="pointer-events"]');
-        allElements.forEach((el: any) => {
-          if (el !== this.document.body && !el.classList.contains('messaging-panel')) {
-            el.style.pointerEvents = '';
-          }
-        });
-      } catch (e) {
-        console.warn('⚠️ Could not reset pointer events:', e);
-      }
-
-      // Priority 4: Force layout recalculation
-      this.cdr.detectChanges();
-      void this.document.body.getBoundingClientRect();
-      
-      console.log('✅ Overlay cleanup completed');
-    } catch (error) {
-      console.error('❌ Error during overlay cleanup:', error);
-    }
-  }
-
-  /**
-   * ✅ Remove lingering overlays after animations complete
-   * Called multiple times to ensure cleanup even if animations delay removal
-   */
-  private removeLingeringOverlays(): void {
-    const cleanupPass = (delay: number) => {
-      window.setTimeout(() => {
-        try {
-          // Check for hidden or disconnected overlays
-          const overlays = document.querySelectorAll(
-            '.p-dialog-mask, .p-treeselect-panel, .p-component-overlay'
-          );
-
-          overlays.forEach((overlay: any) => {
-            const isHidden = 
-              overlay.style.display === 'none' ||
-              overlay.getAttribute('aria-hidden') === 'true' ||
-              !overlay.isConnected ||
-              overlay.offsetHeight === 0;
-
-            if (isHidden) {
-              try {
-                if (overlay.parentNode) {
-                  overlay.parentNode.removeChild(overlay);
-                } else {
-                  overlay.remove?.();
-                }
-                console.log('🧹 Removed lingering overlay');
-              } catch (e) {
-                console.warn('⚠️ Could not remove lingering overlay:', e);
-              }
-            }
-          });
-
-          // Restore body scroll
-          if (this.document.body.style.overflow === 'hidden') {
-            this.document.body.style.overflow = '';
-          }
-        } catch (e) {
-          console.warn('⚠️ Error in cleanup pass:', e);
-        }
-      }, delay);
-    };
-
-    // Multiple cleanup passes to catch delayed removals
-    cleanupPass(50);
-    cleanupPass(150);
-    cleanupPass(1000);
-  }
-
   /**
    * ✅ Updated hide() method with enhanced cleanup
    */
@@ -758,53 +605,13 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
     this.isVisible = false;
     this.cdr.detectChanges();
 
-    try {
-      // Blur active element
-      const active = this.document.activeElement as HTMLElement | null;
-      if (active && typeof active.blur === 'function') {
-        active.blur();
-      }
-      // Focus body to ensure no element is focused
-      (this.document.body as HTMLElement).focus?.();
-    } catch (e) {
-      console.warn('⚠️ Could not blur element:', e);
-    }
-
-    // ✅ CRITICAL: Clean overlays while they're animating out
-    this.forceCleanupOverlays();
-    
-    // Additional cleanup during animation
-    window.setTimeout(() => this.forceCleanupOverlays(), 50);
-
-    // Final cleanup after animation completes
-    window.setTimeout(() => {
-      this.forceCleanupOverlays();
-      this.removeLingeringOverlays();
-      this.cdr.detectChanges();
-      
-      // Only disable guard after all cleanup is done
-      this.disableOverlayGuard();
-    }, 350); // Match or exceed the 0.3s animation duration + buffer
-
-    try {
-      this.document.body.style.overflow = '';
-      this.document.body.classList.remove('p-overflow-hidden');
-    } catch (e) {
-      console.warn('⚠️ Could not reset body overflow:', e);
-    }
-
-    void this.document.body.getBoundingClientRect();
-    this.cdr.detectChanges();
   }
 
   /**
    * ✅ Show method with proper overlay guard
    */
   show(): void {
-    this.enableOverlayGuard();
-    
-    // Clean up any remnants from previous interactions
-    this.forceCleanupOverlays();
+    // this.enableOverlayGuard();
 
     this.isVisible = true;
 
@@ -815,32 +622,9 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  /**
-   * ✅ Enable overlay guard to prevent body scroll
-   */
-  private enableOverlayGuard(): void {
-    try {
-      this.document.body.classList.add('messaging-overlay-guard');
-      this.document.body.style.overflow = 'hidden';
-    } catch (e) {
-      console.warn('⚠️ Could not enable overlay guard:', e);
-    }
-  }
-
-  /**
-   * ✅ Disable overlay guard to restore body scroll
-   */
-  private disableOverlayGuard(): void {
-    try {
-      this.document.body.classList.remove('messaging-overlay-guard');
-      this.document.body.style.overflow = '';
-    } catch (e) {
-      console.warn('⚠️ Could not disable overlay guard:', e);
-    }
-  }
-
+ 
   onTabChange(tab: string): void {
-    console.log('📑 Tab changed to:', tab);
+    
   }
 
   // ==========================================
