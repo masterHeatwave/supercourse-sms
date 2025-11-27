@@ -150,8 +150,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
         console.log('⌨️ ChatList: User typing', data);
         // Handle typing indicator if needed
       });
-  
-    console.log('✅ Socket listeners set up successfully');
   }
 
   ngOnDestroy(): void {
@@ -191,7 +189,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
         // Increment unread count for current user
         const currentCount = newUnreadCount[currentUser] || 0;
         newUnreadCount[currentUser] = currentCount + 1;
-        console.log(`📊 Updated unread count for user ${currentUser}: ${currentCount} → ${currentCount + 1}`);
       }
       
       const updatedChat: Chat = {
@@ -211,17 +208,12 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
         this.selectChat.emit(updatedChat);
       }
   
-      console.log('✅ Chat updated and moved to top');
       this.cdr.detectChanges();
       return;
     }
-  
-    // ✅ FIX: Fetch chat from server if not found locally
-    console.log('📥 Chat not found locally, fetching from server:', chatId);
     
     this.api.getChatById(chatId).subscribe({
       next: (fetchedChat) => {
-        console.log('✅ Fetched chat from server:', fetchedChat._id);
         
         // ✅ Set unread count if message is not from current user
         if (!isFromCurrentUser) {
@@ -229,7 +221,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
             fetchedChat.unreadCount = {};
           }
           fetchedChat.unreadCount[currentUser] = 1;
-          console.log(`📊 Set initial unread count for user ${currentUser}: 1`);
         }
         
         // Add the fetched chat to the list
@@ -240,8 +231,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
           this.selectedChat = fetchedChat;
           this.selectChat.emit(fetchedChat);
         }
-        
-        console.log('✅ New chat added to list');
         this.cdr.detectChanges();
       },
       error: (error) => {
@@ -412,14 +401,11 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
   
     this.api.deleteChat(chat._id).subscribe({
       next: (response) => {
-        console.log('✅ Chat deleted successfully:', response);
         this.deletingChats.delete(chat._id);
         
         const chatsBefore = this.chats.length;
         this.chats = this.chats.filter(c => c._id !== chat._id);
         const chatsAfter = this.chats.length;
-        
-        console.log(`📊 Removed ${chatsBefore - chatsAfter} chat(s) from UI`);
         
         this.deleteChat.emit(chat);
   
@@ -434,7 +420,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
         this.deletingChats.delete(chat._id);
   
         if (error.status === 404) {
-          console.log('Chat not found on server, removing from UI anyway');
           this.chats = this.chats.filter(c => c._id !== chat._id);
           this.deleteChat.emit(chat);
           
@@ -456,7 +441,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
   onDialogClosed() {}
 
   onChatCreated(newChatData: NewChatData & { chat?: any }) {
-    console.log('📨 Chat created event received:', newChatData);
     
     if (newChatData.chat) {
       

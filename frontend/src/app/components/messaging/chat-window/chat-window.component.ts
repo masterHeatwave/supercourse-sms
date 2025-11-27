@@ -106,7 +106,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
   }
 
   /**
-   * ✅ NEW: Find and scroll to messages from a specific session
+   * ✅ Find and scroll to messages from a specific session
    */
   private scrollToSessionInMessages(sessionId: string, timestamp?: number): void {
     console.log('🔍 Looking for messages from session:', sessionId);
@@ -433,7 +433,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
       setTimeout(() => {
         this.api.markChatAsRead(this.chat._id, this.currentUserId).subscribe({
           next: () => {
-            console.log('✅ Chat marked as read');
             
             // Update local unread count
             if (!this.chat.unreadCount) {
@@ -481,25 +480,21 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
   private updateMessageReadStatus(data: { messageId: string; userId: string; readAt: Date; chatId: string }) {
     // ✅ FIX: Check both current chat and if we're the sender
     if (!this.chat || data.chatId !== this.chat._id) {
-      console.log('⚠️ Ignoring read status for different chat');
       return;
     }
     
     // Only update if the reader is not the current user (we're the sender)
     if (data.userId === this.currentUserId) {
-      console.log('⚠️ Ignoring read status from ourselves');
       return;
     }
   
     const message = this.messages.find(m => m._id === data.messageId);
     if (!message) {
-      console.log('⚠️ Message not found:', data.messageId);
       return;
     }
     
     // Only update our sent messages
     if (message.senderId !== this.currentUserId) {
-      console.log('⚠️ Not our message, ignoring');
       return;
     }
   
@@ -511,7 +506,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
         userId: data.userId,
         readAt: data.readAt
       });
-      console.log(`✅ Message ${data.messageId} marked as read by ${data.userId}`);
       this.cdr.detectChanges();
     }
   }
@@ -945,7 +939,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
   
     if (this.chat.participantsDetails && msg.senderId) {
       const sender = this.chat.participantsDetails.find(u => u.userId === msg.senderId);
-      console.log('Found sender:', sender);
       if (sender) {
         return sender.displayName || `${sender.firstname || ''} ${sender.lastname || ''}`.trim() || 'Unknown User';
       }

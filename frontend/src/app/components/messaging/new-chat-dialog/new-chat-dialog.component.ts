@@ -1,5 +1,5 @@
 // new-chat-dialog.component.ts
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject, ChangeDetectorRef, Renderer2, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -13,6 +13,7 @@ import { Chat } from '../models/chat.models';
 import { Store } from '@ngrx/store';
 import { selectAuthState } from '@store/auth/auth.selectors';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { DOCUMENT } from '@angular/common';
 
 export interface NewChatData {
   participants: string[];
@@ -82,51 +83,227 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
   private _cachedSelectedUsersList: any[] = [];
   private _lastSelectionString: string = '';
 
-  
   private userRole: string = '';
   private userBranchId: string = '';
   private isActive: boolean = false;
-  private userClassIds: string[] = []; // Track user's class memberships
+  private userClassIds: string[] = [];
   private translate: TranslateService = inject(TranslateService);
+  private cdr: ChangeDetectorRef = inject(ChangeDetectorRef);
+  private renderer: Renderer2 = inject(Renderer2);
 
   store = inject(Store);
 
   isLoadingUsers = false;
   isLoadingClasses = false;
 
-  constructor(private apiService: MessagingWrapperService) {
+  constructor(
+    private apiService: MessagingWrapperService,
+    @Inject(DOCUMENT) private document: Document
+  ) {
     this.store.select(selectAuthState).subscribe({
       next: (authState: any) => {
-        
         this.userRole = authState.currentRoleTitle?.toLowerCase() || '';
         this.userBranchId = authState.currentBranchId || '';
         this.isActive = authState.is_active || false;
-        
-        // ✅ IMPORTANT: Store user's class IDs for filtering
         this.userClassIds = authState.classIds || [];
       }
     });
   }
 
   ngOnInit() {
-    console.log('🎬 Initialized NewChatDialogComponent', {
-      userId: this.currentUserId,
-      role: this.userRole,
-      branch: this.userBranchId,
-      isActive: this.isActive
-    });
+
   }
 
   show() {
+    // ✅ Clean up any lingering overlays before showing
+    this.forceCleanupOverlays();
+    
     this.visible = true;
     this.resetForm();
     this.loadUsers();
     this.loadClasses();
+    this.cdr.detectChanges();
   }
 
   hide() {
     this.visible = false;
-    this.dialogClosed.emit();
+    this.cdr.detectChanges();
+
+    // ✅ Multiple cleanup passes during and after animation
+    this.forceCleanupOverlays();
+    
+    window.setTimeout(() => {
+      this.forceCleanupOverlays();
+    }, 50);
+
+    window.setTimeout(() => {
+      this.forceCleanupOverlays();
+      this.dialogClosed.emit();
+    }, 150);
+
+    window.setTimeout(() => {
+      this.forceCleanupOverlays();
+      this.cdr.detectChanges();
+    }, 350);
+  }
+
+  /**
+   * ✅ CRITICAL: Comprehensive overlay cleanup function
+   * Targets ALL PrimeNG overlay elements and removes them from DOM
+   */
+  private forceCleanupOverlays(): void {
+    try {
+      console.log('🧹 [Dialog] Starting aggressive overlay cleanup');
+
+      // ✅ Priority 1: Target all possible PrimeNG overlay selectors
+      const selectors = [
+        '.p-dialog-mask',           // Dialog backdrop
+        '.p-component-overlay',     // Generic PrimeNG overlays
+        '.p-treeselect-panel',      // TreeSelect dropdown panel
+        '.p-treeselect-items-wrapper', // TreeSelect wrapper (THE KEY ONE)
+        '.p-treenode-content',    // Tree node content wrappers
+        '.p-dropdown-panel',        // Dropdown panels
+        '.p-overlaypanel',          // Overlay panels
+        '.p-menu-overlay',          // Menu overlays
+        '.p-tooltip',               // Tooltip overlays
+        '.p-overlay',               // Generic overlays
+        '.p-sidebar-mask',          // Sidebar masks
+        '.cdk-overlay-pane'         // Angular CDK overlays
+      ];
+
+      // ✅ Remove each overlay element
+      selectors.forEach(selector => {
+        const elements = this.document.querySelectorAll(selector);
+        
+        if (elements.length > 0) {
+          
+          elements.forEach((el: any) => {
+            try {
+              // Use removeChild for better browser compatibility
+              if (el.parentNode) {
+                el.parentNode.removeChild(el);
+              } else if (el.remove && typeof el.remove === 'function') {
+                el.remove();
+              }
+              console.log(`✅ Removed ${selector}`);
+            } catch (e) {
+              console.warn(`⚠️ Could not remove ${selector}:`, e);
+            }
+          });
+        }
+      });
+
+      // ✅ Priority 2: Reset body scroll and overflow states
+      try {
+        this.document.body.style.overflow = '';
+        this.document.body.style.position = '';
+        this.document.body.style.width = '';
+        this.document.body.style.height = '';
+        this.document.body.style.top = '';
+        
+        // Remove all overflow-related classes
+        const overflowClasses = [
+          'p-overflow-hidden',
+          'messaging-overlay-guard',
+          'cdk-overlay-pane-container',
+          'cdk-overlay-connected-position-bounding-box'
+        ];
+        
+        overflowClasses.forEach(cls => {
+          if (this.document.body.classList.contains(cls)) {
+            this.document.body.classList.remove(cls);
+          }
+        });
+      } catch (e) {
+        console.warn('⚠️ Could not reset body styles:', e);
+      }
+
+      // ✅ Priority 3: Reset pointer events on any blocked elements
+      try {
+        const allElements = this.document.querySelectorAll('[style*="pointer-events"]');
+        allElements.forEach((el: any) => {
+          // Don't modify dialog or messaging panel elements
+          if (
+            !el.classList.contains('p-dialog') &&
+            !el.classList.contains('messaging-panel') &&
+            !el.classList.contains('messaging-overlay')
+          ) {
+            el.style.pointerEvents = '';
+            el.style.zIndex = '';
+          }
+        });
+      } catch (e) {
+        console.warn('⚠️ Could not reset pointer events:', e);
+      }
+
+      // ✅ Priority 4: Force layout recalculation
+      try {
+        this.cdr.detectChanges();
+        void this.document.body.getBoundingClientRect();
+      } catch (e) {
+        console.warn('⚠️ Could not force layout recalculation:', e);
+      }
+
+      console.log('✅ [Dialog] Overlay cleanup completed');
+    } catch (error) {
+      console.error('❌ [Dialog] Error during overlay cleanup:', error);
+    }
+  }
+
+  /**
+   * ✅ Remove lingering overlays that might have escaped first pass
+   * Runs multiple times to catch delayed DOM removals
+   */
+  private removeLingeringOverlays(): void {
+    const cleanupPass = (passNumber: number, delay: number) => {
+      window.setTimeout(() => {
+        try {
+
+          // Check for hidden or disconnected overlays
+          const overlays = this.document.querySelectorAll(
+            '.p-dialog-mask, .p-treeselect-panel, .p-treeselect-items-wrapper, .p-treenode-content, .p-component-overlay'
+          );
+
+          if (overlays.length > 0) {
+            console.log(`Found ${overlays.length} potential lingering overlays`);
+          }
+
+          overlays.forEach((overlay: any) => {
+            const isHidden =
+              overlay.style.display === 'none' ||
+              overlay.getAttribute('aria-hidden') === 'true' ||
+              !overlay.isConnected ||
+              overlay.offsetHeight === 0 ||
+              overlay.offsetWidth === 0;
+
+            if (isHidden) {
+              try {
+                if (overlay.parentNode) {
+                  overlay.parentNode.removeChild(overlay);
+                } else if (overlay.remove && typeof overlay.remove === 'function') {
+                  overlay.remove();
+                }
+                console.log('🗑️ Removed lingering overlay');
+              } catch (e) {
+                console.warn('⚠️ Could not remove lingering overlay:', e);
+              }
+            }
+          });
+
+          // Restore body scroll if needed
+          if (this.document.body.style.overflow === 'hidden') {
+            this.document.body.style.overflow = '';
+          }
+        } catch (e) {
+          console.warn(`⚠️ Error in cleanup pass ${passNumber}:`, e);
+        }
+      }, delay);
+    };
+
+    // Multiple cleanup passes for safety
+    cleanupPass(1, 50);
+    cleanupPass(2, 150);
+    cleanupPass(3, 300);
   }
 
   private resetForm() {
@@ -138,11 +315,11 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Role-based user filtering :
+   * Role-based user filtering:
    * - Admin/Manager: Can chat with anyone
-   * - Teacher: Can chat with admins, managers (same branch), students in their classes, parents of those students
-   * - Student: Can chat with admins, managers (same branch), teachers in their classes, parents in their classes
-   * - Parent: Same as student (admins, managers in branch, teachers/students in child's classes)
+   * - Teacher: Can chat with admins, managers (same branch), students in their classes, parents
+   * - Student: Can chat with managers, teachers in their classes, parents
+   * - Parent: Same as student
    */
   private filterUsersByRole(users: any[]): any[] {
     const currentRole = this.userRole;
@@ -159,45 +336,30 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
       switch (currentRole) {
         case 'admin':
         case 'manager':
-          //   Admins and Managers can chat with everyone
           return true;
 
         case 'teacher':
-          //  Teachers can chat with:
-          // - All admins (any branch)
-          // - Managers in their branch
-          // - Students in their classes (handled by class membership)
-          // - Parents of students in their classes (handled by class membership)
           return (
             (userRole === 'admin' && userBranch === currentBranch) ||
             (userRole === 'manager' && userBranch === currentBranch) ||
-            (userRole === 'student' && userBranch === currentBranch) || // Will be further filtered by class membership
-            (userRole === 'parent' && userBranch === currentBranch) || // Will be further filtered by class membership
-             userRole === 'teacher'  
+            (userRole === 'student' && userBranch === currentBranch) ||
+            (userRole === 'parent' && userBranch === currentBranch) ||
+            userRole === 'teacher'
           );
 
         case 'student':
-          //  Students can chat with:
-          // - Managers in their branch
-          // - Teachers in their classes
-          // - Other students in their classes
-          // - Parents in their classes
           return (
-            // (userRole === 'admin' && userBranch === currentBranch) ||  To be deleted ? 
-            (userRole === 'manager' && userBranch === currentBranch ) ||
-            (userRole ===  'teacher' && userBranch === currentBranch) || // Will be further filtered by class membership
-            // (userRole ===  'student' && userBranch === currentBranch) || Students won't communicate with each other ? Really ?
-            (userRole ===  'parent' && userBranch === currentBranch)
+            (userRole === 'manager' && userBranch === currentBranch) ||
+            (userRole === 'teacher' && userBranch === currentBranch) ||
+            (userRole === 'parent' && userBranch === currentBranch)
           );
 
         case 'parent':
-          //  Parents have same rights as students
           return (
-            // (userRole === 'admin' && userBranch === currentBranch) ||
-            (userRole === 'manager' && userBranch === currentBranch ) ||
-            (userRole ===  'teacher' && userBranch === currentBranch) || // Will be further filtered by class membership
-            (userRole ===  'student' && userBranch === currentBranch) ||
-            (userRole ===  'parent' && userBranch === currentBranch)
+            (userRole === 'manager' && userBranch === currentBranch) ||
+            (userRole === 'teacher' && userBranch === currentBranch) ||
+            (userRole === 'student' && userBranch === currentBranch) ||
+            (userRole === 'parent' && userBranch === currentBranch)
           );
 
         default:
@@ -217,13 +379,13 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
     }
 
     this.isLoadingUsers = true;
+    console.log('📥 Loading users...');
 
-    // ✅ Use limit parameter (1000 users max)
     this.apiService.getUsers(1000).subscribe({
       next: (response: any) => {
+        console.log(`✅ Loaded ${response.length} total users`);
 
         const activeUsers = response.filter((u: any) => u.is_active !== false);
-
         const filtered = this.filterUsersByRole(activeUsers);
 
         this.users = filtered.map((user: any) => ({
@@ -233,6 +395,7 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
           userType: user.userType,
           branchId: user.branchId || ''
         }));
+
         this.isLoadingUsers = false;
         this.buildRecipientTreeIfReady();
       },
@@ -245,17 +408,14 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * ✅ ENHANCED: Load classes with limit and proper filtering
-   */
   private loadClasses() {
     this.isLoadingClasses = true;
+    console.log('📥 Loading classes...');
 
-    // ✅ Use limit parameter (1000 classes max)
     this.apiService.getClasses().subscribe({
       next: (response: any) => {
+        console.log(`✅ Loaded ${response.length} total classes`);
 
-        // ✅ Filter classes based on role and membership
         this.classes = response
           .filter((c: any) => this.canAccessClass(c))
           .map((classItem: any) => ({
@@ -268,6 +428,7 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
             teachers: classItem.teachers || []
           }));
 
+        console.log(`✅ Filtered to ${this.classes.length} accessible classes`);
         this.isLoadingClasses = false;
         this.buildRecipientTreeIfReady();
       },
@@ -280,36 +441,27 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * ✅ ENHANCED: Determines if user can access a specific class
-   */
   private canAccessClass(classItem: any): boolean {
     const role = this.userRole;
     const currentUserId = this.currentUserId;
     const currentBranch = this.userBranchId;
 
-    // ✅ Admin/Manager: Access all classes
     if (role === 'admin') return true;
-    
-    // ✅ Manager: Access classes in their branch
+
     if (role === 'manager') {
       return classItem.branchId === currentBranch;
     }
 
-    // ✅ Teacher: Access only classes they teach
     if (role === 'teacher') {
       return classItem.teachers?.some((t: any) => t.user === currentUserId || t._id === currentUserId);
     }
 
-    // ✅ Student: Access only classes they're enrolled in
     if (role === 'student') {
       return classItem.students?.some((s: any) => s.user === currentUserId || s._id === currentUserId);
     }
 
-    // ✅ Parent: Access classes where their child is enrolled
     if (role === 'parent') {
-      // Check if any student in the class has this parent
-      return classItem.students?.some((s: any) => 
+      return classItem.students?.some((s: any) =>
         s.parents?.some((p: any) => p.user === currentUserId || p._id === currentUserId)
       );
     }
@@ -322,10 +474,9 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
     this.buildRecipientTree();
   }
 
-  /**
-   * ✅ ENHANCED: Build tree with proper class-based filtering
-   */
   private buildRecipientTree() {
+    console.log('🌳 Building recipient tree...');
+
     const makeUserNode = (user: User | UserInTaxi): TreeNode => ({
       key: (user.user || user._id).toString(),
       label: this.extractDisplayName(user.username),
@@ -345,7 +496,7 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
       icon: this.getUserTypeIcon(key)
     });
 
-    // ✅ Build user type groups (Teachers, Students, Parents, Managers, Admins)
+    // Build user type groups
     const types = ['teacher', 'student', 'parent', 'manager', 'admin'];
     const groupedNodes: TreeNode[] = [];
 
@@ -357,32 +508,29 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
       if (nodes.length > 0) {
         groupedNodes.push(
           makeParentNode(
-            `${type}s`, 
-            `${type[0].toUpperCase() + type.slice(1)}s (${nodes.length})`, 
+            `${type}s`,
+            `${type[0].toUpperCase() + type.slice(1)}s (${nodes.length})`,
             nodes
           )
         );
       }
     }
 
-    // ✅ Build class nodes with filtered members
+    // Build class nodes
     const classNodes = this.classes.map(c => {
-      // ✅ Filter class members based on role-based access
       const allMembers = [...c.students, ...c.teachers];
       const accessibleMembers = allMembers.filter(member => {
         if (member._id === this.currentUserId) return false;
-        
-        // Additional filtering based on role
+
         if (this.userRole === 'teacher' || this.userRole === 'student' || this.userRole === 'parent') {
-          // Only show members from accessible classes
           return this.canAccessClass(c);
         }
-        
+
         return true;
       });
 
       const memberNodes = accessibleMembers.map(u => makeUserNode(u));
-    
+
       return {
         key: `class-${c._id}`,
         label: `${c.name} - ${c.subject} (${c.level}) • ${memberNodes.length} members`,
@@ -393,9 +541,8 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
         icon: 'pi pi-book',
         data: c
       };
-    }).filter(classNode => classNode.children.length > 0); // Only show classes with accessible members
-    
-    // ✅ Classes parent node
+    }).filter(classNode => classNode.children.length > 0);
+
     const classesParentNode: TreeNode = {
       key: 'classes',
       label: `Classes (${classNodes.length})`,
@@ -405,18 +552,13 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
       icon: 'pi pi-book',
       children: classNodes
     };
-    
-    // ✅ Combine user groups + classes
+
     this.recipientTree = [
-      ...groupedNodes, 
+      ...groupedNodes,
       ...(classNodes.length > 0 ? [classesParentNode] : [])
     ];
 
-    console.log('📊 Recipient tree built:', {
-      userGroups: groupedNodes.length,
-      classes: classNodes.length,
-      totalNodes: this.recipientTree.length
-    });
+    console.log(`✅ Tree built with ${this.recipientTree.length} root nodes`);
   }
 
   private extractDisplayName(username: string): string {
@@ -441,13 +583,13 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
 
   getChatTypeInfo(): string {
     const count = this.getSelectedUserCount();
-  
+
     if (count === 0)
       return this.translate.instant('messages.chat_type.none');
-  
+
     if (count === 1)
       return this.translate.instant('messages.chat_type.single');
-  
+
     return this.translate.instant('messages.chat_type.group', { count });
   }
 
@@ -483,18 +625,20 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
     return userNodes;
   }
 
-  getRoleSeverity(role: string): "success" | "info" | "warning" | "danger" | "secondary" | "contrast" { 
-    switch(role?.toLowerCase()) {
-      case 'teacher': return 'info'; 
-      case 'student': return 'success'; 
-      case 'parent': return 'warning'; 
-      case 'manager': return 'danger'; 
-      case 'admin': return 'contrast'; 
-      default: return 'secondary'; 
-    } 
+  getRoleSeverity(role: string): "success" | "info" | "warning" | "danger" | "secondary" | "contrast" {
+    switch (role?.toLowerCase()) {
+      case 'teacher': return 'info';
+      case 'student': return 'success';
+      case 'parent': return 'warning';
+      case 'manager': return 'danger';
+      case 'admin': return 'contrast';
+      default: return 'secondary';
+    }
   }
 
   onCancel() {
+    console.log('❌ Dialog cancelled');
+    this.forceCleanupOverlays();
     this.hide();
   }
 
@@ -526,19 +670,23 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
       name: chatName
     });
 
-    this.apiService.createChat({ 
-      participants: allParticipants, 
-      type: chatType, 
-      name: chatName 
+    this.apiService.createChat({
+      participants: allParticipants,
+      type: chatType,
+      name: chatName
     }).subscribe({
       next: (createdChat: any) => {
         console.log('✅ Chat created successfully:', createdChat);
-        this.chatCreated.emit({ 
-          participants: allParticipants, 
-          type: chatType, 
-          name: chatName, 
-          chat: createdChat 
+        this.chatCreated.emit({
+          participants: allParticipants,
+          type: chatType,
+          name: chatName,
+          chat: createdChat
         });
+
+        // ✅ Aggressive cleanup before closing
+        this.forceCleanupOverlays();
+        this.removeLingeringOverlays();
         this.hide();
       },
       error: (err: any) => {
@@ -554,40 +702,12 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
     return 'No users found';
   }
 
-  private removeLingeringOverlays(): void {
-    setTimeout(() => {
-      const overlays = document.querySelectorAll('.p-dialog-mask, .p-component-overlay');
-      
-      overlays.forEach(overlay => {
-        const dialog = overlay.querySelector('.p-dialog');
-        if (!dialog || dialog.getAttribute('aria-hidden') === 'true') {
-          overlay.remove();
-        }
-      });
-      
-      const treePanels = document.querySelectorAll('.p-treeselect-panel');
-      treePanels.forEach(panel => {
-        if ((panel as HTMLElement).style.display === 'none' || !panel.isConnected) {
-          panel.remove();
-        }
-      });
-      
-      document.body.style.overflow = '';
-      document.body.classList.remove('p-overflow-hidden');
-    }, 100);
-  }
-
-  private cleanup(): void {
-    console.log('🧹 Cleaning up new chat dialog state');
-    
-    this.selectedRecipients = [];
-    this.groupName = '';
-    this._cachedSelectedUsers = [];
-    
-    this.removeLingeringOverlays();
-  }
-
+  /**
+   * ✅ Cleanup on component destruction
+   */
   ngOnDestroy(): void {
-    this.cleanup();
+    console.log('🧹 Destroying NewChatDialogComponent');
+    this.forceCleanupOverlays();
+    this.removeLingeringOverlays();
   }
 }

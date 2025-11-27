@@ -1,6 +1,6 @@
 // src/app/components/messaging/messaging-container/messaging-container.component.ts
 
-import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewEncapsulation, ChangeDetectorRef, Renderer2, Inject  } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { of, Subject } from 'rxjs';
 import { takeUntil, finalize, filter, take, switchMap, tap, map, catchError } from 'rxjs/operators';
@@ -21,6 +21,7 @@ import { NotificationsWrapperService } from '@services/messaging/notifications-w
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { combineLatest } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
+import { DOCUMENT } from '@angular/common';
 
 @Component({
   selector: 'app-messaging-container',
@@ -44,8 +45,7 @@ import { ActivatedRoute } from '@angular/router';
 export class MessagingContainerComponent implements OnInit, OnDestroy {
   // ✅ User state
   currentUserId: string = '';
-  
-  // ✅ Chat state
+
   selectedChat: Chat | null = null;
   chats: Chat[] = [];
   
@@ -61,7 +61,6 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
   // ✅ Flags
   private hasLoadedInitialChats = false;
   private socketListenersInitialized = false;
-  cdr: any;
 
   constructor(
     private authStore: AuthStoreService, 
@@ -71,7 +70,9 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
     private translate: TranslateService,
     private notificationsService: NotificationsWrapperService, 
     private activatedRoute: ActivatedRoute,
-
+    private cdr: ChangeDetectorRef,
+    private renderer: Renderer2,
+    @Inject(DOCUMENT) private document: Document
   ) {
 
   }
@@ -87,6 +88,7 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
 
     this.handleClassChatNavigation();
   }
+  
 
   ngOnDestroy(): void {
     console.log('🧹 MessagingContainerComponent destroyed');
@@ -621,23 +623,219 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
   // ✅ UI CONTROLS
   // ==========================================
 
-  show(): void {
-    this.isVisible = true;
-    
-    if (this.currentUserId && !this.hasLoadedInitialChats) {
-      this.loadChats();
+/**
+ * ✅ CRITICAL FIX: Comprehensive cleanup of ALL PrimeNG overlays
+ */
+  private forceCleanupOverlays(): void {
+    try {
+      // Priority 1: Remove dialog masks and overlays
+      const selectors = [
+        '.p-dialog-mask',           // Dialog backdrop
+        '.p-component-overlay',     // Generic PrimeNG overlays
+        '.p-treeselect-panel',      // TreeSelect dropdown
+        '.p-treeselect-items-wrapper', // TreeSelect wrapper
+        '.p-dropdown-panel',        // Dropdown panels
+        '.p-overlaypanel',          // Overlay panels
+        '.p-menu-overlay',          // Menu overlays
+        '.p-tooltip',               // Tooltip overlays
+        '.p-overlay',               // Generic overlays
+        '.p-sidebar-mask',          // Sidebar mask
+        '.cdk-overlay-pane'         // Angular CDK overlays
+      ];
+
+      selectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach((el: any) => {
+          try {
+            // Remove element from DOM
+            if (el.parentNode) {
+              el.parentNode.removeChild(el);
+            } else {
+              el.remove?.();
+            }
+          } catch (e) {
+            console.warn(`⚠️ Could not remove ${selector}:`, e);
+          }
+        });
+      });
+
+      // Priority 2: Reset body scroll state
+      try {
+        this.document.body.style.overflow = '';
+        this.document.body.style.position = '';
+        this.document.body.style.width = '';
+        
+        // Remove all overflow-related classes
+        const overflowClasses = [
+          'p-overflow-hidden',
+          'messaging-overlay-guard',
+          'cdk-overlay-pane-container'
+        ];
+        
+        overflowClasses.forEach(cls => {
+          this.document.body.classList.remove(cls);
+        });
+      } catch (e) {
+        console.warn('⚠️ Could not reset body styles:', e);
+      }
+
+      // Priority 3: Clean up any remaining pointer events blocks
+      try {
+        const allElements = document.querySelectorAll('[style*="pointer-events"]');
+        allElements.forEach((el: any) => {
+          if (el !== this.document.body && !el.classList.contains('messaging-panel')) {
+            el.style.pointerEvents = '';
+          }
+        });
+      } catch (e) {
+        console.warn('⚠️ Could not reset pointer events:', e);
+      }
+
+      // Priority 4: Force layout recalculation
+      this.cdr.detectChanges();
+      void this.document.body.getBoundingClientRect();
+      
+      console.log('✅ Overlay cleanup completed');
+    } catch (error) {
+      console.error('❌ Error during overlay cleanup:', error);
     }
   }
 
-  hide(): void {
-    this.isVisible = false;
+  /**
+   * ✅ Remove lingering overlays after animations complete
+   * Called multiple times to ensure cleanup even if animations delay removal
+   */
+  private removeLingeringOverlays(): void {
+    const cleanupPass = (delay: number) => {
+      window.setTimeout(() => {
+        try {
+          // Check for hidden or disconnected overlays
+          const overlays = document.querySelectorAll(
+            '.p-dialog-mask, .p-treeselect-panel, .p-component-overlay'
+          );
+
+          overlays.forEach((overlay: any) => {
+            const isHidden = 
+              overlay.style.display === 'none' ||
+              overlay.getAttribute('aria-hidden') === 'true' ||
+              !overlay.isConnected ||
+              overlay.offsetHeight === 0;
+
+            if (isHidden) {
+              try {
+                if (overlay.parentNode) {
+                  overlay.parentNode.removeChild(overlay);
+                } else {
+                  overlay.remove?.();
+                }
+                console.log('🧹 Removed lingering overlay');
+              } catch (e) {
+                console.warn('⚠️ Could not remove lingering overlay:', e);
+              }
+            }
+          });
+
+          // Restore body scroll
+          if (this.document.body.style.overflow === 'hidden') {
+            this.document.body.style.overflow = '';
+          }
+        } catch (e) {
+          console.warn('⚠️ Error in cleanup pass:', e);
+        }
+      }, delay);
+    };
+
+    // Multiple cleanup passes to catch delayed removals
+    cleanupPass(50);
+    cleanupPass(150);
+    cleanupPass(1000);
   }
 
-  toggle(): void {
-    if (this.isVisible) {
-      this.hide();
-    } else {
-      this.show();
+  /**
+   * ✅ Updated hide() method with enhanced cleanup
+   */
+  hide(): void {
+    this.isVisible = false;
+    this.cdr.detectChanges();
+
+    try {
+      // Blur active element
+      const active = this.document.activeElement as HTMLElement | null;
+      if (active && typeof active.blur === 'function') {
+        active.blur();
+      }
+      // Focus body to ensure no element is focused
+      (this.document.body as HTMLElement).focus?.();
+    } catch (e) {
+      console.warn('⚠️ Could not blur element:', e);
+    }
+
+    // ✅ CRITICAL: Clean overlays while they're animating out
+    this.forceCleanupOverlays();
+    
+    // Additional cleanup during animation
+    window.setTimeout(() => this.forceCleanupOverlays(), 50);
+
+    // Final cleanup after animation completes
+    window.setTimeout(() => {
+      this.forceCleanupOverlays();
+      this.removeLingeringOverlays();
+      this.cdr.detectChanges();
+      
+      // Only disable guard after all cleanup is done
+      this.disableOverlayGuard();
+    }, 350); // Match or exceed the 0.3s animation duration + buffer
+
+    try {
+      this.document.body.style.overflow = '';
+      this.document.body.classList.remove('p-overflow-hidden');
+    } catch (e) {
+      console.warn('⚠️ Could not reset body overflow:', e);
+    }
+
+    void this.document.body.getBoundingClientRect();
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * ✅ Show method with proper overlay guard
+   */
+  show(): void {
+    this.enableOverlayGuard();
+    
+    // Clean up any remnants from previous interactions
+    this.forceCleanupOverlays();
+
+    this.isVisible = true;
+
+    if (this.currentUserId && !this.hasLoadedInitialChats) {
+      this.loadChats();
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * ✅ Enable overlay guard to prevent body scroll
+   */
+  private enableOverlayGuard(): void {
+    try {
+      this.document.body.classList.add('messaging-overlay-guard');
+      this.document.body.style.overflow = 'hidden';
+    } catch (e) {
+      console.warn('⚠️ Could not enable overlay guard:', e);
+    }
+  }
+
+  /**
+   * ✅ Disable overlay guard to restore body scroll
+   */
+  private disableOverlayGuard(): void {
+    try {
+      this.document.body.classList.remove('messaging-overlay-guard');
+      this.document.body.style.overflow = '';
+    } catch (e) {
+      console.warn('⚠️ Could not disable overlay guard:', e);
     }
   }
 
