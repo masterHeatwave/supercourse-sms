@@ -256,13 +256,16 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     if (this.currentChatId) {
       this.socket.leaveChat(this.currentChatId);
     }
-
+  
     this.currentChatId = this.chat._id;
+    
     this.messages = [];
     this.typingFrom = null;
     this.online = false;
     this.cancelReply();
 
+    this.cdr.detectChanges();
+  
     if (this.isSocketReady) {
       this.finalizeChatSwitch();
     } else {
@@ -276,29 +279,37 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
       checkReady();
     }
   }
-
+  
+  // ✅ FIXED: finalizeChatSwitch - Better error handling and retry
   private async finalizeChatSwitch() {
     if (!this.chat?._id) return;
     
-    // ✅ FIXED: Wait for socket to be ready before joining
     try {
       await this.socket.waitForConnection();
       
       const joined = this.socket.joinChat(this.chat._id);
       if (!joined) {
-        console.error('❌ Failed to join chat, retrying in 1 second...');
+        console.warn('⚠️ Failed to join chat initially, retrying...');
         
-        // Retry once after a delay
         setTimeout(async () => {
-          await this.socket.waitForConnection();
-          this.socket.joinChat(this.chat._id);
+          try {
+            await this.socket.waitForConnection();
+            const retryJoin = this.socket.joinChat(this.chat._id);
+            if (retryJoin) {
+              this.loadChatMessages();
+              this.markChatAsRead();
+            }
+          } catch (error) {
+            console.error('❌ Retry failed:', error);
+          }
         }, 1000);
+        return;
       }
       
       this.loadChatMessages();
       this.markChatAsRead();
     } catch (error) {
-      console.error('❌ Error waiting for socket connection:', error);
+      console.error('❌ Error in finalizeChatSwitch:', error);
       
       // Still try to load messages even if socket fails
       this.loadChatMessages();
@@ -522,7 +533,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
           this.typingFrom = null;
           this.cdr.detectChanges();
         }
-      }, 3000);
+      }, 5000);
     } else {
       this.typingFrom = null;
     }

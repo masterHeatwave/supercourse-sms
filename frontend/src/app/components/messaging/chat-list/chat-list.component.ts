@@ -1,4 +1,4 @@
-// chat-list.component.ts 
+// chat-list.component.ts - FIXED
 import { Component, Input, Output, EventEmitter, OnChanges, OnInit, SimpleChanges, ChangeDetectorRef, ViewChild, OnDestroy } from '@angular/core';
 import { Chat, Message, User } from '../models/chat.models';
 import { CommonModule } from '@angular/common';
@@ -100,9 +100,8 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
     private socketService: SocketService,
     private translate: TranslateService,
   ) {}
+  
   ngOnInit(): void {
-    
-    // Set up Socket.IO listeners for real-time updates
     this.setupSocketListeners();
   }
   
@@ -110,35 +109,30 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
    * Set up Socket.IO event listeners for real-time chat updates
    */
   private setupSocketListeners(): void {
-    // ✅ FIX: Use onNewMessage() instead of on('onNewMessage')
     this.socketService.onNewMessage()
       .pipe(takeUntil(this.destroy$))
       .subscribe((message: Message & { chatId: string }) => {
         this.handleIncomingMessage(message);
       });
   
-    // ✅ FIX: Use onChatUpdated() instead of on('chatUpdated')
     this.socketService.onChatUpdated()
       .pipe(takeUntil(this.destroy$))
       .subscribe((event: any) => {
         this.handleChatUpdate(event);
       });
   
-    // ✅ FIX: Use onUserOnline() instead of on('userOnline')
     this.socketService.onUserOnline()
       .pipe(takeUntil(this.destroy$))
       .subscribe((userId: string) => {
         this.updateUserOnlineStatus(userId, true);
       });
   
-    // ✅ FIX: Use onUserOffline() instead of on('userOffline')
     this.socketService.onUserOffline()
       .pipe(takeUntil(this.destroy$))
       .subscribe((userId: string) => {
         this.updateUserOnlineStatus(userId, false);
       });
   
-    // ✅ FIX: Use onTyping() instead of on('userTyping')
     this.socketService.onTyping()
       .pipe(takeUntil(this.destroy$))
       .subscribe((data: { userId: string; chatId: string; isTyping: boolean }) => {
@@ -151,7 +145,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
     this.destroy$.complete();
   }
   
-  // ✅ ADD THIS METHOD if missing (should be around line 148)
   private updateUserOnlineStatus(userId: string, isOnline: boolean): void {
     this.chats.forEach(chat => {
       const user = chat.participantsDetails?.find(u => u.userId === userId);
@@ -165,9 +158,7 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
   
-  // ✅ FIX: Change the chatType line in handleIncomingMessage to suppress warning
   private handleIncomingMessage(message: Message & { chatId: string }) {
-    
     const chatId = message.chatId;
     const existingIndex = this.chats.findIndex(c => c._id === chatId);
     const currentUser = String(this.currentUserId);
@@ -177,10 +168,8 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
     if (existingIndex !== -1) {
       const oldChat = this.chats[existingIndex];
       
-      // ✅ FIX: Calculate new unread count
       const newUnreadCount = { ...oldChat.unreadCount };
       if (!isFromCurrentUser) {
-        // Increment unread count for current user
         const currentCount = newUnreadCount[currentUser] || 0;
         newUnreadCount[currentUser] = currentCount + 1;
       }
@@ -192,11 +181,9 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
         unreadCount: newUnreadCount
       };
   
-      // Move chat to top of list
       this.chats.splice(existingIndex, 1);
       this.chats = [updatedChat, ...this.chats];
   
-      // Update selected chat if it's the same one
       if (this.selectedChat?._id === chatId) {
         this.selectedChat = updatedChat;
         this.selectChat.emit(updatedChat);
@@ -208,8 +195,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
     
     this.api.getChatById(chatId).subscribe({
       next: (fetchedChat) => {
-        
-        // ✅ Set unread count if message is not from current user
         if (!isFromCurrentUser) {
           if (!fetchedChat.unreadCount) {
             fetchedChat.unreadCount = {};
@@ -217,10 +202,8 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
           fetchedChat.unreadCount[currentUser] = 1;
         }
         
-        // Add the fetched chat to the list
         this.chats = [fetchedChat, ...this.chats];
         
-        // If no chat is selected, select this one
         if (!this.selectedChat) {
           this.selectedChat = fetchedChat;
           this.selectChat.emit(fetchedChat);
@@ -234,7 +217,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
   }
 
   private handleChatUpdate(event: any) {
-    
     const chatId = event.chatId || event._id;
     const chatIndex = this.chats.findIndex(c => c._id === chatId);
   
@@ -242,16 +224,12 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
       const oldChat = this.chats[chatIndex];
       const isSelected = this.selectedChat?._id === chatId;
   
-  
-      // ✅ Start with a copy of the old chat to preserve all properties
       const updatedChat: Chat = {
         ...oldChat
       };
   
-      // ✅ Get updates - if event has participantsDetails at top level, use event itself
       const updates = event.updates || event;
   
-      // Update each field only if it exists in the update
       if (updates.hasOwnProperty('lastMessageContent')) {
         updatedChat.lastMessageContent = updates.lastMessageContent;
       }
@@ -286,11 +264,9 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
         updatedChat.isArchived = updates.isArchived;
       }
   
-      // Replace chat in list
       this.chats.splice(chatIndex, 1);
       this.chats = [updatedChat, ...this.chats];
   
-      // Update selected chat if it matches
       if (isSelected) {
         this.selectedChat = updatedChat;
         this.selectChat.emit(updatedChat);
@@ -342,10 +318,9 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
   }
 
   onSelectChat(chat: Chat) {
+    
     this.selectedChat = chat;
   
-    // ✅ FIX: Validate chat exists before trying to reset unread count
-    // Only reset unread count if the chat has unread messages
     if (chat.unreadCount && this.getUnreadCount(chat) > 0) {
       const userKey = this.findUserKey(chat.unreadCount, this.currentUserId);
       if (userKey) {
@@ -388,10 +363,7 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
       next: (response) => {
         this.deletingChats.delete(chat._id);
         
-        const chatsBefore = this.chats.length;
         this.chats = this.chats.filter(c => c._id !== chat._id);
-        const chatsAfter = this.chats.length;
-        
         this.deleteChat.emit(chat);
   
         if (this.selectedChat?._id === chat._id) {
@@ -425,22 +397,61 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
 
   onDialogClosed() {}
 
+  /**
+   * ✅ FIXED: Handle newly created chat
+   * - Immediately select it
+   * - Update avatar initials
+   * - Allow deletion without refresh
+   */
   onChatCreated(newChatData: NewChatData & { chat?: any }) {
     
     if (newChatData.chat) {
+      // ✅ Ensure chat has all required properties
+      const newChat = this.ensureChatComplete(newChatData.chat);
       
-      // Add the new chat to the beginning of the list
-      this.chats = [newChatData.chat, ...this.chats];
+      // Add to beginning of list
+      this.chats = [newChat, ...this.chats];
       
-      // Optionally select the new chat
-      this.selectedChat = newChatData.chat;
-      this.selectChat.emit(newChatData.chat);
-      
+      // ✅ IMMEDIATELY SELECT THE NEW CHAT
+      this.selectedChat = newChat;
+      this.selectChat.emit(newChat);
+
       this.cdr.detectChanges();
     } else {
-      // ✅ If only data is provided, refetch chats from server
+      // Fallback: refetch from server
       this.refreshChats();
     }
+  }
+
+  /**
+   * ✅ CRITICAL: Ensure newly created chat has all required data
+   */
+  private ensureChatComplete(chat: any): Chat {
+    return {
+      _id: chat._id || '',
+      participants: chat.participants || [],
+      participantsDetails: chat.participantsDetails && chat.participantsDetails.length > 0 
+        ? chat.participantsDetails 
+        : chat.participants?.map((pid: any) => ({
+            _id: pid,
+            userId: pid,
+            username: 'Unknown',
+            displayName: 'Unknown User',
+            userType: 'User',
+            isOnline: false
+          })) || [],
+      type: chat.type || 'direct',
+      name: chat.name || '',
+      lastMessageContent: chat.lastMessageContent || 'No messages yet',
+      lastMessageDate: chat.lastMessageDate ? new Date(chat.lastMessageDate) : new Date(),
+      unreadCount: chat.unreadCount || {},
+      createdAt: chat.createdAt ? new Date(chat.createdAt) : new Date(),
+      updatedAt: chat.updatedAt ? new Date(chat.updatedAt) : new Date(),
+      isStarred: chat.isStarred || false,
+      isPinned: chat.isPinned || false,
+      isMuted: chat.isMuted || false,
+      isArchived: chat.isArchived || false
+    };
   }
   
   /**
@@ -449,7 +460,6 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
   private refreshChats() {
     if (!this.currentUserId) return;
     
-    // You'll need to implement this method in your service
     this.api.getUserChats(this.currentUserId).subscribe({
       next: (chats: Chat[]) => {
         this.chats = chats;
@@ -588,6 +598,9 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
     return chat.participants && chat.participants.length > 2 ? `Group Chat` : 'Direct Chat';
   }
 
+  /**
+   * ✅ FIXED: Get avatar initials with fallback for new chats
+   */
   getAvatarInitials(chat: Chat): string {
     if (chat.type === 'group') {
       if (chat.name) {
@@ -599,6 +612,7 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
       return 'GRP';
     }
 
+    // ✅ Direct chat - use participant details
     if (chat.participantsDetails && chat.participantsDetails.length > 0) {
       const otherUser = chat.participantsDetails.find(u => u.userId !== this.currentUserId);
       if (otherUser) {
@@ -606,15 +620,18 @@ export class ChatListComponent implements OnChanges, OnInit, OnDestroy {
           const names = otherUser.displayName.split(/[\.\s]/);
           const firstInitial = names[0]?.[0] || '';
           const lastInitial = names.length > 1 ? names[names.length - 1][0] : '';
-          return (firstInitial + lastInitial).toUpperCase() || 'U';
+          const initials = (firstInitial + lastInitial).toUpperCase();
+          return initials || 'U';
         }
         const firstInitial = otherUser.firstname?.[0] || '';
         const lastInitial = otherUser.lastname?.[0] || '';
-        return (firstInitial + lastInitial).toUpperCase() || 'U';
+        const initials = (firstInitial + lastInitial).toUpperCase();
+        return initials || 'U';
       }
     }
 
-    return 'U';
+    // ✅ Fallback for new chats without participant details yet
+    return 'CH';
   }
 
   isOnline(chat: Chat): boolean {

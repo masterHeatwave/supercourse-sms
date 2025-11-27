@@ -294,9 +294,10 @@
         <p-button 
           icon="pi pi-send" 
           [rounded]="true"
-          [disabled]="!newMessage || !newMessage.trim()"
           [pTooltip]="'messages.send_message' | translate"
           (onClick)="sendMessage()">
+
+          <!-- [disabled]="!newMessage || !newMessage.trim()" -->
         </p-button>
       </div>
     </div>

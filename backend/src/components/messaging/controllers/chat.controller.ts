@@ -21,8 +21,14 @@ export class ChatController {
    */
   createChat = asyncHandler(async (req: Request, res: Response) => {
     const payload = createChatSchema.parse(req.body);
-    const chat = await this.chatService.createChat(payload);
-
+  
+    const chat = await this.chatService.createOrGetChat(
+      payload.participants,
+      payload.type,
+      payload.name,
+      true   // force new if needed
+    );
+  
     jsonResponse(res, {
       status: StatusCodes.CREATED,
       success: true,

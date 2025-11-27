@@ -291,6 +291,25 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
     cleanupPass(3, 300);
   }
 
+  removeTreeSelectItemsWrapper() {
+    try {
+      const wrappers = this.document.querySelectorAll('.p-treeselect-items-wrapper');
+  
+      wrappers.forEach(el => {
+        const element = el as HTMLElement;
+  
+        if (element.parentNode) {
+          element.parentNode.removeChild(element);
+        } else if (typeof element.remove === 'function') {
+          element.remove();
+        }
+      });
+  
+    } catch (e) {
+      console.warn('Could not remove .p-treeselect-items-wrapper:', e);
+    }
+  }
+
   private resetForm() {
     this.selectedRecipients = [];
     this.groupName = '';
@@ -675,7 +694,6 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
    * ✅ Cleanup on component destruction
    */
   ngOnDestroy(): void {
-    console.log('🧹 Destroying NewChatDialogComponent');
     this.forceCleanupOverlays();
     this.removeLingeringOverlays();
   }

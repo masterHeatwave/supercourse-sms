@@ -46,7 +46,8 @@
           [filterBy]="'label'"
           appendTo="body"
           [scrollHeight]="'400px'"
-          [emptyMessage]="getEmptyMessage()">
+          [emptyMessage]="getEmptyMessage()"
+          (onHide)="removeTreeSelectItemsWrapper()">
           
           <!-- (onHide)="visible=false" -->
           

@@ -41,45 +41,6 @@ export class ChatService {
   }
 
   /**
-   * Create a new chat (direct or group)
-   */
-  async createChat(payload: ICreateChatDTO): Promise<IChat> {
-    const participants = Array.from(new Set(payload.participants));
-
-    if (participants.length < 2) {
-      throw new ErrorResponse('A chat must have at least 2 participants', StatusCodes.BAD_REQUEST);
-    }
-
-    const type = payload.type ?? (participants.length === 2 ? ChatType.DIRECT : ChatType.GROUP);
-
-    // Validate users exist
-    const users = await User.find({ _id: { $in: participants } }).select('_id');
-    if (users.length !== participants.length) {
-      throw new ErrorResponse('One or more participants not found', StatusCodes.NOT_FOUND);
-    }
-
-    // For direct chats, check if one already exists
-    if (type === ChatType.DIRECT) {
-      const existing = await Chat.findOne({
-        type: ChatType.DIRECT,
-        participants: { $all: participants },
-        $expr: { $eq: [{ $size: '$participants' }, participants.length] },
-      });
-      if (existing) return existing;
-    }
-
-    const chat = await Chat.create({
-      participants,
-      type,
-      name: payload.name,
-      lastMessageContent: '',
-      lastMessagedAt: new Date(),
-    });
-
-    return chat;
-  }
-
-  /**
    * List chats, optionally filtered by participant
    */
   async listChats(participant?: string): Promise<IChat[]> {
@@ -170,7 +131,6 @@ export class ChatService {
    */
   async getUserChats(userId: string): Promise<any[]> {
     try {
-      console.log('🔍 Fetching chats for userId:', userId);
   
       const chats = await Chat.aggregate([
         { $match: { participants: new Types.ObjectId(userId) } },
@@ -460,8 +420,7 @@ export class ChatService {
         chat.updatedAt = new Date();
         
         await chat.save();
-    
-        console.log('✅ Chat saved successfully');
+  
     
         // ✅ FIX: Use aggregate to get full chat with participantsDetails
         const populatedChats = await Chat.aggregate([
@@ -555,7 +514,6 @@ export class ChatService {
         if (this.io) {
           chat.participants.forEach((participantId: Types.ObjectId) => {
             const participantIdStr = participantId.toString();
-            console.log(`📡 Emitting full chat update to user-${participantIdStr}`);
             this.io?.to(`user-${participantIdStr}`).emit('chatUpdated', {
               chatId: response._id,
               ...response  // Send the FULL chat object
@@ -575,7 +533,6 @@ export class ChatService {
    */
   async deleteChat(chatId: string): Promise<IChat> {
     try {
-      console.log('🗑️ Deleting chat with _id:', chatId);
 
       const chat = await Chat.findById(chatId);
       if (!chat) {
