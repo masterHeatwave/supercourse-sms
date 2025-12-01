@@ -5,6 +5,7 @@
    ============================================== */
    .p-scrollpanel .p-scrollpanel-content {
     scroll-behavior: smooth;
+    height: 100% - 20px;
   }
   
   .p-scrollpanel .p-scrollpanel-bar {
@@ -273,6 +274,7 @@
       align-items: flex-end !important;
       gap: 0.75rem !important;
       width: 100% !important;
+      bottom: 20px;
     }
     
     /* Attachment Button */

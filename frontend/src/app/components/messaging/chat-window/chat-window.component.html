@@ -46,7 +46,7 @@
   </div>
 
   <!-- Messages Container -->
-  <p-scrollPanel class="flex-1" [style]="{height: 'calc(100vh - 200px)'}" #scrollPanel>
+  <p-scrollPanel class="scrollPanel flex-1" [style]="{height: 'calc(100vh - 200px)'}" #scrollPanel>
     <div class="flex flex-column gap-3 p-3">
       <div *ngFor="let msg of messages; trackBy: trackByMessageId"
            class="flex"

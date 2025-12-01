@@ -64,10 +64,10 @@
      4. TREESELECT WRAPPER - FIXED POSITIONING
      ============================================================ */
   
-  .recipient-wrapper {
-    position: relative;
-    z-index: 997 !important;
-  }
+  // .recipient-wrapper {
+  //   position: relative;
+  //   z-index: 1000 !important;
+  // }
   
   /* ============================================================
      5. TREESELECT PANEL - CONTAINED WITHIN DIALOG
@@ -75,7 +75,7 @@
   
   /* Panel itself */
   ::ng-deep .p-treeselect-panel {
-    z-index: 998 !important; /* Below dialog but accessible */
+    z-index: 1001 !important; /* Below dialog but accessible */
     max-width: 500px !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
     border: 1px solid #e5e7eb !important;

@@ -116,8 +116,7 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
 
   show() {
     // ✅ Clean up any lingering overlays before showing
-    this.forceCleanupOverlays();
-    
+    // this.forceCleanupOverlays();
     this.visible = true;
     this.resetForm();
     this.loadUsers();
@@ -127,6 +126,7 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
 
   hide() {
     this.visible = false;
+
     this.cdr.detectChanges();
 
     // ✅ Multiple cleanup passes during and after animation
@@ -139,12 +139,12 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
     window.setTimeout(() => {
       this.forceCleanupOverlays();
       this.dialogClosed.emit();
-    }, 150);
+    }, 300);
 
     window.setTimeout(() => {
       this.forceCleanupOverlays();
       this.cdr.detectChanges();
-    }, 300);
+    }, 1000);
   }
 
   /**
@@ -156,9 +156,11 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
 
       // ✅ Priority 1: Target all possible PrimeNG overlay selectors
       const selectors = [
+        '.p-dialog',                // Dialog containers
         '.p-dialog-mask',           // Dialog backdrop
+        '.p-tree',                  // Tree dropdowns
         '.p-treeselect-panel',      // TreeSelect dropdown panel
-        '.p-tooltip',               // Tooltip overlays
+        '.p-treeselect-items-wrapper', // TreeSelect items wrapper
         '.p-overlay'               // Generic overlays
       ];
 
@@ -251,7 +253,7 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
 
           // Check for hidden or disconnected overlays
           const overlays = this.document.querySelectorAll(
-            '.p-dialog-mask, .p-treeselect-panel,  p-tooltip, .p-overlay,'
+            '.p-dialog, .p-dialog-mask, .p-tree, .p-treeselect-panel, .p-treeselect-items-wrapper, .p-overlay,'
           );
 
           overlays.forEach((overlay: any) => {
@@ -273,6 +275,9 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
                 console.warn('⚠️ Could not remove lingering overlay:', e);
               }
             }
+
+            console.log(`✅ Lingering overlay cleanup pass ${passNumber} completed.`);
+
           });
 
           // Restore body scroll if needed
@@ -287,13 +292,13 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
 
     // Multiple cleanup passes for safety
     cleanupPass(1, 50);
-    cleanupPass(2, 150);
-    cleanupPass(3, 300);
+    cleanupPass(2, 300);
+    cleanupPass(3, 1000);
   }
 
   removeTreeSelectItemsWrapper() {
     try {
-      const wrappers = this.document.querySelectorAll('.p-treeselect-items-wrapper');
+      const wrappers = this.document.querySelectorAll('.p-treeselect-panel');
   
       wrappers.forEach(el => {
         const element = el as HTMLElement;
@@ -306,8 +311,9 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
       });
   
     } catch (e) {
-      console.warn('Could not remove .p-treeselect-items-wrapper:', e);
+      console.warn('Could not remove .p-treeselect-panel:', e);
     }
+    console.log('Removed .p-treeselect-stuff.');
   }
 
   private resetForm() {
@@ -633,7 +639,7 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
   }
 
   onCancel() {
-    this.forceCleanupOverlays();
+    // this.forceCleanupOverlays();
     this.hide();
   }
 
@@ -673,9 +679,9 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
         });
 
         // ✅ Aggressive cleanup before closing
-        this.forceCleanupOverlays();
-        this.removeLingeringOverlays();
-        this.hide();
+        // this.forceCleanupOverlays();
+        // this.removeLingeringOverlays();
+        // this.hide();
       },
       error: (err: any) => {
         console.error('❌ Failed to create chat:', err);
@@ -694,7 +700,7 @@ export class NewChatDialogComponent implements OnInit, OnDestroy {
    * ✅ Cleanup on component destruction
    */
   ngOnDestroy(): void {
-    this.forceCleanupOverlays();
-    this.removeLingeringOverlays();
+    // this.forceCleanupOverlays();
+    // this.removeLingeringOverlays();
   }
 }

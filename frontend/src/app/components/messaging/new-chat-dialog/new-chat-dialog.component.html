@@ -8,7 +8,8 @@
   styleClass="p-fluid"
   [style]="{'width': '500px'}"
   [header]="'messages.new_chat_dialog.start_new_conversation' | translate"
-  (onHide)="onCancel()">
+  (onShow)="show()"
+  (onHide)="hide()">
   
   <div class="flex flex-column gap-4 p-2">
     <!-- ✅ Loading Indicator -->
@@ -30,7 +31,6 @@
         {{ 'messages.new_chat_dialog.categories_available' | translate:{ count: recipientTree.length } }}
       </div>
       
-      <div class="recipient-wrapper">
         <p-treeSelect
           [options]="recipientTree"
           [(ngModel)]="selectedRecipients"
@@ -57,7 +57,6 @@
             </div>
           </ng-template>
         </p-treeSelect>
-      </div>
     </div>
 
     <!-- Selected Users Display -->

@@ -2,38 +2,37 @@
 
 .messaging-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100vh;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 1007;
+  z-index: 1000;           /* BELOW PrimeNG dialogs (which are usually 1100+) */
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
+}
 
-  &.visible {
-    opacity: 1;
-    pointer-events: auto;
-  }
+.messaging-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .messaging-panel {
   position: fixed;
   top: 0;
   right: -100%;
-  width: 85%;
+  /* width: 85%; */
   height: 100vh;
-  background: white;
-  z-index: 1008;
+  background: #ffffff;
+  z-index: 1001;           /* BELOW dialogs, ABOVE overlay */
   display: flex;
   flex-direction: column;
   box-shadow: -2px 0 20px rgba(0, 0, 0, 0.2);
-  transition: right 0.3s ease;
+  transition: right 0.5s ease;
+}
 
-  &.visible {
-    right: 0;
-  }
+.messaging-panel.visible {
+  right: 0;
 }
 
 /* ==================== HEADER ==================== */
@@ -42,7 +41,6 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 1.5rem;
-  z-index: 3207;
   border-bottom: 1px solid #e5e7eb;
   background: white;
   min-height: 70px; /* ✅ Fixed height for consistent alignment */
@@ -67,7 +65,7 @@
   .close-btn {
     width: 2.5rem;
     height: 2.5rem;
-    z-index: 3209;
+    z-index: auto !important;
   }
 }
 
