@@ -21,7 +21,7 @@ import { CardModule } from 'primeng/card';
 import { MenuItem } from 'primeng/api';
 import { Menu } from 'primeng/menu';
 import { ScrollPanel } from 'primeng/scrollpanel';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 
 
 @Component({

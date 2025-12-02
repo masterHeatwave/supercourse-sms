@@ -603,7 +603,7 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
    * ✅ Updated hide() method with enhanced cleanup
    */
   hide(): void {
-    this.panelWidth = '90%';
+    this.panelWidth = '87%';
     this.isVisible = false;
     this.cdr.detectChanges();
   }

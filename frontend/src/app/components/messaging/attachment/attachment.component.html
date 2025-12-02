@@ -1,44 +1,123 @@
-<!-- src/app/components/attachment/attachment.component.html -->
-<!-- File Input (hidden) -->
-<input #fileInput 
-       type="file" 
-       [accept]="acceptedFileTypes" 
-       [multiple]="true"
-       (change)="onFileSelected($event)"
-       style="display: none;">
+<div class="attachment-wrapper">
 
-<!-- Upload Button -->
-<p-button 
-  [icon]="getButtonIcon()" 
-  [rounded]="true"
-  [text]="true"
-  [disabled]="disabled || isUploading"
-  [pTooltip]="getTooltipText()"
-  tooltipPosition="top"
-  [loading]="isUploading"
-  (onClick)="openFileDialog()">
-</p-button>
+  <!-- Hidden File Input -->
+  <input
+    #fileInput
+    type="file"
+    [accept]="acceptedFileTypes"
+    [multiple]="true"
+    (change)="onFilesSelected($event)"
+    style="display:none"
+  />
 
-<!-- Upload Progress (shown during upload) -->
-<div *ngIf="isUploading" 
-     class="upload-progress mt-2 p-2 border-round-lg surface-100">
-  <div class="flex align-items-center gap-2 mb-2">
-    <i class="pi pi-upload text-primary"></i>
-    <span class="text-sm font-medium">Uploading {{selectedFiles.length}} file(s)...</span>
-  </div>
-  <p-progressBar 
-    [value]="uploadProgress" 
-    [showValue]="true"
-    [style]="{'height': '6px'}">
-  </p-progressBar>
-  
-  <!-- File List -->
-  <div class="file-list mt-2">
-    <div *ngFor="let file of selectedFiles" 
-         class="flex align-items-center gap-2 text-xs text-600">
-      <i [class]="AttachmentUtils.getFileIcon(file.name)"></i>
-      <span class="flex-1 overflow-hidden text-overflow-ellipsis">{{file.name}}</span>
-      <span>{{AttachmentUtils.formatFileSize(file.size)}}</span>
-    </div>
+  <!-- Upload Button -->
+  <p-button
+    [icon]="getButtonIcon()"
+    [rounded]="true"
+    [text]="true"
+    [disabled]="disabled || isUploading"
+    [pTooltip]="getTooltipText()"
+    tooltipPosition="top"
+    [loading]="isUploading"
+    (onClick)="openFileDialog()"
+    styleClass="attachment-button"
+  ></p-button>
+
+  <!-- Overlay During Upload -->
+  <div *ngIf="isUploading" class="upload-progress-overlay">
+
+    <p-card styleClass="upload-progress-card">
+
+      <ng-template pTemplate="content">
+
+        <!-- HEADER -->
+        <div class="upload-header">
+          <div class="flex align-items-center gap-2">
+            <i class="pi pi-cloud-upload upload-icon"></i>
+
+            <div class="flex flex-column">
+              <span class="upload-title">Uploading Files</span>
+              <span class="upload-subtitle">
+                {{selectedFiles.length}} file(s) • {{uploadProgress}}%
+              </span>
+            </div>
+          </div>
+
+          <div class="upload-percentage">{{uploadProgress}}%</div>
+        </div>
+
+        <!-- PROGRESS BAR -->
+        <div class="progress-container">
+          <p-progressBar
+            [value]="uploadProgress"
+            [showValue]="false"
+            styleClass="custom-progress-bar"
+          ></p-progressBar>
+        </div>
+
+        <!-- FILE LIST -->
+        <div class="file-list-container">
+
+          <div class="file-list-header">
+            <i class="pi pi-file text-xs"></i>
+            <span>Files</span>
+          </div>
+
+          <p-scrollPanel
+            [style]="{width: '100%', height: '120px'}"
+            styleClass="custom-scrollpanel"
+          >
+            <div class="file-list">
+
+              <div
+                *ngFor="let file of selectedFiles"
+                class="file-item"
+                [@fileItemAnimation]
+              >
+                <div class="file-item-content">
+                  <div class="file-icon-wrapper">
+                    <i [class]="AttachmentUtils.getFileIcon(file.name) + ' file-type-icon'"></i>
+                  </div>
+
+                  <div class="file-details">
+                    <span class="file-name" [pTooltip]="file.name" tooltipPosition="top">
+                      {{file.name}}
+                    </span>
+                    <span class="file-size">
+                      {{AttachmentUtils.formatFileSize(file.size)}}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="file-status">
+                  <i *ngIf="uploadProgress < 100" class="pi pi-spin pi-spinner status-icon uploading"></i>
+                  <i *ngIf="uploadProgress === 100" class="pi pi-check-circle status-icon success"></i>
+                </div>
+              </div>
+
+            </div>
+          </p-scrollPanel>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="upload-footer">
+
+          <div class="flex align-items-center gap-2">
+            <i class="pi pi-clock text-xs text-500"></i>
+            <span class="text-xs text-500">
+              {{uploadProgress < 100 ? 'Uploading...' : 'Upload complete!'}}
+            </span>
+          </div>
+
+          <p-tag
+            [value]="uploadProgress < 100 ? 'In Progress' : 'Completed'"
+            [severity]="uploadProgress < 100 ? 'info' : 'success'"
+            styleClass="upload-status-tag"
+          ></p-tag>
+
+        </div>
+
+      </ng-template>
+    </p-card>
   </div>
 </div>

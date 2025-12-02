@@ -1,21 +1,157 @@
-/* src/app/components/attachment/attachment.component.css */
+/* MOVE ATTACHMENT WRAPPER 20PX UP */
+/* .attachment-wrapper {
+  position: relative;
+  top: -20px;
+} */
 
-.upload-progress {
-  min-width: 200px;
-  max-width: 300px;
+/* HIDDEN INPUT (YOUR TEMPLATE USES INLINE STYLE, BUT KEEP CLASS FOR SAFETY) */
+.hidden-file-input {
+  display: none;
 }
 
+/* UPLOAD OVERLAY */
+.upload-progress-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* CARD INSIDE OVERLAY */
+.upload-progress-card {
+  width: 420px;
+  border-radius: 12px;
+  padding: 0.75rem;
+}
+
+/* HEADER INSIDE CARD */
+.upload-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: .75rem;
+}
+
+.upload-icon {
+  font-size: 1.75rem;
+  color: var(--primary-color);
+}
+
+.upload-title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.upload-subtitle {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.upload-percentage {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* PROGRESS BAR WRAPPER */
+.progress-container {
+  margin-bottom: 1rem;
+}
+
+.custom-progress-bar .p-progressbar-value {
+  transition: width 0.2s ease;
+}
+
+/* FILE LIST WRAPPER */
+.file-list-container {
+  margin-bottom: 1rem;
+}
+
+.file-list-header {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-weight: 600;
+  margin-bottom: .5rem;
+}
+
+/* SCROLLPANEL */
+.custom-scrollpanel .p-scrollpanel-content {
+  padding-right: 10px;
+}
+
+/* FILE LIST */
 .file-list {
-  max-height: 100px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
 }
 
-/* Optional: Add some animation for the upload progress */
-.upload-progress {
-  animation: fadeIn 0.3s ease-in;
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .35rem .25rem;
+  border-bottom: 1px dashed rgba(0,0,0,0.08);
+  font-size: .85rem;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+.file-item:last-child {
+  border-bottom: none;
+}
+
+.file-item-content {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.file-icon-wrapper {
+  font-size: 1.2rem;
+}
+
+.file-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.file-name {
+  font-weight: 500;
+  max-width: 180px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.file-size {
+  font-size: .75rem;
+  opacity: 0.75;
+}
+
+/* STATUS ICONS */
+.status-icon {
+  font-size: 1.2rem;
+}
+
+.status-icon.uploading {
+  color: var(--primary-color);
+}
+
+.status-icon.success {
+  color: var(--green-500);
+}
+
+/* FOOTER */
+.upload-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: .75rem;
+  border-top: 1px solid var(--surface-border);
+}
+
+.upload-status-tag {
+  font-size: .75rem;
 }
