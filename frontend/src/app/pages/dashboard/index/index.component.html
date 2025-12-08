@@ -1,18 +1,7 @@
 <p-toast></p-toast>
 
-<div
-  class="full-width-image relative"
-  style="
-    width: 100%;
-    height: 300px;
-    background-image: url('assets/images/dashboard-background.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    margin-bottom: 20px;
-  "
->
-  <div class="text-white text-5xl font-bold m-2 absolute bottom-0 left-0 flex flex-column">
+<div class="full-width-image relative">
+  <div class="text-white text-5xl font-bold m-3 absolute bottom-0 left-0 flex flex-column gap-3">
     {{ currentCustomer?.name }}
     <span class="text-white text-sm">
       <i [class]="currentCustomer?.is_primary ? 'pi pi-star-fill' : 'pi pi-star'"></i>
@@ -22,9 +11,9 @@
 </div>
 
 <div class="flex flex-column gap-4 px-4">
-  <div class="custom-card flex p-4 gap-4 align-items-center">
+  <div class="custom-card flex p-4 gap-2 align-items-center">
     <div class="font-bold text-2xl">{{ currentDayName }}</div>
-    <div class="text-primary text-3xl font-bold">{{ currentMonthDay }}</div>
+    <div class="text-primary text-2xl font-bold">{{ currentMonthDay }}</div>
     <div class="font-bold ml-auto text-lg">{{ 'dashboard.week' | translate }} {{ currentWeekNumber }}</div>
   </div>
 
@@ -41,89 +30,6 @@
         <div class="stat-icon">
           <i [class]="stat.icon"></i>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="custom-card p-3">
-    <div class="grid">
-      <div class="col-12">
-        <h2 class="text-2xl font-bold m-0 mb-4 text-primary">{{ 'dashboard.branch_contact_details' | translate }}</h2>
-      </div>
-
-      <div class="col-12 md:col-4 mb-3">
-        <div class="flex flex-column gap-3">
-          <div>
-            <span class="text-primary font-bold">{{ 'dashboard.website' | translate }} </span>
-            <span>{{ branchDetails?.website }}</span>
-          </div>
-          <div>
-            <span class="text-primary font-bold">{{ 'dashboard.administrator' | translate }} </span>
-            <span>{{ branchDetails?.administrator }}</span>
-          </div>
-          <div>
-            <span class="text-primary font-bold">{{ 'dashboard.manager' | translate }} </span>
-            <span>{{ branchDetails?.manager }}</span>
-          </div>
-          <div>
-            <span class="text-primary font-bold">{{ 'dashboard.address' | translate }} </span>
-            <span>{{ branchDetails?.address }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-12 md:col-4 mb-3">
-        <div class="flex flex-column gap-3">
-          <div>
-            <span class="text-primary font-bold">{{ 'dashboard.branch_email' | translate }} </span>
-            <span>{{ branchDetails?.branchEmail }}</span>
-          </div>
-          <div>
-            <span class="text-primary font-bold">{{ 'dashboard.administrator_email' | translate }} </span>
-            <span>{{ branchDetails?.administratorEmail }}</span>
-          </div>
-          <div>
-            <span class="text-primary font-bold">{{ 'dashboard.manager_email' | translate }} </span>
-            <span>{{ branchDetails?.managerEmail }}</span>
-          </div>
-          <div>
-            <span class="text-primary font-bold">{{ 'dashboard.phone' | translate }} </span>
-            <span>{{ branchDetails?.phone }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-12 md:col-4 mb-3">
-        <div class="flex flex-column gap-3">
-          <div>
-            <span class="text-primary font-bold">{{ 'dashboard.phone' | translate }} </span>
-            <span>{{ branchDetails?.phone }}</span>
-          </div>
-          <div>
-            <span class="text-primary font-bold">{{ 'dashboard.code' | translate }} </span>
-            <span>{{ branchDetails?.code }}</span>
-          </div>
-          <div>
-            <span class="text-primary font-bold">{{ 'dashboard.vat' | translate }} </span>
-            <span>{{ branchDetails?.vat }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Map -->
-      <div class="col-12">
-        <iframe
-          [src]="branchDetails?.mapLocation ?? '' | safeResourceUrl"
-          width="100%"
-          height="200"
-          frameborder="0"
-          style="border: 0"
-          allowfullscreen=""
-          loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"
-          class="border-round-sm"
-        >
-        </iframe>
       </div>
     </div>
   </div>
@@ -251,6 +157,89 @@
             {{ activity.datetime }}
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="custom-card p-3">
+    <div class="grid">
+      <div class="col-12">
+        <h2 class="text-2xl font-bold m-0 mb-4 text-primary-600">{{ 'dashboard.branch_contact_details' | translate }}</h2>
+      </div>
+
+      <div class="col-12 md:col-4 mb-3">
+        <div class="flex flex-column gap-3">
+          <div>
+            <span class="text-primary-600 font-bold">{{ 'dashboard.website' | translate }} </span>
+            <span>{{ branchDetails?.website }}</span>
+          </div>
+          <div>
+            <span class="text-primary-600 font-bold">{{ 'dashboard.administrator' | translate }} </span>
+            <span>{{ branchDetails?.administrator }}</span>
+          </div>
+          <div>
+            <span class="text-primary-600 font-bold">{{ 'dashboard.manager' | translate }} </span>
+            <span>{{ branchDetails?.manager }}</span>
+          </div>
+          <div>
+            <span class="text-primary-600 font-bold">{{ 'dashboard.address' | translate }} </span>
+            <span>{{ branchDetails?.address }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 md:col-4 mb-3">
+        <div class="flex flex-column gap-3">
+          <div>
+            <span class="text-primary-600 font-bold">{{ 'dashboard.branch_email' | translate }} </span>
+            <span>{{ branchDetails?.branchEmail }}</span>
+          </div>
+          <div>
+            <span class="text-primary-600 font-bold">{{ 'dashboard.administrator_email' | translate }} </span>
+            <span>{{ branchDetails?.administratorEmail }}</span>
+          </div>
+          <div>
+            <span class="text-primary-600 font-bold">{{ 'dashboard.manager_email' | translate }} </span>
+            <span>{{ branchDetails?.managerEmail }}</span>
+          </div>
+          <div>
+            <span class="text-primary-600 font-bold">{{ 'dashboard.phone' | translate }} </span>
+            <span>{{ branchDetails?.phone }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 md:col-4 mb-3">
+        <div class="flex flex-column gap-3">
+          <div>
+            <span class="text-primary-600 font-bold">{{ 'dashboard.phone' | translate }} </span>
+            <span>{{ branchDetails?.phone }}</span>
+          </div>
+          <div>
+            <span class="text-primary-600 font-bold">{{ 'dashboard.code' | translate }} </span>
+            <span>{{ branchDetails?.code }}</span>
+          </div>
+          <div>
+            <span class="text-primary-600 font-bold">{{ 'dashboard.vat' | translate }} </span>
+            <span>{{ branchDetails?.vat }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map -->
+      <div class="col-12">
+        <iframe
+          [src]="branchDetails?.mapLocation ?? '' | safeResourceUrl"
+          width="100%"
+          height="200"
+          frameborder="0"
+          style="border: 0"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          class="border-round-sm"
+        >
+        </iframe>
       </div>
     </div>
   </div>

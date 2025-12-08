@@ -36,7 +36,7 @@
 }
 
 .div-editable:empty::before {
-  content: 'Insert a sentence';
+  content: attr(data-placeholder);
   pointer-events: none;
 }
 

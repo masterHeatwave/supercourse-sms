@@ -1,0 +1,93 @@
+<div class="single-classroom-container">
+  <!-- Loading Spinner -->
+  <app-spinner *ngIf="isLoading" [overlay]="true"></app-spinner>
+
+  <!-- Classroom Details -->
+  <div *ngIf="classroom && !isLoading" class="classroom-details">
+    <!-- Header Section with Title -->
+    <div class="classroom-header">
+      <h1 class="classroom-title">{{ classroom.name }}</h1>
+    </div>
+
+    <!-- Content Section -->
+    <div class="classroom-content">
+      <!-- Information Grid -->
+      <div class="info-section">
+        <div class="info-row">
+          <div class="info-item">
+            <span class="info-label font-bold">Branch:</span>
+            <span class="info-value">{{ getBranchName() }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label font-bold">Location:</span>
+            <span class="info-value">{{ classroom.location || 'Not specified' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label font-bold">Capacity:</span>
+            <span class="info-value">{{ classroom.capacity || 'Not specified' }}</span>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-item">
+            <span class="info-label font-bold">Type:</span>
+            <span class="info-value">{{ classroom.type || 'Not specified' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label font-bold">Availability:</span>
+            <span class="info-value availability"
+                  [ngClass]="getAvailabilityClass(classroom.availability)">
+              {{ classroom.formattedAvailability }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Amenities Grid -->
+        <div class="amenities-wrapper">
+          <h3 class="amenities-title font-bold">Amenities:</h3>
+          <div class="amenities-columns" *ngIf="classroom.equipment && classroom.equipment.length > 0">
+            <div class="amenities-column" *ngFor="let column of getAmenitiesColumns()">
+              <div class="amenity-item" *ngFor="let amenity of column">
+                <i [class]="getAmenityIcon(amenity)"></i>
+                <span>{{ amenity }}</span>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="!classroom.equipment || classroom.equipment.length === 0" 
+               class="no-amenities">
+            <p class="text-gray-500" >No amenities available</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes Section -->
+      <div class="notes-wrapper">
+        <app-primary-textarea
+          [standaloneLabel]="'Notes:'"
+          [value]="classroom.description || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus vehicula viverra convallis. Donec at pharetra lectus, vel interdum dolor. Nam tincidunt suscipit quam, eu sagittis felis posuere a. Quisque a posuere urna, sit amet venenatis erat. Nullam felis libero, mattis tristique fringilla et, tristique et lacus. Suspendisse potenti. Integer interdum sapien consequat urna sodales scelerisque.'"
+          [standaloneRows]="4"
+          [standaloneDisabled]="true">
+        </app-primary-textarea>
+      </div>
+
+      <!-- Done Button -->
+      <div class="actions-wrapper">
+        <app-outline-button
+          (click)="onBack()">
+          Done
+        </app-outline-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!classroom && !isLoading" class="error-state">
+    <i class="pi pi-exclamation-triangle"></i>
+    <h3>Classroom not found</h3>
+    <p>The classroom you're looking for doesn't exist or has been removed.</p>
+    <p-button 
+      label="Back to Classrooms"
+      icon="pi pi-arrow-left"
+      (onClick)="onBack()">
+    </p-button>
+  </div>
+</div>

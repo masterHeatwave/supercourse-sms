@@ -82,8 +82,20 @@ const MessageSchema: Schema<IMessage> = new mongoose.Schema(
       type: String,
       trim: true,
       maxlength: 1000,
-      required: true,
+      required: false,
     },
+    attachments: [
+      {
+        fileId: {
+          type: Schema.Types.ObjectId,
+          ref: 'StorageFile',
+        },
+        filename: String,
+        key: String,
+        size: Number,
+        contentType: String,
+      }
+    ],
     timestamp: {
       type: Date,
       default: Date.now,

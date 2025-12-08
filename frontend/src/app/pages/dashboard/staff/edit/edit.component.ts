@@ -97,7 +97,8 @@ export class EditComponent implements OnInit {
               twitter_link: data.twitter_link,
               linkedin_link: data.linkedin_link,
               status: data.is_active,
-              startDate: data.createdAt, // Use createdAt instead of hire_date
+              registration_date: data.registration_date, // Prefer registration_date
+              startDate: data.registration_date || data.startDate || data.createdAt, // Fallback chain for form field
               documents: data.documents || []
             };
 

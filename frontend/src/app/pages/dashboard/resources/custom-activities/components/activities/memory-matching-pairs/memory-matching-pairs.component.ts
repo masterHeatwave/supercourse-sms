@@ -1,32 +1,22 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { MemoryMatchingPairsCardComponent } from './memory-matching-pairs-card/memory-matching-pairs-card.component';
 import { Answer, Question } from '../../../types';
 import { CommonModule } from '@angular/common';
 import { INITIAL_ANSWER, INITIAL_QUESTION } from '../../../Constants';
 import { DataService } from '../../../services/data.service';
 import * as Constants from '../../../Constants';
-import {
-  CdkDragDrop,
-  DragDropModule,
-  moveItemInArray,
-} from '@angular/cdk/drag-drop';
-import { WarningDialogComponent } from '../../dialogs/warning-dialog/warning-dialog.component';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'memory-matching-pairs-activity',
   standalone: true,
-  imports: [
-    MemoryMatchingPairsCardComponent,
-    CommonModule,
-    DragDropModule,
-    WarningDialogComponent,
-    RadioButtonModule,
-    FormsModule,
-  ],
+  imports: [MemoryMatchingPairsCardComponent, CommonModule, DragDropModule, WarningDialogComponent, RadioButtonModule, FormsModule, TranslateModule],
   templateUrl: './memory-matching-pairs.component.html',
-  styleUrl: './memory-matching-pairs.component.scss',
+  styleUrl: './memory-matching-pairs.component.scss'
 })
 export class MemoryMatchingPairsComponent {
   @Input() questionNumber: number = 1;
@@ -49,17 +39,17 @@ export class MemoryMatchingPairsComponent {
           item1: {
             imageURL: '',
             TTSText: '',
-            answerText: '',
+            answerText: ''
           },
           item2: {
             imageURL: '',
             TTSText: '',
-            answerText: '',
+            answerText: ''
           },
           answerText: '',
-          imageURL: '',
-        },
-      ],
+          imageURL: ''
+        }
+      ]
     },
     {
       id: 2,
@@ -72,35 +62,41 @@ export class MemoryMatchingPairsComponent {
           item1: {
             imageURL: '',
             TTSText: '',
-            answerText: '',
+            answerText: ''
           },
           item2: {
             imageURL: '',
             TTSText: '',
-            answerText: '',
+            answerText: ''
           },
           answerText: '',
-          imageURL: '',
-        },
-      ],
-    },
+          imageURL: ''
+        }
+      ]
+    }
   ];
-  
-  dataService = inject(DataService);
-  
-  constructor() {
+
+  constructor(private dataService: DataService, private translate: TranslateService) {
     this.dataService.getQuestions().subscribe((questions: Question[]) => {
       this.questions = questions;
     });
+  }
+
+  ngOnInit() {
+    const same = this.constants.PAIRS_OF_SAME_ITEM_VALUE;
+    const diff = this.constants.PAIRS_OF_DIFF_ITEM_VALUE;
+
+    // If parent passed an invalid option → reset to default
+    if (this.option !== same && this.option !== diff) {
+      this.option = same;
+    }
   }
 
   putSameItemsIfNeeded() {
     if (this.option === this.constants.PAIRS_OF_SAME_ITEM_VALUE) {
       for (let i = 0; i < this.questions.length; i++) {
         this.questions[i].option = this.option;
-        this.questions[i].answers[0].item2 = JSON.parse(
-          JSON.stringify(this.questions[i].answers[0].item1)
-        );
+        this.questions[i].answers[0].item2 = JSON.parse(JSON.stringify(this.questions[i].answers[0].item1));
       }
     }
   }
@@ -112,7 +108,7 @@ export class MemoryMatchingPairsComponent {
         JSON.stringify({
           imageURL: '',
           TTSText: '',
-          answerText: '',
+          answerText: ''
         })
       );
     }
@@ -137,10 +133,7 @@ export class MemoryMatchingPairsComponent {
 
   handleAnswersChange(answers: Answer[], index: number) {
     if (this.questions[index].answers.length > 1) {
-      this.questions[index].answers.splice(
-        1,
-        this.questions[index].answers.length
-      );
+      this.questions[index].answers.splice(1, this.questions[index].answers.length);
     }
     this.questions[index].answers[0] = answers[0];
     this.putSameItemsIfNeeded();
@@ -148,14 +141,10 @@ export class MemoryMatchingPairsComponent {
   }
 
   removePair(index: number) {
-    if (
-      index > -1 &&
-      index < this.questions.length &&
-      this.questions.length > 1
-    ) {
+    if (index > -1 && index < this.questions.length && this.questions.length > 1) {
       this.questions.splice(index, 1);
     } else {
-      this.warningMessage = 'You cannot have less than 1 pair.';
+      this.warningMessage = this.translate.instant('customActivities.you_cannot_have_less_than_one_pair'); //'You cannot have less than 1 pair.';
       this.isWarningDialogVisible = true;
     }
     this.questions = [...this.questions];
@@ -176,15 +165,15 @@ export class MemoryMatchingPairsComponent {
             item1: {
               TTSText: '',
               answerText: '',
-              imageURL: '',
+              imageURL: ''
             },
             item2: {
               TTSText: '',
               answerText: '',
-              imageURL: '',
-            },
-          },
-        ],
+              imageURL: ''
+            }
+          }
+        ]
       })
     );
     this.idsCounter++;

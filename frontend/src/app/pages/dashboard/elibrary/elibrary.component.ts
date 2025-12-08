@@ -1,6 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BehaviorSubject, map, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Subject, map, switchMap, tap, debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router } from '@angular/router';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -9,6 +9,9 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { FormsModule } from '@angular/forms';
+import { CardModule } from 'primeng/card';
+import { TooltipModule } from 'primeng/tooltip';
+import { PaginatorModule } from 'primeng/paginator';
 import { PrimaryTableComponent } from '@components/table/primary-table/primary-table.component';
 import { SpinnerComponent } from '@components/spinner/spinner.component';
 import { InventoryService } from '@gen-api/inventory/inventory.service';
@@ -17,12 +20,12 @@ import { GetInventory200, Inventory } from '@gen-api/schemas';
 @Component({
   selector: 'app-elibrary',
   standalone: true,
-  imports: [CommonModule, PrimaryTableComponent, SpinnerComponent, ButtonModule, ConfirmDialogModule, ToastModule, TranslateModule, InputTextModule, FormsModule],
+  imports: [CommonModule, PrimaryTableComponent, SpinnerComponent, ButtonModule, ConfirmDialogModule, ToastModule, TranslateModule, InputTextModule, FormsModule, CardModule, TooltipModule, PaginatorModule],
   templateUrl: './elibrary.component.html',
   styleUrls: ['./elibrary.component.scss'],
   providers: [ConfirmationService, MessageService]
 })
-export class ElibraryComponent implements OnInit {
+export class ElibraryComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private messageService = inject(MessageService);
   private translate = inject(TranslateService);
@@ -31,20 +34,32 @@ export class ElibraryComponent implements OnInit {
   inventoryService = inject(InventoryService);
 
   items: (Inventory & { billing_person?: string })[] = [];
+  allItems: (Inventory & { billing_person?: string })[] = [];
+  filteredItems: (Inventory & { billing_person?: string })[] = [];
   totalRecords = 0;
   isLoading = false;
 
   private reloadSubject = new BehaviorSubject<void>(undefined);
+  private searchSubject = new Subject<string>();
+  private searchSubscription: any;
   currentPage = 1;
   rowsPerPage = 10;
   searchTerm = '';
 
+  // View options
+  viewModes = [
+    { icon: 'pi pi-th-large', value: 'grid' },
+    { icon: 'pi pi-list', value: 'list' }
+  ];
+
+  currentViewMode = 'list';
+
   tableColumns = [
     { field: 'code', header: 'inventory.table.code', filterType: 'text', sortable: true },
-    { field: 'title', header: 'inventory.table.title', filterType: 'text', sortable: true },
-    { field: 'billing_person', header: 'inventory.table.billingPerson', filterType: 'text', sortable: true, priority: 1 },
     { field: 'billing_date', header: 'inventory.table.billingDate', type: 'date', filterType: 'date', sortable: true, getValue: (rowData: any) => this.formatDate(rowData.billing_date) },
-    { field: 'return_date', header: 'inventory.table.returnDate', type: 'date', filterType: 'date', sortable: true, getValue: (rowData: any) => this.formatDate(rowData.return_date) }
+    { field: 'return_date', header: 'inventory.table.returnDate', type: 'date', filterType: 'date', sortable: true, getValue: (rowData: any) => this.formatDate(rowData.return_date) },
+    { field: 'billing_person', header: 'inventory.table.borrower', filterType: 'text', sortable: true, priority: 1 },
+    { field: 'title', header: 'inventory.table.bookTitle', filterType: 'text', sortable: true }
   ];
 
   items$ = this.reloadSubject.pipe(
@@ -52,12 +67,11 @@ export class ElibraryComponent implements OnInit {
     switchMap(() =>
       this.inventoryService.getInventory(
         undefined,
-        { params: { page: this.currentPage, limit: this.rowsPerPage, search: this.searchTerm || undefined, item_type: 'ELIBRARY' } as any }
+        { params: { page: '1', limit: '1000', item_type: 'ELIBRARY' } as any }
       )
     ),
     map((response: GetInventory200) => {
       const data = response.data || [];
-      this.totalRecords = (response.count as number) || data.length;
       return data;
     }),
     map((items) => {
@@ -69,12 +83,28 @@ export class ElibraryComponent implements OnInit {
     }),
     tap((items) => {
       this.isLoading = false;
-      this.items = items;
+      this.allItems = items;
+      this.applyFilter();
     })
   );
 
   ngOnInit(): void {
     this.items$.subscribe();
+    
+    // Set up instant search with debounce (client-side filtering)
+    this.searchSubscription = this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(() => {
+      this.currentPage = 1;
+      this.applyFilter();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.searchSubscription) {
+      this.searchSubscription.unsubscribe();
+    }
   }
 
   private getBillingPersonNameFromUser(user: any): string {
@@ -155,22 +185,62 @@ export class ElibraryComponent implements OnInit {
   }
 
   // PrimaryTable pagination hooks
-  onPageChange(event: { page: number; rows: number }) {
-    // Assuming PrimeNG paginator is 0-indexed for page
-    this.currentPage = (event?.page ?? 0) + 1;
-    this.rowsPerPage = event?.rows ?? this.rowsPerPage;
-    this.reloadSubject.next();
+  onPageChange(event: any) {
+    // Handle both PrimeNG paginator and PrimaryTable
+    if (event.first !== undefined) {
+      // From PrimeNG paginator (event.first is 0-indexed)
+      this.currentPage = event.page !== undefined ? event.page + 1 : Math.floor(event.first / this.rowsPerPage) + 1;
+      this.rowsPerPage = event.rows ?? this.rowsPerPage;
+    } else {
+      // From PrimaryTable (event.page is 0-indexed)
+      this.currentPage = (event?.page ?? 0) + 1;
+      this.rowsPerPage = event?.rows ?? this.rowsPerPage;
+    }
+    this.updatePaginatedItems();
   }
 
   onRowsPerPageChange(rows: number) {
     this.rowsPerPage = rows || this.rowsPerPage;
     this.currentPage = 1;
-    this.reloadSubject.next();
+    this.updatePaginatedItems();
+  }
+
+  private applyFilter(): void {
+    if (!this.searchTerm || this.searchTerm.trim() === '') {
+      this.filteredItems = [...this.allItems];
+    } else {
+      const searchLower = this.searchTerm.toLowerCase().trim();
+      this.filteredItems = this.allItems.filter(item => {
+        const title = (item.title || '').toLowerCase();
+        const code = (item.code || '').toLowerCase();
+        const billingPerson = (item.billing_person || '').toLowerCase();
+        return title.includes(searchLower) || 
+               code.includes(searchLower) || 
+               billingPerson.includes(searchLower);
+      });
+    }
+    
+    this.totalRecords = this.filteredItems.length;
+    this.updatePaginatedItems();
+  }
+
+  private updatePaginatedItems(): void {
+    const startIndex = (this.currentPage - 1) * this.rowsPerPage;
+    const endIndex = startIndex + this.rowsPerPage;
+    // Create new array reference to trigger change detection
+    this.items = [...this.filteredItems.slice(startIndex, endIndex)];
+  }
+
+  onSearchInput(event?: any) {
+    // Get the value from the event if available, otherwise use searchTerm
+    const value = event?.target?.value ?? this.searchTerm;
+    this.searchTerm = value;
+    this.searchSubject.next(value);
   }
 
   onSearch() {
     this.currentPage = 1;
-    this.reloadSubject.next();
+    this.applyFilter();
   }
 
   getBillingPersonOptions(): string[] {
@@ -188,5 +258,9 @@ export class ElibraryComponent implements OnInit {
       month: 'short',
       day: '2-digit'
     });
+  }
+
+  setViewMode(mode: string) {
+    this.currentViewMode = mode;
   }
 }

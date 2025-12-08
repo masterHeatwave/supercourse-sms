@@ -1,4 +1,7 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
+import {
+  Component, Input, Output, EventEmitter,
+  ViewChild, ElementRef, ChangeDetectorRef
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { ProgressBarModule } from 'primeng/progressbar';
@@ -7,10 +10,10 @@ import { CardModule } from 'primeng/card';
 import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { TagModule } from 'primeng/tag';
 import { HttpEvent, HttpEventType } from '@angular/common/http';
-import { MessagingWrapperService } from '../../../services/messaging/messaging-wrapper.service';
 import { Attachment, AttachmentUtils, ATTACHMENT_LIMITS } from '../models/attachment.models';
 import { trigger, transition, style, animate } from '@angular/animations';
 
+import { AttachmentService } from '../../../services/messaging/attachment.service';
 
 @Component({
   selector: 'app-attachment',
@@ -51,29 +54,28 @@ export class AttachmentComponent {
   uploadProgress = 0;
   selectedFiles: File[] = [];
 
-  AttachmentUtils = AttachmentUtils; 
+  AttachmentUtils = AttachmentUtils;
 
   constructor(
-    private apiService: MessagingWrapperService,
+    private attachmentService: AttachmentService,
     private cdr: ChangeDetectorRef
   ) {}
 
-  /* ----------------------------------------------
-      FILE DIALOG
-  ------------------------------------------------*/
+  /* --------------------------------------------------------------
+      OPEN FILE DIALOG
+  -------------------------------------------------------------- */
   openFileDialog(): void {
     if (!this.disabled && !this.isUploading) {
       this.fileInput.nativeElement.click();
     }
   }
 
-  /* ----------------------------------------------
-      FILE SELECTION
-  ------------------------------------------------*/
+  /* --------------------------------------------------------------
+      FILE SELECT
+  -------------------------------------------------------------- */
   onFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-
-    if (!input.files || input.files.length === 0) return;
+    if (!input.files?.length) return;
 
     const files = Array.from(input.files);
     const validation = this.validateFiles(files);
@@ -89,42 +91,36 @@ export class AttachmentComponent {
     this.resetFileInput();
   }
 
-  /* ----------------------------------------------
+  /* --------------------------------------------------------------
       VALIDATION
-  ------------------------------------------------*/
-  private validateFiles(files: File[]): { isValid: boolean; errors: string[] } {
+  -------------------------------------------------------------- */
+  private validateFiles(files: File[]) {
     const errors: string[] = [];
-
-    if (files.length > ATTACHMENT_LIMITS.MAX_FILES_PER_UPLOAD) {
-      errors.push(`Maximum ${ATTACHMENT_LIMITS.MAX_FILES_PER_UPLOAD} files allowed per upload.`);
-    }
-
     let totalSize = 0;
 
-    for (const file of files) {
-      totalSize += file.size;
+    if (files.length > ATTACHMENT_LIMITS.MAX_FILES_PER_UPLOAD) {
+      errors.push(`Maximum ${ATTACHMENT_LIMITS.MAX_FILES_PER_UPLOAD} files allowed.`);
+    }
 
-      const result = AttachmentUtils.validateFile(file);
-      if (!result.isValid) {
-        errors.push(`${file.name} → ${result.errors.join(', ')}`);
-      }
+    for (const f of files) {
+      totalSize += f.size;
+      const res = AttachmentUtils.validateFile(f);
+      if (!res.isValid) errors.push(`${f.name}: ${res.errors.join(', ')}`);
     }
 
     if (totalSize > ATTACHMENT_LIMITS.MAX_TOTAL_SIZE) {
-      errors.push(
-        `Total size exceeds ${AttachmentUtils.formatFileSize(ATTACHMENT_LIMITS.MAX_TOTAL_SIZE)}`
-      );
+      errors.push(`Total size exceeds ${AttachmentUtils.formatFileSize(ATTACHMENT_LIMITS.MAX_TOTAL_SIZE)}`);
     }
 
     return { isValid: errors.length === 0, errors };
   }
 
-  /* ----------------------------------------------
-      UPLOAD PROCESS
-  ------------------------------------------------*/
+  /* --------------------------------------------------------------
+      UPLOAD (one-by-one)
+  -------------------------------------------------------------- */
   private startUpload(): void {
     if (!this.chatId || this.selectedFiles.length === 0) {
-      this.uploadError.emit('Missing chat ID or no files selected.');
+      this.uploadError.emit('Missing chat ID or files.');
       return;
     }
 
@@ -132,62 +128,53 @@ export class AttachmentComponent {
     this.uploadProgress = 0;
     this.uploadStart.emit(this.selectedFiles);
 
-    const formData = new FormData();
-    this.selectedFiles.forEach(f => formData.append('files', f));
-    formData.append('chatId', this.chatId);
-    if (this.messageId) formData.append('messageId', this.messageId);
+    const uploaded: Attachment[] = [];
+    let completed = 0;
 
-    this.apiService.uploadAttachmentsWithProgress(formData).subscribe({
-      next: (event: HttpEvent<any>) => {
-        if (event.type === HttpEventType.UploadProgress && event.total) {
-          this.uploadProgress = Math.round((event.loaded / event.total) * 100);
-          this.cdr.detectChanges();
+    this.selectedFiles.forEach(file => {
+      this.attachmentService.uploadFile(file).subscribe({
+        next: (event: HttpEvent<any>) => {
+          if (event.type === HttpEventType.UploadProgress && event.total) {
+            this.uploadProgress = Math.round((event.loaded / event.total) * 100);
+            this.cdr.detectChanges();
+          }
+
+          if (event.type === HttpEventType.Response) {
+            uploaded.push(event.body.data);
+            completed++;
+
+            if (completed === this.selectedFiles.length) {
+              this.uploadComplete.emit(uploaded);
+              this.resetUploadState();
+            }
+          }
+        },
+
+        error: (err) => {
+          this.handleUploadError(err);
+          this.resetUploadState();
         }
-
-        if (event.type === HttpEventType.Response) {
-          this.handleUploadSuccess(event.body);
-        }
-      },
-
-      error: (err) => this.handleUploadError(err)
+      });
     });
   }
 
-  /* ----------------------------------------------
-      SUCCESS
-  ------------------------------------------------*/
-  private handleUploadSuccess(response: any): void {
-    if (response?.success && Array.isArray(response.attachments)) {
-      this.uploadComplete.emit(response.attachments);
-      this.uploadProgress = 100;
-      this.cdr.detectChanges();
-
-      setTimeout(() => this.resetUploadState(), 1400);
-    } else {
-      this.uploadError.emit('Upload failed: Unknown response.');
-      this.resetUploadState();
-    }
-  }
-
-  /* ----------------------------------------------
-      ERROR
-  ------------------------------------------------*/
+  /* --------------------------------------------------------------
+      ERROR HANDLING
+  -------------------------------------------------------------- */
   private handleUploadError(error: any): void {
     let msg = 'Upload failed.';
-
     if (error.error?.error) msg = error.error.error;
-    else if (Array.isArray(error.error?.errors)) msg = error.error.errors.join('; ');
-    else if (error.message) msg = error.message;
+    if (error.error?.errors) msg = error.error.errors.join('; ');
+    if (error.message) msg = error.message;
 
     this.uploadError.emit(msg);
-    this.resetUploadState();
   }
 
-  /* ----------------------------------------------
+  /* --------------------------------------------------------------
       RESET HELPERS
-  ------------------------------------------------*/
+  -------------------------------------------------------------- */
   private resetFileInput(): void {
-    if (this.fileInput) this.fileInput.nativeElement.value = '';
+    this.fileInput.nativeElement.value = '';
   }
 
   private resetUploadState(): void {
@@ -197,24 +184,47 @@ export class AttachmentComponent {
     this.cdr.detectChanges();
   }
 
-  /* ----------------------------------------------
+  /* --------------------------------------------------------------
+      DOWNLOAD
+  -------------------------------------------------------------- */
+  downloadAttachment(file: Attachment) {
+    this.attachmentService.downloadFile(file.key).subscribe(res => {
+      window.open(res.url, '_blank');
+    });
+  }
+
+  /* --------------------------------------------------------------
+      DELETE
+  -------------------------------------------------------------- */
+  deleteAttachment(file: Attachment) {
+    this.attachmentService.deleteObject(file.key).subscribe({
+      next: () => {
+        // Optionally emit event to parent
+      },
+      error: (err) => this.uploadError.emit('Delete failed: ' + err?.message)
+    });
+  }
+
+  displayAttachment() {
+    return this.selectedFiles.length > 0;
+  }
+
+  /* --------------------------------------------------------------
       UI HELPERS
-  ------------------------------------------------*/
+  -------------------------------------------------------------- */
   get acceptedFileTypes(): string {
     return ATTACHMENT_LIMITS.ALLOWED_EXTENSIONS.map(ext => `.${ext}`).join(',');
   }
 
   getButtonIcon(): string {
-    return this.isUploading
-      ? (this.uploadProgress === 100 ? 'pi pi-check' : 'pi pi-spin pi-spinner')
-      : 'pi pi-paperclip';
+    if (!this.isUploading) return 'pi pi-paperclip';
+    return this.uploadProgress === 100 ? 'pi pi-check' : 'pi pi-spin pi-spinner';
   }
 
   getTooltipText(): string {
     if (!this.isUploading) return 'Attach files';
-
     return this.uploadProgress === 100
-      ? 'Upload completed!'
-      : `Uploading ${this.selectedFiles.length} file(s) … ${this.uploadProgress}%`;
+      ? 'Upload complete'
+      : `Uploading... ${this.uploadProgress}%`;
   }
 }

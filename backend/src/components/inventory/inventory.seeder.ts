@@ -101,7 +101,6 @@ const seedTenantInventory = async (tenantId: string) => {
 
 const seedInventory = async () => {
   await seedTenantInventory('supercourse');
-  await seedTenantInventory('piedpiper');
 };
 
 export { seedTenantInventory };

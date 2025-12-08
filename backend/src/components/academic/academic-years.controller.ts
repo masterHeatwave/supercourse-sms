@@ -38,6 +38,15 @@ export class AcademicYearController {
     });
   });
 
+  getAcademicYearStatus = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const status = await this.academicYearService.getAcademicYearStatus();
+
+    res.status(200).json({
+      success: true,
+      data: status,
+    });
+  });
+
   createAcademicYear = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const academicYearData: IAcademicYearCreateDTO = req.body;
     const academicYear = await this.academicYearService.createAcademicYear(academicYearData);
@@ -68,6 +77,15 @@ export class AcademicYearController {
     res.status(200).json({
       success: true,
       data: {},
+    });
+  });
+
+  getCurrentlySelectedAcademicYear = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const selectedAcademicYear = await this.academicYearService.getCurrentlySelectedAcademicYear();
+
+    res.status(200).json({
+      success: true,
+      data: selectedAcademicYear,
     });
   });
 }

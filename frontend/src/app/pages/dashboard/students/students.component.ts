@@ -13,16 +13,19 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import * as XLSX from 'xlsx';
 import { GetUsersStudents200, User } from '@gen-api/schemas';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TooltipModule } from 'primeng/tooltip';
 import { Store } from '@ngrx/store';
 import { AppState } from '@store/app.state';
 import { selectAuthState } from '@store/auth/auth.selectors';
+import { mapSubjectToCode, mapLevelToLabel } from '../../../utils/subject-mapping.util';
+import { RoleAccessService } from '@services/role-access.service';
 
 @Component({
-  selector: 'app-students', // Changed selector
+  selector: 'app-students',
   standalone: true,
-  imports: [CommonModule, PrimaryTableComponent, SpinnerComponent, ButtonModule, ConfirmDialogModule, TranslateModule],
-  templateUrl: './students.component.html', // Changed template URL
-  styleUrl: './students.component.scss', // Changed style URL
+  imports: [CommonModule, PrimaryTableComponent, SpinnerComponent, ButtonModule, ConfirmDialogModule, TooltipModule, TranslateModule],
+  templateUrl: './students.component.html',
+  styleUrls: ['./students.component.scss'],
   providers: [ConfirmationService]
 })
 export class StudentsComponent implements OnInit {
@@ -35,6 +38,7 @@ export class StudentsComponent implements OnInit {
   private translateService = inject(TranslateService);
   private confirmationService = inject(ConfirmationService);
   private store = inject(Store<AppState>);
+  private roleAccessService = inject(RoleAccessService);
 
   // Table columns configuration adapted from the screenshot and User interface
   tableColumns = [
@@ -45,7 +49,7 @@ export class StudentsComponent implements OnInit {
       sortable: true,
       iconConfig: {
         icon: 'pi pi-user',
-        getColor: (rowData: any) => (rowData.on_live_session ? '#00897b' : '#ef4444')
+        getColor: (rowData: any) => (rowData.is_active ? '#00897b' : '#ef4444')
       }
     },
     {
@@ -69,9 +73,51 @@ export class StudentsComponent implements OnInit {
       header: 'students.table.registration',
       type: 'date',
       filterType: 'date',
-      sortable: true
+      sortable: true,
+      getValue: (rowData: any) => {
+        if (!rowData.createdAt) return '';
+        
+        const registrationDate = new Date(rowData.createdAt);
+        
+        // Check if date is valid
+        if (isNaN(registrationDate.getTime())) return this.translateService.instant('students.table.invalid_date');
+        
+        // Format time as HH:MM
+        const hours = String(registrationDate.getHours()).padStart(2, '0');
+        const minutes = String(registrationDate.getMinutes()).padStart(2, '0');
+        
+        // Format date as DD/MM/YYYY
+        const day = String(registrationDate.getDate()).padStart(2, '0');
+        const month = String(registrationDate.getMonth() + 1).padStart(2, '0');
+        const year = registrationDate.getFullYear();
+        
+        return `${hours}:${minutes} | ${day}/${month}/${year}`;
+      }
     },
-    { field: 'phone', header: 'students.table.phone', filterType: 'text', sortable: true },
+    { 
+      field: 'phone', 
+      header: 'students.table.phone', 
+      filterType: 'text', 
+      sortable: true,
+      getValue: (rowData: any) => {
+        if (!rowData.phone) return '';
+        
+        const phone = rowData.phone.toString();
+        
+        // If phone already starts with +30, return as is
+        if (phone.startsWith('+30')) {
+          return phone.replace('+30', '+30 ');
+        }
+        
+        // If phone starts with 30, add + and space
+        if (phone.startsWith('30')) {
+          return `+${phone.substring(0, 2)} ${phone.substring(2)}`;
+        }
+        
+        // Otherwise, add +30 prefix
+        return `+30 ${phone}`;
+      }
+    },
     { field: 'email', header: 'students.table.email', filterType: 'text', sortable: true },
     {
       field: 'birthday', // Use birthday for Age (DoB)
@@ -123,13 +169,31 @@ export class StudentsComponent implements OnInit {
       field: 'level',
       header: 'students.table.level',
       filterType: 'text',
-      sortable: true
+      sortable: true,
+      getValue: (rowData: any) => {
+        if (rowData.taxis && rowData.taxis.length > 0) {
+          const firstTaxi = rowData.taxis[0];
+          if (typeof firstTaxi === 'object' && firstTaxi.level) {
+            return mapLevelToLabel(firstTaxi.level);
+          }
+        }
+        return '';
+      }
     },
     {
       field: 'subject',
       header: 'students.table.subject',
       filterType: 'text',
-      sortable: true
+      sortable: true,
+      getValue: (rowData: any) => {
+        if (rowData.taxis && rowData.taxis.length > 0) {
+          const firstTaxi = rowData.taxis[0];
+          if (typeof firstTaxi === 'object' && firstTaxi.subject) {
+            return mapSubjectToCode(firstTaxi.subject);
+          }
+        }
+        return '';
+      }
     },
     {
       field: 'health',
@@ -174,6 +238,93 @@ export class StudentsComponent implements OnInit {
   private viewModeSubject = new BehaviorSubject<'list' | 'grid'>('list');
   viewMode$ = this.viewModeSubject.asObservable();
 
+  // Table view state - students or linked contacts
+  private tableViewSubject = new BehaviorSubject<'students' | 'contacts'>('students');
+  tableView$ = this.tableViewSubject.asObservable();
+
+  // Linked contacts data
+  linkedContactsData: any[] = [];
+  linkedContactsLoading = false;
+  linkedContactsColumns = [
+    {
+      field: 'contactName',
+      header: 'students.linked_contacts.name',
+      filterType: 'text',
+      sortable: true
+    },
+    {
+      field: 'contactType',
+      header: 'students.linked_contacts.contact_type',
+      filterType: 'text',
+      sortable: true,
+      getValue: (rowData: any) => {
+        const relationshipMap: { [key: string]: string } = {
+          'parent_guardian': 'students.linked_contacts.parent_guardian',
+          'caretaker': 'students.linked_contacts.caretaker'
+        };
+        const key = relationshipMap[rowData.contactType] || rowData.contactType;
+        return this.translateService.instant(key);
+      }
+    },
+    {
+      field: 'studentName',
+      header: 'students.linked_contacts.student_name',
+      filterType: 'text',
+      sortable: true
+    },
+    {
+      field: 'studentLevel',
+      header: 'students.linked_contacts.student_level',
+      filterType: 'text',
+      sortable: true
+    },
+    {
+      field: 'studentClass',
+      header: 'students.linked_contacts.student_class',
+      filterType: 'text',
+      sortable: true
+    },
+    {
+      field: 'studentStatus',
+      header: 'students.linked_contacts.student_status',
+      type: 'boolean',
+      filterType: 'boolean',
+      sortable: true,
+      getValue: (rowData: any) => {
+        return rowData.studentStatus 
+          ? this.translateService.instant('table.active') 
+          : this.translateService.instant('table.inactive');
+      },
+      getTextColor: (rowData: any) => {
+        return rowData.studentStatus ? 'var(--primary-color)' : '#ef4444';
+      }
+    },
+    {
+      field: 'phone',
+      header: 'students.linked_contacts.phone',
+      filterType: 'text',
+      sortable: true
+    },
+    {
+      field: 'email',
+      header: 'students.linked_contacts.email',
+      filterType: 'text',
+      sortable: true
+    },
+    {
+      field: 'address',
+      header: 'students.linked_contacts.address',
+      filterType: 'text',
+      sortable: true
+    },
+    {
+      field: 'branch',
+      header: 'students.linked_contacts.branch',
+      filterType: 'text',
+      sortable: true
+    }
+  ];
+
   // Helper function to get full name
   getFullName(student: User): string {
     return `${student.firstname || ''} ${student.lastname || ''}`.trim();
@@ -192,16 +343,29 @@ export class StudentsComponent implements OnInit {
         branch: this.currentCustomerId || ''
       };
 
-      return this.studentsService.getUsersStudents(params).pipe(
-        map((response: GetUsersStudents200) => {
-          this.isLoading = false;
-          const studentData = response.data?.results || [];
-          this.totalRecords = response.data?.totalResults || 0;
-          // Add computed fields to each student object
-          return studentData.map((student: User) => ({
-            ...student,
-            name: this.getFullName(student)
-          }));
+      // For admins, include inactive users by default
+      return this.roleAccessService.isAdministrator().pipe(
+        switchMap((isAdmin) => {
+          if (isAdmin) {
+            // Admin can see all users (active and inactive) unless explicitly filtered
+            // Don't add is_active filter, let backend return all users
+          } else {
+            // Non-admin users only see active users (backend will filter by default)
+            //params['is_active'] = 'true';
+          }
+
+          return this.studentsService.getUsersStudents(params).pipe(
+            map((response: GetUsersStudents200) => {
+              this.isLoading = false;
+              const studentData = response.data?.results || [];
+              this.totalRecords = response.data?.totalResults || 0;
+              // Add computed fields to each student object
+              return studentData.map((student: User) => ({
+                ...student,
+                name: this.getFullName(student)
+              }));
+            })
+          );
         })
       );
     }),
@@ -364,6 +528,96 @@ export class StudentsComponent implements OnInit {
           summary: this.translateService.instant('api_messages.error_title'),
           detail: error?.error?.message || this.translateService.instant('students.errors.delete_failed')
         });
+      }
+    });
+  }
+
+  toggleTableView() {
+    const currentView = this.tableViewSubject.value;
+    const newView = currentView === 'students' ? 'contacts' : 'students';
+    this.tableViewSubject.next(newView);
+    
+    if (newView === 'contacts' && this.linkedContactsData.length === 0) {
+      this.loadLinkedContacts();
+    }
+  }
+
+  loadLinkedContacts() {
+    this.linkedContactsLoading = true;
+    this.linkedContactsData = [];
+
+    // Fetch all students with their contacts
+    const params: { [key: string]: string } = {
+      page: '1',
+      limit: '1000', // Get a large number to fetch all students
+      archived: 'false',
+      branch: this.currentCustomerId || ''
+    };
+
+    this.studentsService.getUsersStudents(params).subscribe({
+      next: (response: GetUsersStudents200) => {
+        const students = response.data?.results || [];
+        
+        // Flatten contacts - each contact becomes a row with student info
+        const contactsData: any[] = [];
+        
+        students.forEach((student: User) => {
+          const studentName = this.getFullName(student);
+          
+          // Get student level from taxis
+          let studentLevel = '';
+          let studentClass = '';
+          if (student.taxis && Array.isArray(student.taxis) && student.taxis.length > 0) {
+            const firstTaxi = student.taxis[0] as any;
+            if (typeof firstTaxi === 'object') {
+              if (firstTaxi.level) {
+                studentLevel = mapLevelToLabel(firstTaxi.level);
+              }
+              if (firstTaxi.name) {
+                studentClass = firstTaxi.name;
+              }
+            }
+          }
+          
+          // Get branch name(s)
+          let branchNames = '';
+          if (student.branches && Array.isArray(student.branches) && student.branches.length > 0) {
+            branchNames = student.branches
+              .map((branch: any) => typeof branch === 'object' ? branch.name : branch)
+              .filter((name: string) => name)
+              .join(', ');
+          }
+          
+          if (student.contacts && Array.isArray(student.contacts) && student.contacts.length > 0) {
+            student.contacts.forEach((contact: any) => {
+              contactsData.push({
+                id: `${student.id}_${contact._id || contact.id || Math.random()}`,
+                studentId: student.id,
+                contactName: contact.name || '',
+                contactType: contact.relationship || '',
+                studentName: studentName,
+                studentLevel: studentLevel,
+                studentClass: studentClass,
+                studentStatus: student.is_active,
+                phone: contact.phone || '',
+                email: contact.email || '',
+                address: student.address || '',
+                branch: branchNames
+              });
+            });
+          }
+        });
+
+        this.linkedContactsData = contactsData;
+        this.linkedContactsLoading = false;
+      },
+      error: (error) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: this.translateService.instant('api_messages.error_title'),
+          detail: error?.error?.message || 'Failed to load linked contacts'
+        });
+        this.linkedContactsLoading = false;
       }
     });
   }

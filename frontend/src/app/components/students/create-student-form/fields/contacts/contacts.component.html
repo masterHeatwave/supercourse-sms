@@ -34,15 +34,12 @@
                  class="text-red-500 text-xs">Valid email is required when adding contacts</small>
         </div>
         <div class="flex-1">
-          <p-dropdown 
-            formControlName="relationship" 
-            [options]="relationships" 
-            optionLabel="label" 
-            optionValue="value" 
+          <app-primary-dropdown
             class="w-full"
-            [class.ng-invalid]="contact.get('relationship')?.invalid && contact.get('relationship')?.touched"
-            placeholder="Parent & Guardian">
-          </p-dropdown>
+            formControlName="relationship"
+            [options]="relationships"
+            placeholder="Select relationship">
+          </app-primary-dropdown>
           <small *ngIf="contact.get('relationship')?.invalid && contact.get('relationship')?.touched" 
                  class="text-red-500 text-xs">Relationship is required when adding contacts</small>
         </div>
@@ -55,7 +52,7 @@
           </p-inputSwitch>
           <span>Primary contact</span>
         </div>
-        <button *ngIf="isEditMode || contactsArray.length === 1" pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger" (click)="removeContact(i)"></button>
+        <button *ngIf="isEditMode || contactsArray.length === 1" pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger" (click)="removeContact(i)" [disabled]="isMinor(dateOfBirth) && contactsArray.length === 1"></button>
       </div>
     </div>
     <button type="button" class="p-button p-button-text mt-2" style="color: black;" (click)="addContact()">

@@ -1,0 +1,158 @@
+<div class="p-4">
+  <div *ngIf="role" class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="flex justify-content-between align-items-center mb-4">
+      <h2 class="text-2xl font-semibold text-900 m-0">{{ isEditMode ? 'Edit Role: ' : 'View Role: ' }}{{ role.name }}</h2>
+      
+      <div class="flex gap-2">
+        <app-outline-button
+          *ngIf="!isEditMode"
+          [borderColor]="'#6c757d'"
+          [textColor]="'#6c757d'"
+          [hoverBackgroundColor]="'#6c757d'"
+          [hoverTextColor]="'white'"
+          (click)="onBack()">
+          Back
+        </app-outline-button>
+        
+        <div *ngIf="isEditMode" class="flex gap-2">
+          <app-outline-button
+            [borderColor]="'#6c757d'"
+            [textColor]="'#6c757d'"
+            [hoverBackgroundColor]="'#6c757d'"
+            [hoverTextColor]="'white'"
+            (click)="onBack()">
+            Cancel
+          </app-outline-button>
+          <app-outline-button
+            [borderColor]="'var(--primary-color)'"
+            [textColor]="'var(--primary-color)'"
+            [hoverBackgroundColor]="'var(--primary-color)'"
+            [hoverTextColor]="'white'"
+            (click)="onSave()">
+            Save
+          </app-outline-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Description Section -->
+    <div class="bg-white border-round p-4 mb-4 border-1 border-black" style="border-radius: 8px;">
+      <label class="block text-900 font-medium mb-2">Description</label>
+      <p class="text-600 line-height-3 m-0">{{ role.description }}</p>
+    </div>
+
+    <!-- Permissions section -->
+    <div class="bg-white border-round p-4 border-1 border-black" style="border-radius: 8px;">
+      <div class="mb-3">
+        <h3 class="text-900 font-medium m-0 mb-2">{{ isEditMode ? 'Set Permissions' : 'Permissions' }}</h3>
+        <p class="text-600 m-0">{{ isEditMode ? 'Modify the permissions for this role' : 'Current permissions for this role' }}</p>
+      </div>
+
+      <!-- Permissions List -->
+      <div class="flex flex-column gap-3 mt-4">
+        <!-- Access Label -->
+        <div class="flex align-items-center gap-2 mb-2">
+          <span class="font-medium text-900 text-sm">Access:</span>
+        </div>
+        
+        <!-- School Access -->
+        <div class="flex align-items-center justify-content-between p-3 border-1 border-black border-round" 
+             [class.cursor-pointer]="isEditMode"
+             style="border-radius: 8px;"
+             (click)="isEditMode ? togglePermission('School Access') : null">
+          <div class="flex align-items-center gap-2">
+            <i [class]="hasPermission('School Access') ? 'pi pi-check-circle text-green-500' : 'pi pi-circle text-400'"></i>
+            <span class="font-medium">School Access</span>
+          </div>
+          <i *ngIf="isEditMode" class="pi pi-chevron-down text-400"></i>
+        </div>
+
+        <!-- Staff Access -->
+        <div class="flex align-items-center justify-content-between p-3 border-1 border-black border-round" 
+             [class.cursor-pointer]="isEditMode"
+             style="border-radius: 8px;"
+             (click)="isEditMode ? togglePermission('Staff Access') : null">
+          <div class="flex align-items-center gap-2">
+            <i [class]="hasPermission('Staff Access') ? 'pi pi-check-circle text-green-500' : 'pi pi-circle text-400'"></i>
+            <span class="font-medium">Staff Access</span>
+          </div>
+          <i *ngIf="isEditMode" class="pi pi-chevron-down text-400"></i>
+        </div>
+
+        <!-- Student Access -->
+        <div class="flex align-items-center justify-content-between p-3 border-1 border-black border-round" 
+             [class.cursor-pointer]="isEditMode"
+             style="border-radius: 8px;"
+             (click)="isEditMode ? togglePermission('Student Access') : null">
+          <div class="flex align-items-center gap-2">
+            <i [class]="hasPermission('Student Access') ? 'pi pi-check-circle text-green-500' : 'pi pi-circle text-400'"></i>
+            <span class="font-medium">Student Access</span>
+          </div>
+          <i *ngIf="isEditMode" class="pi pi-chevron-down text-400"></i>
+        </div>
+
+        <!-- Class Access -->
+        <div class="flex align-items-center justify-content-between p-3 border-1 border-black border-round" 
+             [class.cursor-pointer]="isEditMode"
+             style="border-radius: 8px;"
+             (click)="isEditMode ? togglePermission('Class Access') : null">
+          <div class="flex align-items-center gap-2">
+            <i [class]="hasPermission('Class Access') ? 'pi pi-check-circle text-green-500' : 'pi pi-circle text-400'"></i>
+            <span class="font-medium">Class Access</span>
+          </div>
+          <i *ngIf="isEditMode" class="pi pi-chevron-down text-400"></i>
+        </div>
+
+        <!-- Library Access -->
+        <div class="flex align-items-center justify-content-between p-3 border-1 border-black border-round" 
+             [class.cursor-pointer]="isEditMode"
+             style="border-radius: 8px;"
+             (click)="isEditMode ? togglePermission('Library Access') : null">
+          <div class="flex align-items-center gap-2">
+            <i [class]="hasPermission('Library Access') ? 'pi pi-check-circle text-green-500' : 'pi pi-circle text-400'"></i>
+            <span class="font-medium">Library Access</span>
+          </div>
+          <i *ngIf="isEditMode" class="pi pi-chevron-down text-400"></i>
+        </div>
+
+        <!-- Board Access -->
+        <div class="flex align-items-center justify-content-between p-3 border-1 border-black border-round" 
+             [class.cursor-pointer]="isEditMode"
+             style="border-radius: 8px;"
+             (click)="isEditMode ? togglePermission('Board Access') : null">
+          <div class="flex align-items-center gap-2">
+            <i [class]="hasPermission('Board Access') ? 'pi pi-check-circle text-green-500' : 'pi pi-circle text-400'"></i>
+            <span class="font-medium">Board Access</span>
+          </div>
+          <i *ngIf="isEditMode" class="pi pi-chevron-down text-400"></i>
+        </div>
+
+        <!-- Progress / Grades Access -->
+        <div class="flex align-items-center justify-content-between p-3 border-1 border-black border-round" 
+             [class.cursor-pointer]="isEditMode"
+             style="border-radius: 8px;"
+             (click)="isEditMode ? togglePermission('Progress / Grades Access') : null">
+          <div class="flex align-items-center gap-2">
+            <i [class]="hasPermission('Progress / Grades Access') ? 'pi pi-check-circle text-green-500' : 'pi pi-circle text-400'"></i>
+            <span class="font-medium">Progress / Grades Access</span>
+          </div>
+          <i *ngIf="isEditMode" class="pi pi-chevron-down text-400"></i>
+        </div>
+
+        <!-- Assessments Access -->
+        <div class="flex align-items-center justify-content-between p-3 border-1 border-black border-round" 
+             [class.cursor-pointer]="isEditMode"
+             style="border-radius: 8px;"
+             (click)="isEditMode ? togglePermission('Assessments Access') : null">
+          <div class="flex align-items-center gap-2">
+            <i [class]="hasPermission('Assessments Access') ? 'pi pi-check-circle text-green-500' : 'pi pi-circle text-400'"></i>
+            <span class="font-medium">Assessments Access</span>
+          </div>
+          <i *ngIf="isEditMode" class="pi pi-chevron-down text-400"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

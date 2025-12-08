@@ -6,7 +6,7 @@ import { TagModule } from 'primeng/tag';
 import { TabViewModule } from 'primeng/tabview';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UsersService } from '../../../gen-api/users/users.service';
-import { Observable, catchError, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
@@ -20,6 +20,9 @@ import { ProgressTableComponent } from '../progress-table/progress-table.compone
 import { DocumentsTableComponent } from '../documents-table/documents-table.component';
 import { StudentIdModalComponent } from '../student-id-modal';
 import { IDocument } from '../../../interfaces/student.interface';
+import { mapSubjectToCode } from '../../../utils/subject-mapping.util';
+import { calculateAge } from '../../../utils/age-calculation.util';
+import { CustomersService } from '@gen-api/customers/customers.service';
 
 interface StudentProfile {
   id: string;
@@ -33,7 +36,18 @@ interface StudentProfile {
     name: string;
     code: string;
     language: string;
+    logoUrl?: string;
+    logo?: string;
+    avatarUrl?: string;
+    parentName?: string;
+    parentEmail?: string;
+    parentAvatarUrl?: string;
   }[];
+  customerAvatarUrl?: string;
+  customerName?: string;
+  customerEmail?: string;
+  customerId?: string;
+  customerSlug?: string;
   taxiSubjects: {
     name: string;
     subject: string;
@@ -101,11 +115,11 @@ export class SingleStudentComponent implements OnInit {
   private usersService = inject(UsersService);
   private messageService = inject(MessageService);
   private translate = inject(TranslateService);
+  private customersService = inject(CustomersService);
 
   loading = true;
   studentProfile: StudentProfile | null = null;
   studentHistoryData: any[] = [];
-  studentBooksData: any[] = [];
   studentProgressData: any[] = [];
   studentDocumentsData: (IDocument | string)[] = [];
   showStudentIdModal = false;
@@ -147,11 +161,51 @@ export class SingleStudentComponent implements OnInit {
           this.studentProfile = profile;
           // Process documents data for the documents table
           this.studentDocumentsData = this.processDocumentsData(profile ? profile.documents || [] : []);
+          this.loadParentCustomerInfo();
           this.loading = false;
         },
         error: () => {
           this.loading = false;
         }
+      });
+  }
+
+  private loadParentCustomerInfo(): void {
+    if (!this.studentProfile) {
+      return;
+    }
+
+    this.customersService
+      .getCustomersMain()
+      .pipe(
+        catchError((error) => {
+          console.warn('Failed to load parent customer info', error);
+          return of(null);
+        })
+      )
+      .subscribe((response) => {
+        if (!response || !this.studentProfile) {
+          return;
+        }
+
+        const data = (response as any)?.data ?? response;
+        if (!data) {
+          return;
+        }
+
+        const avatarUrl = data.avatar || '';
+        this.studentProfile = {
+          ...this.studentProfile,
+          customerName: data.name || this.studentProfile.customerName,
+          customerEmail: data.email || this.studentProfile.customerEmail,
+          customerAvatarUrl: avatarUrl || this.studentProfile.customerAvatarUrl,
+          branchDescription: this.studentProfile.branchDescription.map((branch) => ({
+            ...branch,
+            parentName: data.name || branch.parentName,
+            parentEmail: data.email || branch.parentEmail,
+            parentAvatarUrl: avatarUrl || branch.parentAvatarUrl
+          }))
+        };
       });
   }
 
@@ -221,12 +275,8 @@ export class SingleStudentComponent implements OnInit {
   }
 
   private mapApiResponseToStudentProfile(data: any): StudentProfile {
-    // Calculate age from birthday
-    const dob = new Date(data.birthday);
-    const today = new Date();
-    const age = today.getFullYear() - dob.getFullYear();
-    const monthDiff = today.getMonth() - dob.getMonth();
-    const years = monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate()) ? age - 1 : age;
+    // Calculate age from birthday using utility function
+    const years = calculateAge(data.birthday);
 
     // Generate initials from first and last name
     const initials = `${data.firstname?.[0] || ''}${data.lastname?.[0] || ''}`;
@@ -245,15 +295,22 @@ export class SingleStudentComponent implements OnInit {
     const colorIndex = nameForColor.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
     const avatarColor = colors[colorIndex];
 
+    const mainCustomerInfo = this.getMainCustomerInfo(data);
+    const branchDescription = this.getBranchDescription(data, mainCustomerInfo);
     return {
       id: data._id,
       name: `${data.firstname} ${data.lastname}`,
-      role: data.user_type || 'Student',
+      role: this.capitalizeFirst(data.user_type || 'Student'),
       avatar: !!data.avatar,
       avatarUrl: data.avatar ? `${environment.assetUrl}/${data.avatar}` : undefined,
       avatarInitials: initials,
       avatarColor: avatarColor,
-      branchDescription: this.getBranchDescription(data),
+      branchDescription,
+      customerAvatarUrl: mainCustomerInfo?.avatarUrl,
+      customerName: mainCustomerInfo?.name,
+      customerEmail: mainCustomerInfo?.email,
+      customerId: mainCustomerInfo?.id,
+      customerSlug: mainCustomerInfo?.slug,
       taxiSubjects: this.getTaxiSubjects(data),
       isActive: !!data.is_active,
       status: data.is_active ? 'Active' : 'Inactive',
@@ -287,7 +344,7 @@ export class SingleStudentComponent implements OnInit {
         by: data.updatedBy || ''
       },
       registered: {
-        date: new Date(data.createdAt).toLocaleDateString('en-GB', {
+        date: (data.registration_date ? new Date(data.registration_date) : new Date(data.createdAt)).toLocaleDateString('en-GB', {
           day: '2-digit',
           month: '2-digit',
           year: 'numeric'
@@ -308,7 +365,10 @@ export class SingleStudentComponent implements OnInit {
     };
   }
 
-  private getBranchDescription(data: any): any[] {
+  private getBranchDescription(
+    data: any,
+    parentInfo?: { name?: string; email?: string; avatarUrl?: string }
+  ): any[] {
     const branches = [];
 
     // First, check if branches array has populated data
@@ -318,22 +378,11 @@ export class SingleStudentComponent implements OnInit {
           branches.push({
             name: branch.name,
             code: branch.code || '',
-            language: branch.language || ''
-          });
-        }
-      }
-    }
-
-    // If no branches found, check customers field (which might be the actual branch field)
-    if (branches.length === 0 && data.customers && Array.isArray(data.customers) && data.customers.length > 0) {
-      console.log('Checking customers field for branch data');
-      for (const customer of data.customers) {
-        if (typeof customer === 'object' && customer.name) {
-          console.log('Adding customer as branch:', customer.name);
-          branches.push({
-            name: customer.name,
-            code: customer.code || '',
-            language: customer.language || ''
+            language: branch.language || '',
+            logoUrl: branch.logoUrl || branch.logo || branch.avatarUrl || '',
+            parentName: parentInfo?.name || '',
+            parentEmail: parentInfo?.email || '',
+            parentAvatarUrl: parentInfo?.avatarUrl || ''
           });
         }
       }
@@ -347,12 +396,39 @@ export class SingleStudentComponent implements OnInit {
         branches.push({
           name: data.default_branch.name,
           code: data.default_branch.code || '',
-          language: data.default_branch.language || ''
+          language: data.default_branch.language || '',
+          logoUrl: data.default_branch.logoUrl || data.default_branch.logo || data.default_branch.avatarUrl || '',
+          parentName: parentInfo?.name || '',
+          parentEmail: parentInfo?.email || '',
+          parentAvatarUrl: parentInfo?.avatarUrl || ''
         });
       }
     }
 
     return branches;
+  }
+
+  private getMainCustomerInfo(data: any): { name: string; avatarUrl?: string; email?: string; id?: string; slug?: string } | undefined {
+    if (data.customers && Array.isArray(data.customers)) {
+      const mainCustomer = data.customers.find(
+        (customer: any) => typeof customer === 'object' && customer.is_main_customer
+      );
+      if (mainCustomer) {
+        return {
+          name: mainCustomer.name || '',
+          email: mainCustomer.email || '',
+          id: mainCustomer.id || mainCustomer._id || '',
+          slug: mainCustomer.slug || '',
+          avatarUrl:
+            mainCustomer.avatar ||
+            mainCustomer.logoUrl ||
+            mainCustomer.logo ||
+            mainCustomer.avatarUrl ||
+            ''
+        };
+      }
+    }
+    return undefined;
   }
 
   private getTaxiSubjects(data: any): any[] {
@@ -364,32 +440,13 @@ export class SingleStudentComponent implements OnInit {
         if (typeof taxi === 'object' && taxi.name && taxi.subject) {
           taxiSubjects.push({
             name: taxi.name,
-            subject: this.mapSubjectToCode(taxi.subject)
+            subject: mapSubjectToCode(taxi.subject)
           });
         }
       }
     }
 
     return taxiSubjects;
-  }
-
-  private mapSubjectToCode(subject: string): string {
-    const subjectMapping: { [key: string]: string } = {
-      english: 'ENG',
-      french: 'FRA',
-      spanish: 'ESP',
-      italian: 'ITA',
-      italy: 'ITA',
-      german: 'DEU',
-      portuguese: 'POR',
-      russian: 'RUS',
-      arabic: 'ARAB',
-      chinese: 'CHI',
-      japanese: 'JAP'
-    };
-
-    const normalizedSubject = subject.toLowerCase().trim();
-    return subjectMapping[normalizedSubject] || subject.toUpperCase();
   }
   onEditStudent() {
     if (this.studentProfile) {
@@ -425,5 +482,10 @@ export class SingleStudentComponent implements OnInit {
       return this.translate.instant('students.table.none');
     }
     return siblings.join(', ');
+  }
+
+  capitalizeFirst(str: string): string {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   }
 }

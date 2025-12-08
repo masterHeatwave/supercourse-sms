@@ -14,6 +14,7 @@ export enum MessageType {
   FILE = 'file',
   VOICE = 'voice',
   SYSTEM = 'system',
+  ATTACHMENT = "ATTACHMENT",
 }
 
 export enum AttachmentStatus {
@@ -116,6 +117,13 @@ export interface IMessage extends Document {
   recipientIds: Types.ObjectId[];
   chatId: Types.ObjectId;
   content?: string;
+  attachments?: {
+    fileId: string;
+    filename: string;
+    key: string;
+    size: number;
+    contentType: string;
+  }[];
   timestamp: Date;
   replyToMessageId?: Types.ObjectId;
   deliveredTo: IDeliveryStatus[];
@@ -132,17 +140,34 @@ export interface ISendMessageDTO {
   chatId?: string;
   recipientIds?: string[];
   content?: string;
+  attachments?: IMessageAttachmentDTO[];
   type?: MessageType;
   replyToMessageId?: string;
-  timestamp?: Date;
+  timestamp?: Date | string;
 }
 
 export interface IMessageUpdateDTO {
   id: string;
   content?: string;
+  attachments?: {
+    fileId: string;
+    filename: string;
+    key: string;
+    size: number;
+    contentType: string;
+ }[];
   deliveredTo?: IDeliveryStatus[];
   readBy?: IReadStatus[];
 }
+
+export interface IMessageAttachmentDTO {
+  fileId: string;
+  filename: string;
+  key: string;
+  size: number;
+  contentType?: string;
+}
+
 
 export interface IMessageModel {
   findByChatId(chatId: string | Types.ObjectId, limit?: number): Promise<IMessage[]>;

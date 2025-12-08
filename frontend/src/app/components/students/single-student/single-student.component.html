@@ -38,7 +38,7 @@
                             <div class="flex align-items-center gap-2">
                                 <span class="text-black text-4xl text-primary font-bold">{{ studentProfile.name }}</span>
                                 <p-tag [severity]="studentProfile.isActive ? 'success' : 'danger'">
-                                  {{ studentProfile.isActive ? ('table.active' | translate) : ('table.inactive' | translate) }}
+                                  <p style="margin: 0 !important; padding: 10px !important;">{{ studentProfile.isActive ? ('table.active' | translate) : ('table.inactive' | translate) }}</p>
                                 </p-tag>
                             </div>
                             <span class="text-black text-2xl font-regular">{{ studentProfile.role }}</span>
@@ -165,7 +165,7 @@
                 <app-history-table [historyData]="studentHistoryData"></app-history-table>
             </p-tabPanel>
             <p-tabPanel [header]="('students.single.tabs.books' | translate)">
-                <app-books-table [booksData]="studentBooksData"></app-books-table>
+                <app-books-table [userId]="studentProfile.id"></app-books-table>
             </p-tabPanel>
             <p-tabPanel [header]="('students.single.tabs.progress' | translate)">
                 <app-progress-table [progressData]="studentProgressData"></app-progress-table>

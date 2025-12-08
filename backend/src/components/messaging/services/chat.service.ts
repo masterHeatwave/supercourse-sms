@@ -158,7 +158,6 @@ export class ChatService {
             _id: 1,
             participants: 1,
             lastMessageId: 1,
-            // ✅ FIX: Use actual last message content if available, otherwise use stored value
             lastMessageContent: {
               $ifNull: ['$lastMessage.content', '$lastMessageContent']
             },
@@ -541,15 +540,12 @@ export class ChatService {
       const deletedMessages = await Message.deleteMany({
         chatId: new Types.ObjectId(chatId),
       });
-      console.log(`✅ Deleted ${deletedMessages.deletedCount} messages for chat:`, chatId);
 
       const deletedChat = await Chat.findByIdAndDelete(chatId);
 
       if (!deletedChat) {
         throw new ErrorResponse('Chat could not be deleted', StatusCodes.INTERNAL_SERVER_ERROR);
       }
-
-      console.log('✅ Chat deleted successfully:', chatId);
 
       if (this.io) {
         deletedChat.participants.forEach((participantId: Types.ObjectId) => {
@@ -611,7 +607,6 @@ export class ChatService {
 
   async getChatByTaxiId(taxiId: string): Promise<any> {
     try {
-      console.log('🔍 [ChatService] Finding chat for taxi:', taxiId);
   
       // Validate input
       if (!taxiId) {
@@ -633,12 +628,7 @@ export class ChatService {
         console.warn('⚠️ No class chat found for taxi:', taxiId);
         throw new ErrorResponse('Class chat not found', StatusCodes.NOT_FOUND);
       }
-  
-      console.log('✅ [ChatService] Chat found:', {
-        chatId: chat._id,
-        name: chat.name,
-        participants: chat.participants?.length || 0,
-      });
+
   
       // Now populate with aggregation for full details
       const fullChats = await Chat.aggregate([
@@ -721,7 +711,6 @@ export class ChatService {
     if (!this.io) return;
 
     chat.participants.forEach((participantId: Types.ObjectId) => {
-      console.log(`📡 Emitting 'chatUpdate' to user: ${participantId}`);
       this.io?.to(participantId.toString()).emit('chatUpdate', {
         chatId,
         chat,

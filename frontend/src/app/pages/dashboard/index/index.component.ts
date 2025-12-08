@@ -45,7 +45,6 @@ type EntityType = 'user' | 'student' | 'taxi' | 'post' | 'session' | 'classroom'
 })
 export class DashboardIndexComponent implements OnInit {
   #store = inject(Store);
-  #customerService = inject(CustomersService);
   #dashboardService = inject(DashboardService);
   #absencesService = inject(AbsencesService);
   #postsService = inject(PostsService);
@@ -150,6 +149,8 @@ export class DashboardIndexComponent implements OnInit {
                 { value: dashboardData.taxis_count || 0, label: 'dashboard.stats.classes', color: 'teal', icon: 'pi pi-book' },
                 { value: dashboardData.ongoing_sessions || 0, label: 'dashboard.stats.ongoing_sessions', color: 'red', icon: 'pi pi-clock' }
               ];
+
+              console.log('Dashboard data:', dashboardData);
             }
           },
           error: (error) => {
@@ -179,8 +180,19 @@ export class DashboardIndexComponent implements OnInit {
       .subscribe({
         next: (response: any) => {
           if (response.success && response.data) {
-            this.sessions = response.data;
-            this.processSessionsForCalendar(this.sessions);
+            // Handle both array and object with results property
+            const sessionsData = Array.isArray(response.data) 
+              ? response.data 
+              : (response.data.results || response.data.data || []);
+            
+            this.sessions = sessionsData;
+            
+            // Only process if we have an array
+            if (Array.isArray(this.sessions)) {
+              this.processSessionsForCalendar(this.sessions);
+            } else {
+              console.error('Sessions data is not an array:', this.sessions);
+            }
           } else {
             console.error('Failed to fetch sessions:', response);
           }
@@ -199,6 +211,12 @@ export class DashboardIndexComponent implements OnInit {
   processSessionsForCalendar(sessions: Session[]) {
     // Reset events
     this.calendarEvents = [];
+
+    // Validate sessions is an array
+    if (!Array.isArray(sessions)) {
+      console.error('processSessionsForCalendar: sessions is not an array', sessions);
+      return;
+    }
 
     // Create events from sessions
     sessions.forEach((session) => {
@@ -509,6 +527,7 @@ export class DashboardIndexComponent implements OnInit {
 
   get branchDetails() {
     if (!this.currentCustomer) return null;
+    const customer = this.currentCustomer as any;
 
     // Get administrator and manager names if they exist
     let administratorName = 'N/A';
@@ -516,32 +535,51 @@ export class DashboardIndexComponent implements OnInit {
     let managerName = 'N/A';
     let managerEmail = 'N/A';
 
-    if (this.currentCustomer.administrator) {
-      const admin = this.currentCustomer.administrator as any;
+    if (customer.administrator && typeof customer.administrator === 'object') {
+      const admin = customer.administrator;
       administratorName = admin.firstname && admin.lastname ? `${admin.firstname} ${admin.lastname}` : 'N/A';
       administratorEmail = admin.email || 'N/A';
     }
+    if (administratorName === 'N/A' && typeof customer.administrator_name === 'string') {
+      administratorName = customer.administrator_name;
+    }
+    if (typeof customer.nickname === 'string' && customer.nickname.trim()) {
+      administratorName = customer.nickname;
+    }
+    if (administratorEmail === 'N/A' && typeof customer.administrator_email === 'string') {
+      administratorEmail = customer.administrator_email;
+    }
+    if (typeof customer.customer_email === 'string') {
+      administratorEmail = customer.customer_email;
+    }
 
-    if (this.currentCustomer.manager) {
-      const manager = this.currentCustomer.manager as any;
+    if (customer.manager && typeof customer.manager === 'object') {
+      const manager = customer.manager;
       managerName = manager.firstname && manager.lastname ? `${manager.firstname} ${manager.lastname}` : 'N/A';
       managerEmail = manager.email || 'N/A';
     }
+    if (managerName === 'N/A' && typeof customer.manager_name === 'string') {
+      managerName = customer.manager_name;
+    }
+    if (managerEmail === 'N/A' && typeof customer.manager_email === 'string') {
+      managerEmail = customer.manager_email;
+    }
+    if (typeof customer.email === 'string') {
+      managerEmail = customer.email;
+    }
 
     return {
-      website: this.currentCustomer.website || 'N/A',
+      website: customer.website || 'N/A',
       administrator: administratorName,
       manager: managerName,
-      address: this.currentCustomer.address || 'N/A',
-      branchEmail: this.currentCustomer.email || 'N/A',
+      address: customer.address || 'N/A',
+      branchEmail: customer.email || customer.customer_email || 'N/A',
       administratorEmail: administratorEmail,
       managerEmail: managerEmail,
-      phone: this.currentCustomer.phone || 'N/A',
-      code: this.currentCustomer.code || this.currentCustomer.slug || 'N/A',
-      vat: this.currentCustomer.vat || 'N/A',
-      mapLocation:
-        this.currentCustomer.mapLocation ||
-        `https://maps.google.com/maps?q=${encodeURIComponent(this.currentCustomer.address || 'Athens, Greece')}&z=15&output=embed`
+      phone: customer.phone || 'N/A',
+      code: customer.code || customer.slug || 'N/A',
+      vat: customer.vat || 'N/A',
+      mapLocation: `https://maps.google.com/maps?q=${encodeURIComponent(customer.address || 'Athens, Greece')}&z=15&output=embed`
     };
   }
 

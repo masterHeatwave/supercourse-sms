@@ -17,6 +17,7 @@ import { absenceOpenApi } from '@components/absences/absence.openapi';
 import { activityOpenApi } from '@components/activity/activity.openapi';
 import { materialsOpenApi, MaterialSchema } from '@components/materials/materials.openapi';
 import { messagingOpenApi } from '@components/messaging/messaging.openapi';
+import { publicOpenApi } from '@routes/v1/public.openapi';
 import { UserSchema } from '@components/users/users-validate.schemas';
 import { ClassroomSchema } from '@components/classrooms/classroom-validate.schema';
 import { CustomerSchema } from '@components/customers/customer-validate.schema';
@@ -38,11 +39,18 @@ import { assignmentStudentOpenApi } from '@components/assignments/assignment-stu
 import { AssignmentForStudentSchema } from '@components/assignments/assignment-student-validate.schema';
 import { MoodSchema, MoodVideoSchema } from '@components/wellness-center/mood-validate.schema';
 import { moodOpenApi } from '@components/wellness-center/mood.openapi';
-import { bookmarkOpenApi } from '@components/bookmarks/bookmark.openapi';
-import { BookmarkSchema } from '@components/bookmarks/bookmark-validate.schema';
+// import { BookmarkSchema } from '@components/bookmarks/bookmark-validate.schema';
+// import { bookmarkOpenApi } from '@components/bookmarks/bookmark.openapi';
 import { customActivityOpenApi } from '@components/custom-activities/customActivity.openapi';
 import { CustomActivitySchema } from '@components/custom-activities/customActivity-validate.schema';
-
+import { BookmarkSchema } from '@components/ebooks/bookmarks/bookmark-validate.schema';
+import { bookmarkOpenApi } from '@components/ebooks/bookmarks/bookmark.openapi';
+import { NoteSchema } from '@components/ebooks/notes/note-validate.schema';
+import { noteOpenApi } from '@components/ebooks/notes/note.openapi';
+import { storageOpenApi } from '@components/storage/storage.openapi';
+import { StorageFileSchema } from '@components/storage/storage-file.validate';
+import { chatbotOpenApi } from '@components/chatbot/chatbot.openapi';
+import { AssignedCustomActivitySchema } from '@components/custom-activities/customActivity-validate.schema';
 
 // Common schemas that can be reused across different endpoints
 const commonSchemas = {
@@ -57,35 +65,38 @@ const commonSchemas = {
     total: z.number().describe('Total number of items'),
     totalPages: z.number().describe('Total number of pages'),
   }),
-  User: UserSchema,
-  Classroom: ClassroomSchema,
-  Customer: CustomerSchema,
-  Session: SessionSchema,
-  Taxi: TaxiSchema,
-  Inventory: InventorySchema,
-  Post: PostSchema,
-  Role: RoleSchema,
-  Permission: PermissionSchema,
-  ErrorItem: ErrorItemSchema,
   Absence: absenceCreateSchema,
   Activity: ActivitySchema,
-  Material: MaterialSchema,
-  Chat: ChatModelSchema,
-  Message: MessageModelSchema,
+  AssignedCustomActivity: AssignedCustomActivitySchema,
   AssignmentForStaff: AssignmentForStaffSchema,
   AssignmentForStudent: AssignmentForStudentSchema,
+  Bookmark: BookmarkSchema,
+  Chat: ChatModelSchema,
+  Classroom: ClassroomSchema,
+  CustomActivity: CustomActivitySchema,
+  Customer: CustomerSchema,
+  ErrorItem: ErrorItemSchema,
+  Inventory: InventorySchema,
+  Material: MaterialSchema,
+  Message: MessageModelSchema,
   Mood: MoodSchema,
   MoodVideo: MoodVideoSchema,
-  Bookmark: BookmarkSchema,
-  CustomActivity: CustomActivitySchema,
+  Note: NoteSchema,
+  Permission: PermissionSchema,
+  Post: PostSchema,
+  Role: RoleSchema,
+  Session: SessionSchema,
+  StorageFile: StorageFileSchema,
+  Taxi: TaxiSchema,
+  User: UserSchema,
 };
 
 export const openApiDocument = createDocument({
   openapi: '3.0.0',
   info: {
-    title: 'Supercourse SMS API',
+    title: 'Super Course SMS API',
     version: '1.0.0',
-    description: 'API documentation for the Supercourse SMS service',
+    description: 'API documentation for the Super Course SMS services',
   },
   servers: [
     {
@@ -135,51 +146,59 @@ export const openApiDocument = createDocument({
     },
   ],
   tags: [
-    ...usersOpenApi.tags,
-    ...authOpenApi.tags,
+    ...absenceOpenApi.tags,
     ...academicOpenApi.tags,
+    ...activityOpenApi.tags,
+    ...assignmentStaffOpenApi.tags,
+    ...assignmentStudentOpenApi.tags,
+    ...authOpenApi.tags,
+    ...bookmarkOpenApi.tags,
+    ...chatbotOpenApi.tags,
     ...classroomOpenApi.tags,
+    ...customActivityOpenApi.tags,
     ...customerOpenApi.tags,
     ...dashboardOpenApi.tags,
     ...errorOpenApi.tags,
     ...inventoryOpenApi.tags,
-    ...notificationsOpenApi.tags,
-    ...postOpenApi.tags,
-    ...roleOpenApi.tags,
-    ...sessionOpenApi.tags,
-    ...taxiOpenApi.tags,
-    ...activityOpenApi.tags,
-    { name: 'Absences', description: 'Absence management operations' },
     ...materialsOpenApi.tags,
     ...messagingOpenApi.tags,
-    ...assignmentStaffOpenApi.tags,
-    ...assignmentStudentOpenApi.tags,
     ...moodOpenApi.tags,
-    ...bookmarkOpenApi.tags,
-    ...customActivityOpenApi.tags,
+    ...noteOpenApi.tags,
+    ...notificationsOpenApi.tags,
+    ...postOpenApi.tags,
+    ...publicOpenApi.tags,
+    ...roleOpenApi.tags,
+    ...sessionOpenApi.tags,
+    ...storageOpenApi.tags,
+    ...taxiOpenApi.tags,
+    ...usersOpenApi.tags,
   ],
   paths: {
-    ...usersOpenApi.paths,
-    ...authOpenApi.paths,
+    ...absenceOpenApi.paths,
     ...academicOpenApi.paths,
+    ...activityOpenApi.paths,
+    ...assignmentStaffOpenApi.paths,
+    ...assignmentStudentOpenApi.paths,
+    ...authOpenApi.paths,
+    ...bookmarkOpenApi.paths,
+    ...chatbotOpenApi.paths,
     ...classroomOpenApi.paths,
+    ...customActivityOpenApi.paths,
     ...customerOpenApi.paths,
     ...dashboardOpenApi.paths,
     ...errorOpenApi.paths,
     ...inventoryOpenApi.paths,
-    ...notificationsOpenApi.paths,
-    ...postOpenApi.paths,
-    ...roleOpenApi.paths,
-    ...sessionOpenApi.paths,
-    ...taxiOpenApi.paths,
-    ...absenceOpenApi.paths,
-    ...activityOpenApi.paths,
     ...materialsOpenApi.paths,
     ...messagingOpenApi.paths,
-    ...assignmentStaffOpenApi.paths,
-    ...assignmentStudentOpenApi.paths,
     ...moodOpenApi.paths,
-    ...bookmarkOpenApi.paths,
-    ...customActivityOpenApi.paths,
+    ...noteOpenApi.paths,
+    ...notificationsOpenApi.paths,
+    ...postOpenApi.paths,
+    ...publicOpenApi.paths,
+    ...roleOpenApi.paths,
+    ...sessionOpenApi.paths,
+    ...storageOpenApi.paths,
+    ...taxiOpenApi.paths,
+    ...usersOpenApi.paths,
   },
 });

@@ -2,7 +2,7 @@
   <app-loading [isLoading]="isLoading"></app-loading>
   <app-warning-dialog [warningMessage]="warningMessage" [isDialogVisible]="isWarningDialogVisible" (onClose)="isWarningDialogVisible = false" />
   <app-info-dialog [infoMessage]="infoMessage" [isDialogVisible]="isInfoDialogVisible" (onClose)="onInfoClose()" />
-  <app-footer-button [showOn]="[1, 2, 3, 4]" text="Back" (buttonClick)="onClick('back')" />
+  <app-footer-button [showOn]="[1, 2, 3, 4]" text="{{ 'customActivities.back_button' | translate }}" (buttonClick)="onClick('back')" />
 
   <!--<app-footer-button *ngIf="false" [showOn]="[1, 2, 3, 4]" text="Start over" (buttonClick)="onClick('startOver')" />
     <app-footer-button *ngIf="false" [showOn]="[3]" text="Clear content" (buttonClick)="onClick('clearContent')" /> -->
@@ -11,6 +11,6 @@
       text="Save & Launch"
       (buttonClick)="onClick('saveAndLaunch')"
     />-->
-  <app-footer-button [showOn]="[4]" text="Save" (buttonClick)="onClick('save')" />
-  <app-footer-button [showOn]="[1, 2, 3]" text="Continue" (buttonClick)="onClick('continue')" />
+  <app-footer-button [showOn]="[4]" text="{{ 'customActivities.save_button' | translate }}" (buttonClick)="onClick('save')" />
+  <app-footer-button [showOn]="[1, 2, 3]" text="{{ 'customActivities.continue_button' | translate }}" (buttonClick)="onClick('continue')" />
 </div>

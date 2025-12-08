@@ -18,7 +18,7 @@ export enum ActivityEntityType {
   CHAT = 'chat',
   MESSAGE = 'message',
   CHAT_NOTIFICATION = 'chat_notification',
-  ATTACHMENT = 'attachment'
+  ATTACHMENT = 'attachment',
 }
 
 export interface IActivity extends Document {

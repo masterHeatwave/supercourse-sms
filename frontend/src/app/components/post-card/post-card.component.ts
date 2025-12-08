@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AvatarModule } from 'primeng/avatar';
 
@@ -20,8 +20,31 @@ export class PostCardComponent {
   @Input() isPinned: boolean = false;
   @Input() tags: string[] = [];
   @Input() author: string | null = null;
+  @Input() hasPoll: boolean = false;
+  @Input() showLikeButton: boolean = false;
+  @Input() priority: string = 'normal';
+  @Input() readOnly: boolean = false; // When true, disables all interactive actions
+  @Output() likeClicked = new EventEmitter<void>();
 
   togglePin(): void {
     this.isPinned = !this.isPinned;
+  }
+
+  onLikeClick(event: Event): void {
+    if (this.readOnly) {
+      event.stopPropagation();
+      return;
+    }
+    event.stopPropagation();
+    this.likeClicked.emit();
+  }
+
+  getPriorityConfig(): { label: string; color: string; bgColor: string } {
+    const priorityMap: { [key: string]: { label: string; color: string; bgColor: string } } = {
+      high: { label: 'High', color: '#ef4444', bgColor: '#fee2e2' },
+      normal: { label: 'Normal', color: '#22c55e', bgColor: '#dcfce7' },
+      low: { label: 'Low', color: '#3b82f6', bgColor: '#dbeafe' }
+    };
+    return priorityMap[this.priority?.toLowerCase()] || priorityMap['normal'];
   }
 }

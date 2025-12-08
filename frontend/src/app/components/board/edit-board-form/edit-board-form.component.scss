@@ -1,0 +1,83 @@
+.custom-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--surface-border);
+}
+
+// Form validation styling
+.ng-invalid.ng-touched {
+  border-color: var(--red-500) !important;
+}
+
+.p-error {
+  color: var(--red-500);
+  font-size: 0.875rem;
+}
+
+// Editor styling
+::ng-deep .p-editor {
+  .ql-toolbar {
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-color: var(--surface-300);
+  }
+
+  .ql-container {
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    border-color: var(--surface-300);
+
+    .ql-editor {
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  }
+}
+
+// Checkbox styling
+::ng-deep .p-checkbox {
+  .p-checkbox-box {
+    border-color: var(--surface-400);
+
+    &.p-highlight {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+  }
+}
+
+// Input text styling
+.p-inputtext {
+  border: 1px solid var(--surface-300);
+  border-radius: 6px;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+
+  &:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.2);
+  }
+
+  &.ng-invalid.ng-touched {
+    border-color: var(--red-500);
+  }
+}
+
+// Button styling
+.p-button {
+  border-radius: 6px;
+  font-weight: 500;
+
+  &.p-button-secondary {
+    color: var(--text-color);
+    border-color: var(--surface-400);
+
+    &:hover {
+      background: var(--surface-100);
+    }
+  }
+}
+

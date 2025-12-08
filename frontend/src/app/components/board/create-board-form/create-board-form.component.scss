@@ -1,0 +1,331 @@
+.create-post-container {
+  min-height: 100vh;
+  background-color: var(--surface-ground);
+}
+
+// Grid layout adjustments
+.grid {
+  align-items: stretch;
+  
+  // First column (New Post) - 50%
+  > div.col-12.lg\:col-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+    display: flex;
+    flex-direction: column;
+    
+    > div {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+  
+  // Recipients and Options columns - 25% each
+  > div.col-12.lg\:col-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+    display: flex;
+    flex-direction: column;
+    
+    > div {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+}
+
+// Content area styling
+.content-area {
+  border: 2px solid var(--red-500);
+  border-radius: 8px;
+  background: white;
+}
+
+.custom-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--surface-border);
+}
+
+.recipients-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.image-upload-area {
+  border: 2px dashed var(--surface-300);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  background: var(--surface-50);
+  transition: all 0.3s ease;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    border-color: var(--primary-color);
+    background: var(--surface-100);
+  }
+
+  ::ng-deep .p-fileupload-choose {
+    width: auto;
+    border-color: var(--primary-color);
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+.image-preview {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+
+  img {
+    width: 100%;
+    height: auto;
+    max-height: 300px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .p-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+}
+
+.recipients-tree {
+  .recipient-item {
+    padding: 0.25rem 0;
+
+    .p-checkbox {
+      flex-shrink: 0;
+    }
+
+    label {
+      cursor: pointer;
+      user-select: none;
+    }
+  }
+}
+
+// Priority options styling
+.priority-option {
+  .pi-circle-fill {
+    font-size: 0.75rem;
+  }
+}
+
+// Form validation styling
+.ng-invalid.ng-touched {
+  border-color: var(--red-500) !important;
+}
+
+.p-error {
+  color: var(--red-500);
+  font-size: 0.875rem;
+}
+
+// Editor styling
+::ng-deep .p-editor {
+  .ql-toolbar {
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-color: var(--surface-300);
+  }
+
+  .ql-container {
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    border-color: var(--surface-300);
+
+    .ql-editor {
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  }
+}
+
+// Checkbox and radio button styling
+::ng-deep .p-checkbox {
+  .p-checkbox-box {
+    border-color: var(--surface-400);
+
+    &.p-highlight {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+  }
+}
+
+::ng-deep .p-radiobutton {
+  .p-radiobutton-box {
+    border-color: var(--surface-400);
+
+    &.p-highlight {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+  }
+}
+
+// Calendar styling
+::ng-deep .p-calendar {
+  .p-inputtext {
+    width: 100%;
+  }
+}
+
+// File upload styling
+::ng-deep .p-fileupload {
+  .p-fileupload-buttonbar {
+    background: transparent;
+    border: none;
+    padding: 0;
+
+    .p-fileupload-choose {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+      color: white;
+      border-radius: 6px;
+
+      &:hover {
+        background: var(--primary-600);
+      }
+    }
+  }
+}
+
+// Button styling
+.p-button {
+  border-radius: 6px;
+  font-weight: 500;
+
+  &.p-button-success {
+    background: var(--green-500);
+    border-color: var(--green-500);
+
+    &:hover {
+      background: var(--green-600);
+      border-color: var(--green-600);
+    }
+  }
+
+  &.p-button-secondary {
+    color: var(--text-color);
+    border-color: var(--surface-400);
+
+    &:hover {
+      background: var(--surface-100);
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 992px) {
+  .create-post-container {
+    padding: 1rem;
+  }
+
+  .grid {
+    .col-12.lg\:col-8,
+    .col-12.lg\:col-4 {
+      width: 100%;
+      padding: 0.5rem;
+    }
+  }
+}
+
+// Loading state
+.p-button-loading {
+  pointer-events: none;
+
+  .p-button-loading-icon {
+    margin-right: 0.5rem;
+  }
+}
+
+// Breadcrumb styling
+.breadcrumb {
+  .text-gray-500 {
+    color: var(--text-color-secondary);
+  }
+
+  .text-primary {
+    color: var(--primary-color);
+  }
+}
+
+// Poll builder styling
+.poll-builder {
+  background: var(--surface-50);
+  border: 1px solid var(--surface-200);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+
+// Input text styling
+.p-inputtext {
+  border: 1px solid var(--surface-300);
+  border-radius: 6px;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+
+  &:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.2);
+  }
+
+  &.ng-invalid.ng-touched {
+    border-color: var(--red-500);
+  }
+}
+
+// Poll add button styling
+::ng-deep .poll-add-button-wrapper,
+::ng-deep .poll-remove-button-wrapper {
+  a {
+    display: inline-block;
+  }
+  
+  .outline-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    .p-button-icon-left {
+      margin-right: 0.75rem !important;
+    }
+    
+    .p-button-label {
+      display: flex !important;
+      align-items: center !important;
+      
+      div {
+        display: flex !important;
+        align-items: center !important;
+      }
+    }
+  }
+}
+

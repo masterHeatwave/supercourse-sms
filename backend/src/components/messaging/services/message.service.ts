@@ -14,16 +14,16 @@ import {
 import { Server as SocketIOServer } from 'socket.io';
 import { ChatNotificationService } from './chat-notification.service';
 import { requestContextLocalStorage } from '@config/asyncLocalStorage';
+import { StorageService } from '@components/storage/storage.service';
 
 export class MessageService {
   private io: SocketIOServer | null = null;
-
   private notificationService: ChatNotificationService;
+  private storageService: StorageService;
 
   constructor() {
-
     this.notificationService = new ChatNotificationService();
-
+    this.storageService = new StorageService();
   }
 
   /**
@@ -50,28 +50,38 @@ export class MessageService {
     return `${tenantId}_messages`;
   }
 
+  private getStorageFilesCollectionName(): string {
+    const tenantId = requestContextLocalStorage.getStore();
+    if (!tenantId) {
+      throw new ErrorResponse('Tenant context not available', StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+    // user said: StorageFile → 'storagefile'
+    return `${tenantId}_storagefiles`;
+  }
+
   /**
    * Send a message, creating a chat if needed
+   * Now supports attachments on the message payload.
    */
   async sendMessage(payload: ISendMessageDTO): Promise<any> {
     try {
       const senderId = payload.senderId;
-
+  
       const sender = await User.findById(senderId);
       if (!sender) {
         throw new ErrorResponse('Sender not found', StatusCodes.NOT_FOUND);
       }
-
+  
       let chatId = payload.chatId;
-
+  
       if (!chatId) {
         const participants = Array.from(new Set([senderId, ...(payload.recipientIds || [])]));
         if (participants.length < 2) {
           throw new ErrorResponse('Provide chatId or at least one recipient', StatusCodes.BAD_REQUEST);
         }
-
+  
         const type = participants.length === 2 ? ChatType.DIRECT : ChatType.GROUP;
-
+  
         if (type === ChatType.DIRECT) {
           const existing = await Chat.findOne({
             type: ChatType.DIRECT,
@@ -82,7 +92,7 @@ export class MessageService {
             chatId = (existing._id as Types.ObjectId).toString();
           }
         }
-
+  
         if (!chatId) {
           const chat = await Chat.create({
             participants,
@@ -93,16 +103,21 @@ export class MessageService {
           chatId = (chat._id as Types.ObjectId).toString();
         }
       }
-
+  
       const chat = await Chat.findById(chatId);
       if (!chat) {
         throw new ErrorResponse('Chat not found', StatusCodes.NOT_FOUND);
       }
-
-      if (!payload.content && payload.type === MessageType.TEXT) {
-        throw new ErrorResponse('Text message requires content', StatusCodes.BAD_REQUEST);
+  
+      // ✅ FIXED: Check attachments first, then validate
+      const hasAttachments = Array.isArray(payload.attachments) && payload.attachments.length > 0;
+      const hasContent = payload.content && payload.content.trim().length > 0;
+  
+      // ✅ NEW VALIDATION: Must have either content OR attachments
+      if (!hasContent && !hasAttachments) {
+        throw new ErrorResponse('Message must have either content or attachments', StatusCodes.BAD_REQUEST);
       }
-
+  
       if (payload.replyToMessageId) {
         const replyToMessage = await Message.findById(payload.replyToMessageId);
         if (!replyToMessage) {
@@ -112,29 +127,47 @@ export class MessageService {
           throw new ErrorResponse('Reply-to message must be in the same chat', StatusCodes.BAD_REQUEST);
         }
       }
-
+  
       const messageData: any = {
         senderId: new Types.ObjectId(senderId),
         recipientIds: chat.participants.filter((p: any) => p.toString() !== senderId.toString()),
         chatId: new Types.ObjectId(chatId),
-        content: payload.content,
+        content: payload.content || '',
         type: payload.type || MessageType.TEXT,
         timestamp: payload.timestamp || new Date(),
         deliveredTo: [],
         readBy: [],
         read: false,
       };
-
+  
       if (payload.replyToMessageId) {
         messageData.replyToMessageId = new Types.ObjectId(payload.replyToMessageId);
       }
-
+  
+      // ✅ Attachments from payload
+      if (hasAttachments) {
+        messageData.attachments = payload.attachments!.map((att: any) => ({
+          fileId: new Types.ObjectId(att.fileId),
+          filename: att.filename,
+          key: att.key,
+          size: att.size,
+          contentType: att.contentType,
+        }));
+      }
+  
       const message = await Message.create(messageData);
-
+  
       chat.lastMessageId = message._id as any;
-      chat.lastMessageContent = message.type === MessageType.TEXT ? (payload.content ?? '') : message.type;
+      // ✅ Better last message content display
+      if (hasContent) {
+        chat.lastMessageContent = payload.content!;
+      } else if (hasAttachments) {
+        chat.lastMessageContent = `📎 ${payload.attachments!.length} attachment(s)`;
+      } else {
+        chat.lastMessageContent = message.type;
+      }
       chat.lastMessagedAt = new Date();
-
+  
       chat.participants.forEach((participantId: Types.ObjectId) => {
         const participantIdStr = participantId.toString();
         if (participantIdStr !== senderId) {
@@ -142,24 +175,27 @@ export class MessageService {
           chat.unreadCount.set(participantIdStr, currentCount + 1);
         }
       });
-
+  
       await chat.save();
-
-      const completeMessage = await this.getCompleteMessage(message._id.toString());
-
+  
+      let completeMessage = await this.getCompleteMessage(message._id.toString());
+      if (completeMessage) {
+        completeMessage = await this.enrichSingleMessageWithAttachmentUrls(completeMessage);
+      }
+  
       this.emitNewMessage(completeMessage, [
         senderId,
         ...messageData.recipientIds.map((id: Types.ObjectId) => id.toString()),
       ]);
-
+  
       await this.notificationService.createMessageNotificationsWithMuteCheck(
         senderId,
         messageData.recipientIds.map((id: Types.ObjectId) => id.toString()),
         message._id.toString(),
         chatId,
-        payload.content || '[Attachment]'
+        hasContent ? payload.content! : (hasAttachments ? `📎 ${payload.attachments!.length} attachment(s)` : '')
       );
-
+  
       return completeMessage;
     } catch (err: any) {
       console.error('❌ Error in sendMessage:', err);
@@ -169,31 +205,29 @@ export class MessageService {
 
   /**
    * Get messages for a chat
+   * Includes attachments + signed URLs (Option C)
    */
   async getMessages(chatId: string, options: { limit?: number; before?: string } = {}): Promise<any[]> {
-    
     const chat = await Chat.findById(chatId);
     if (!chat) {
       throw new ErrorResponse('Chat not found', StatusCodes.NOT_FOUND);
     }
-  
-    // Build match stage
+
     const matchStage: any = { chatId: new Types.ObjectId(chatId) };
-    
+
     if (options.before) {
       const beforeDate = new Date(options.before);
       if (!isNaN(beforeDate.getTime())) {
         matchStage.timestamp = { $lt: beforeDate };
       }
     }
-  
+
     const limit = options.limit && options.limit > 0 ? options.limit : 50;
-  
-    // ✅ USE AGGREGATION to properly flatten sender information
+
     const messages = await Message.aggregate([
       { $match: matchStage },
-      
-      // Lookup sender information
+
+      // Sender info
       {
         $lookup: {
           from: this.getUsersCollectionName(),
@@ -203,8 +237,8 @@ export class MessageService {
         },
       },
       { $unwind: { path: '$sender', preserveNullAndEmptyArrays: true } },
-      
-      // Lookup reply-to message
+
+      // Reply-to message
       {
         $lookup: {
           from: this.getMessagesCollectionName(),
@@ -214,8 +248,8 @@ export class MessageService {
         },
       },
       { $unwind: { path: '$replyToMessage', preserveNullAndEmptyArrays: true } },
-      
-      // Lookup reply-to message sender
+
+      // Reply-to sender
       {
         $lookup: {
           from: this.getUsersCollectionName(),
@@ -225,8 +259,17 @@ export class MessageService {
         },
       },
       { $unwind: { path: '$replyToMessageSender', preserveNullAndEmptyArrays: true } },
-      
-      // Project to flatten fields
+
+      // 🔍 Lookup attachment StorageFile docs (as requested)
+      {
+        $lookup: {
+          from: this.getStorageFilesCollectionName(),
+          localField: 'attachments.fileId',
+          foreignField: '_id',
+          as: 'attachmentFiles',
+        },
+      },
+
       {
         $project: {
           _id: 1,
@@ -243,16 +286,14 @@ export class MessageService {
           replyToMessageId: 1,
           attachments: 1,
           reactions: 1,
-          // ✅ FLATTEN sender information
           senderUsername: '$sender.username',
-          senderFullName: { 
+          senderFullName: {
             $concat: [
-              { $ifNull: ['$sender.firstname', ''] }, 
-              ' ', 
-              { $ifNull: ['$sender.lastname', ''] }
-            ] 
+              { $ifNull: ['$sender.firstname', ''] },
+              ' ',
+              { $ifNull: ['$sender.lastname', ''] },
+            ],
           },
-          // ✅ FIX: Better check for replyToMessage existence
           replyToMessage: {
             $cond: {
               if: { $ifNull: ['$replyToMessage._id', false] },
@@ -266,33 +307,26 @@ export class MessageService {
                   $concat: [
                     { $ifNull: ['$replyToMessageSender.firstname', ''] },
                     ' ',
-                    { $ifNull: ['$replyToMessageSender.lastname', ''] }
+                    { $ifNull: ['$replyToMessageSender.lastname', ''] },
                   ],
                 },
               },
               else: null,
             },
           },
+          // attachmentFiles is not projected outward; we just used lookup if needed
         },
       },
-      
-      // Sort by timestamp (ascending for chat display)
+
       { $sort: { timestamp: 1 } },
-      
-      // Limit results
       { $limit: limit },
     ]);
-  
-    console.log('✅ Returning', messages.length, 'messages with sender info');
-    if (messages.length > 0) {
-      console.log('📝 First message:', messages[0]);
-    }
-  
-    return messages;
+
+    return this.enrichMessagesWithAttachmentUrls(messages);
   }
 
   /**
-   * Get messages by chat ID with pagination (legacy endpoint)
+   * Legacy: Get messages with pagination
    */
   async getMessagesByChatId(chatId: string, page: number = 1, limit: number = 50): Promise<any[]> {
     const skip = (page - 1) * limit;
@@ -326,6 +360,17 @@ export class MessageService {
         },
       },
       { $unwind: { path: '$replyToMessageSender', preserveNullAndEmptyArrays: true } },
+
+      // 🔍 Attachments lookup
+      {
+        $lookup: {
+          from: this.getStorageFilesCollectionName(),
+          localField: 'attachments.fileId',
+          foreignField: '_id',
+          as: 'attachmentFiles',
+        },
+      },
+
       {
         $project: {
           content: 1,
@@ -342,17 +387,16 @@ export class MessageService {
           attachments: 1,
           reactions: 1,
           senderUsername: '$sender.username',
-          senderFullName: { 
+          senderFullName: {
             $concat: [
               { $ifNull: ['$sender.firstname', ''] },
               ' ',
-              { $ifNull: ['$sender.lastname', ''] }
-            ]
+              { $ifNull: ['$sender.lastname', ''] },
+            ],
           },
-          // ✅ FIX: Better check for replyToMessage existence
           replyToMessage: {
             $cond: {
-              if: { $ifNull: ['$replyToMessage._id', false] }, 
+              if: { $ifNull: ['$replyToMessage._id', false] },
               then: {
                 _id: '$replyToMessage._id',
                 content: '$replyToMessage.content',
@@ -363,7 +407,7 @@ export class MessageService {
                   $concat: [
                     { $ifNull: ['$replyToMessageSender.firstname', ''] },
                     ' ',
-                    { $ifNull: ['$replyToMessageSender.lastname', ''] }
+                    { $ifNull: ['$replyToMessageSender.lastname', ''] },
                   ],
                 },
               },
@@ -377,29 +421,27 @@ export class MessageService {
       ...(limit > 0 ? [{ $limit: limit }] : []),
     ]);
 
-    return messages;
+    return this.enrichMessagesWithAttachmentUrls(messages);
   }
 
   /**
-   * Mark a message as read
+   * Mark a single message as read
    */
   async markMessageRead(messageId: string, userId?: string): Promise<IMessage> {
-    console.log(`📖 Marking message ${messageId} as read by user ${userId}`);
-    
+
     const message = await Message.findById(messageId);
     if (!message) {
       throw new ErrorResponse('Message not found', StatusCodes.NOT_FOUND);
     }
-  
+
     if (!message.read) {
       message.read = true;
       message.readAt = new Date();
     }
-  
+
     if (userId) {
       const alreadyRead = message.readBy.some((r) => r.userId.toString() === userId);
       if (!alreadyRead) {
-        // Ensure delivered status is set first
         const alreadyDelivered = message.deliveredTo.some((d) => d.userId.toString() === userId);
         if (!alreadyDelivered) {
           message.deliveredTo.push({
@@ -407,80 +449,66 @@ export class MessageService {
             deliveredAt: new Date(),
           });
         }
-  
-        // Add read status
+
         message.readBy.push({
           userId: new Types.ObjectId(userId),
           readAt: new Date(),
         });
-  
+
         await message.save();
-  
-        // ✅ Emit to sender and chat room
+
         if (this.io) {
           const senderId = message.senderId.toString();
-          const chatId = message.chatId.toString();
-          
-          console.log(`📡 Emitting messageRead to sender user-${senderId} and chat-${chatId}`);
-          
-          // Emit to sender's personal room
+          const chatIdStr = message.chatId.toString();
+
           this.io.to(`user-${senderId}`).emit('messageRead', {
             messageId,
             userId,
             readAt: new Date(),
-            chatId,
+            chatId: chatIdStr,
           });
-          
-          // Emit to chat room
-          this.io.to(`chat-${chatId}`).emit('messageRead', {
+
+          this.io.to(`chat-${chatIdStr}`).emit('messageRead', {
             messageId,
             userId,
             readAt: new Date(),
-            chatId,
+            chatId: chatIdStr,
           });
         }
-      } else {
-        console.log(`✅ Message ${messageId} already marked as read by ${userId}`);
-      }
+      } 
     } else {
       await message.save();
     }
-  
+
     return message;
   }
 
   /**
-   * Mark all messages in a chat as read
+   * Mark all messages in a chat as read by a user
    */
   async markChatMessagesAsRead(chatId: string, userId: string): Promise<IMessage[]> {
-    console.log(`📖 Marking all messages as read in chat ${chatId} for user ${userId}`);
-    
+
     const chat = await Chat.findById(chatId);
     if (!chat) {
       throw new ErrorResponse('Chat not found', StatusCodes.NOT_FOUND);
     }
-  
+
     const unreadMessages = await Message.find({
       chatId: new Types.ObjectId(chatId),
       senderId: { $ne: new Types.ObjectId(userId) },
       'readBy.userId': { $ne: new Types.ObjectId(userId) },
     });
-  
+
     if (unreadMessages.length === 0) {
-      console.log('✅ No unread messages to mark');
       chat.unreadCount.set(userId, 0);
       await chat.save();
       return [];
     }
-  
-    console.log(`📊 Marking ${unreadMessages.length} messages as read`);
-  
+
     const readTimestamp = new Date();
     const updatedMessages: IMessage[] = [];
-    
-    // ✅ Track unique senders to emit events only once per sender
     const uniqueSenders = new Set<string>();
-  
+
     for (const message of unreadMessages) {
       const alreadyDelivered = message.deliveredTo.some((d) => d.userId.toString() === userId);
       if (!alreadyDelivered) {
@@ -489,57 +517,49 @@ export class MessageService {
           deliveredAt: readTimestamp,
         });
       }
-  
+
       message.readBy.push({
         userId: new Types.ObjectId(userId),
         readAt: readTimestamp,
       });
-  
+
       message.read = true;
       message.readAt = readTimestamp;
-  
+
       await message.save();
       updatedMessages.push(message);
-      
-      // Track sender
+
       uniqueSenders.add(message.senderId.toString());
     }
-  
-    // ✅ FIX: Emit read status to ALL senders in the chat
+
     if (this.io) {
-      uniqueSenders.forEach(senderId => {
-        console.log(`📡 Emitting messageRead event to sender user-${senderId}`);
-        
-        // Emit to sender's personal room
+      uniqueSenders.forEach((senderId) => {
+
         this.io?.to(`user-${senderId}`).emit('messageRead', {
           chatId,
           userId,
           readAt: readTimestamp,
-          messageCount: updatedMessages.filter(m => m.senderId.toString() === senderId).length
+          messageCount: updatedMessages.filter((m) => m.senderId.toString() === senderId).length,
         });
       });
-      
-      // ✅ Also emit to the chat room itself
-      console.log(`📡 Emitting messagesRead to chat-${chatId}`);
+
       this.io?.to(`chat-${chatId}`).emit('messagesRead', {
         chatId,
         userId,
         readAt: readTimestamp,
-        messageIds: updatedMessages.map(m => m._id.toString())
+        messageIds: updatedMessages.map((m) => m._id.toString()),
       });
     }
-  
-    // Reset unread count in chat
+
     chat.unreadCount.set(userId, 0);
     chat.markModified('unreadCount');
     await chat.save();
-  
-    console.log(`✅ Successfully marked ${updatedMessages.length} messages as read`);
+
     return updatedMessages;
   }
 
   /**
-   * Mark message as delivered
+   * Mark as delivered
    */
   async markAsDelivered(messageId: string, userId: string): Promise<IMessage> {
     const message = await Message.findById(messageId);
@@ -603,13 +623,13 @@ export class MessageService {
   }
 
   /**
-   * Get messages by user ID (for incoming/sent)
+   * Get messages by user (incoming / sent)
    */
   async getMessagesByUserId(userId: string, field: 'senderId' | 'recipientIds'): Promise<any[]> {
     const id = new Types.ObjectId(userId);
     const matchField = field === 'recipientIds' ? 'recipientIds' : 'senderId';
 
-    return await Message.aggregate([
+    const messages = await Message.aggregate([
       { $match: { [matchField]: id } },
       {
         $lookup: {
@@ -628,6 +648,15 @@ export class MessageService {
           as: 'recipients',
         },
       },
+      // Optional: lookup attachments here as well if needed
+      {
+        $lookup: {
+          from: this.getStorageFilesCollectionName(),
+          localField: 'attachments.fileId',
+          foreignField: '_id',
+          as: 'attachmentFiles',
+        },
+      },
       {
         $project: {
           content: 1,
@@ -638,16 +667,19 @@ export class MessageService {
           readBy: 1,
           deliveredTo: 1,
           chatId: 1,
+          attachments: 1,
           senderUsername: '$sender.username',
           recipientUsernames: '$recipients.username',
         },
       },
       { $sort: { timestamp: -1 } },
     ]);
+
+    return this.enrichMessagesWithAttachmentUrls(messages);
   }
 
   /**
-   * Get complete message with all populated fields
+   * Get a single complete message
    */
   private async getCompleteMessage(messageId: string): Promise<any> {
     const messages = await Message.aggregate([
@@ -679,6 +711,17 @@ export class MessageService {
         },
       },
       { $unwind: { path: '$replyToMessageSender', preserveNullAndEmptyArrays: true } },
+
+      // 🔍 Attachments lookup
+      {
+        $lookup: {
+          from: this.getStorageFilesCollectionName(),
+          localField: 'attachments.fileId',
+          foreignField: '_id',
+          as: 'attachmentFiles',
+        },
+      },
+
       {
         $project: {
           _id: 1,
@@ -696,17 +739,16 @@ export class MessageService {
           attachments: 1,
           reactions: 1,
           senderUsername: '$sender.username',
-          senderFullName: { 
+          senderFullName: {
             $concat: [
               { $ifNull: ['$sender.firstname', ''] },
               ' ',
-              { $ifNull: ['$sender.lastname', ''] }
-            ]
+              { $ifNull: ['$sender.lastname', ''] },
+            ],
           },
-          // ✅ FIX: Better check for replyToMessage existence
           replyToMessage: {
             $cond: {
-              if: { $ifNull: ['$replyToMessage._id', false] },  // ⬅️ FIXED!
+              if: { $ifNull: ['$replyToMessage._id', false] },
               then: {
                 _id: '$replyToMessage._id',
                 content: '$replyToMessage.content',
@@ -717,7 +759,7 @@ export class MessageService {
                   $concat: [
                     { $ifNull: ['$replyToMessageSender.firstname', ''] },
                     ' ',
-                    { $ifNull: ['$replyToMessageSender.lastname', ''] }
+                    { $ifNull: ['$replyToMessageSender.lastname', ''] },
                   ],
                 },
               },
@@ -727,53 +769,89 @@ export class MessageService {
         },
       },
     ]);
-    return messages[0] || null;
+
+    const message = messages[0] || null;
+    if (!message) return null;
+
+    return this.enrichSingleMessageWithAttachmentUrls(message);
   }
 
   /**
-   * Emit new message to all participants
+   * Emit new message to all participants (including attachments)
    */
-  // src/components/messaging/services/message.service.ts
-// Update emitNewMessage method (around line 172)
+  private emitNewMessage(message: any, participantIds: string[]): void {
+    if (!this.io) {
+      console.error('❌ Socket.IO instance not available');
+      return;
+    }
 
-private emitNewMessage(message: any, participantIds: string[]): void {
-  if (!this.io) {
-    console.error('❌ Socket.IO instance not available');
-    return;
-  }
+    const uniqueParticipants = [...new Set(participantIds.map((id) => id.toString()))];
+    const chatIdString = message.chatId.toString();
 
-  const uniqueParticipants = [...new Set(participantIds.map((id) => id.toString()))];
-  
-  const chatIdString = message.chatId.toString();
+    uniqueParticipants.forEach((participantId) => {
+      this.io?.to(`user-${participantId}`).emit('newMessage', {
+        ...message,
+        _id: message._id.toString(),
+        chatId: chatIdString,
+        senderId: message.senderId.toString(),
+        recipientIds: message.recipientIds.map((id: any) => id.toString()),
+      });
+    });
 
-  // ✅ ADD: Log what we're emitting
-  console.log('📡 Emitting newMessage event:');
-  console.log('   - chatId:', chatIdString);
-  console.log('   - participants:', uniqueParticipants);
-  console.log('   - content:', message.content);
-
-  // Emit to each participant's personal room
-  uniqueParticipants.forEach((participantId) => {
-    console.log(`📡 Emitting 'newMessage' to user-${participantId}`);
-    this.io?.to(`user-${participantId}`).emit('newMessage', {
+    this.io?.to(`chat-${chatIdString}`).emit('newMessage', {
       ...message,
       _id: message._id.toString(),
       chatId: chatIdString,
       senderId: message.senderId.toString(),
-      recipientIds: message.recipientIds.map((id: any) => id.toString())
+      recipientIds: message.recipientIds.map((id: any) => id.toString()),
     });
-  });
 
-  // Also emit to the chat room
-  console.log(`📡 Emitting 'newMessage' to chat-${chatIdString}`);
-  this.io?.to(`chat-${chatIdString}`).emit('newMessage', {
-    ...message,
-    _id: message._id.toString(),
-    chatId: chatIdString,
-    senderId: message.senderId.toString(),
-    recipientIds: message.recipientIds.map((id: any) => id.toString())
-  });
-  
-  console.log('✅ Message emission complete');
+  }
+
+  // =========================================================
+  // ATTACHMENT URL ENRICHMENT (Option C)
+  // =========================================================
+
+  private async enrichMessagesWithAttachmentUrls(messages: any[]): Promise<any[]> {
+    const enriched: any[] = [];
+
+    for (const msg of messages) {
+      enriched.push(await this.enrichSingleMessageWithAttachmentUrls(msg));
+    }
+
+    return enriched;
+  }
+
+  private async enrichSingleMessageWithAttachmentUrls(message: any): Promise<any> {
+    if (!Array.isArray(message.attachments) || message.attachments.length === 0) {
+      return message;
+    }
+
+    const enrichedAttachments = [];
+
+    for (const att of message.attachments) {
+      if (!att || !att.key) {
+        enrichedAttachments.push(att);
+        continue;
+      }
+
+      try {
+        // force = true for "download" behavior
+        const url = await this.storageService.getFile(att.key, true);
+        enrichedAttachments.push({
+          ...att,
+          url,
+        });
+      } catch (err) {
+        console.error('Error generating signed URL for attachment:', err);
+        enrichedAttachments.push({
+          ...att,
+          url: null,
+        });
+      }
+    }
+
+    message.attachments = enrichedAttachments;
+    return message;
   }
 }

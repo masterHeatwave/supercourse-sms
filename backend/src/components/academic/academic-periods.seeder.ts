@@ -17,8 +17,16 @@ const seedTenantAcademicPeriods = async (tenantId: string) => {
         return;
       }
 
-      // Get the current academic year
-      const currentAcademicYear = await AcademicYear.findOne({ is_current: true });
+      // Get the current academic year (prefer manually active, fall back to date-derived)
+      let currentAcademicYear = await AcademicYear.findOne({ is_manual_active: true });
+      if (!currentAcademicYear) {
+        // Fall back to date-derived academic year
+        const currentDate = new Date();
+        currentAcademicYear = await AcademicYear.findOne({
+          start_date: { $lte: currentDate },
+          end_date: { $gte: currentDate },
+        });
+      }
       if (!currentAcademicYear) {
         logger.warn(`[${tenantId}] No current academic year found, cannot seed periods`);
         return;
@@ -64,7 +72,6 @@ const seedTenantAcademicPeriods = async (tenantId: string) => {
 
 const seedAcademicPeriods = async () => {
   await seedTenantAcademicPeriods('supercourse');
-  await seedTenantAcademicPeriods('piedpiper');
 };
 
 export { seedTenantAcademicPeriods };

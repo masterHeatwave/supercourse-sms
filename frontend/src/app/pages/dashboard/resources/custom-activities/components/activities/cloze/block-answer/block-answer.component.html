@@ -6,16 +6,13 @@
     [imageURL]="imageURL"
   ></app-image-selector>
 
-  <div #editableDiv class="div-editable" contenteditable="true"></div>
+  <div
+    #editableDiv
+    class="div-editable"
+    contenteditable="true"
+    [attr.data-placeholder]="translate.instant('customActivities.cloze.placeholder')"
+  ></div>
 </div>
-<p-button
-  label="Add block"
-  (mousedown)="addTextBlock()"
-  (mouseup)="mouseClicked = false"
-></p-button>
+<p-button [label]="'customActivities.add_block_button' | translate" (mousedown)="addTextBlock()" (mouseup)="mouseClicked = false"></p-button>
 
-<app-warning-dialog
-  [warningMessage]="warningMessage"
-  [isDialogVisible]="isWarningDialogVisible"
-  (onClose)="isWarningDialogVisible = false"
-/>
+<app-warning-dialog [warningMessage]="warningMessage" [isDialogVisible]="isWarningDialogVisible" (onClose)="isWarningDialogVisible = false" />

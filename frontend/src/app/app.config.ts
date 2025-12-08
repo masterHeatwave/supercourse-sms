@@ -52,9 +52,9 @@ export function localStorageSyncReducer(reducer: ActionReducer<any>): ActionRedu
 export function debug(reducer: ActionReducer<any>): ActionReducer<any> {
   return function (state, action) {
     // eslint-disable-next-line no-console
-    console.log('state', state);
+    // console.log('state', state);
     // eslint-disable-next-line no-console
-    console.log('action', action);
+    // console.log('action', action);
     return reducer(state, action);
   };
 }

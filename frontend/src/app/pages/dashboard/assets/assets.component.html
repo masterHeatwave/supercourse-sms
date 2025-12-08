@@ -30,15 +30,55 @@
   </ng-template>
 </p-confirmDialog>
 
-<ng-container *ngIf="items$ | async as items">
+<ng-container>
   <div class="flex flex-column gap-4 px-4">
-    <div class="flex justify-content-end mb-3 mt-3">
-      <p-button icon="pi pi-plus" styleClass="p-button-text border-circle" (onClick)="navigateToCreate()"> </p-button>
+    <div
+      class="flex justify-content-between align-items-center mb-3 mt-3"
+      *ngIf="!isLoading && allItems.length > 0"
+    >
+      <div class="flex align-items-center gap-2">
+        <input 
+          type="text" 
+          pInputText 
+          [(ngModel)]="searchTerm" 
+          (input)="onSearchInput($event)"
+          placeholder="{{ 'common.search' | translate }}"
+          class="w-20rem" />
+        <p-button 
+          icon="pi pi-search" 
+          styleClass="p-button-text" 
+          (onClick)="onSearch()">
+        </p-button>
+      </div>
+      
+      <!-- Action Buttons Section -->
+      <div class="flex gap-3 align-items-center">
+        <!-- Add Button -->
+        <button 
+          class="icon-only-button"
+          (click)="navigateToCreate()"
+        >
+          <i class="pi pi-plus"></i>
+        </button>
+        
+        <!-- View Mode Toggle -->
+        <div class="flex gap-2">
+          <button 
+            *ngFor="let mode of viewModes"
+            class="icon-only-button"
+            [class.active]="currentViewMode === mode.value"
+            (click)="setViewMode(mode.value)"
+          >
+            <i [class]="mode.icon"></i>
+          </button>
+        </div>
+      </div>
     </div>
     <div class="card position-relative">
       <app-spinner *ngIf="isLoading" [overlay]="true"></app-spinner>
 
       <app-primary-table
+        *ngIf="currentViewMode === 'list' && items.length > 0"
         [data]="items"
         [columns]="tableColumns"
         [rows]="10"
@@ -53,6 +93,115 @@
         [dataKey]="'id'"
       >
       </app-primary-table>
+
+      <div
+        *ngIf="
+          currentViewMode === 'list' &&
+          !isLoading &&
+          items.length === 0
+        "
+        class="flex flex-column align-items-center justify-content-center py-8"
+      >
+        <div class="text-center mb-4">
+          <i class="pi pi-box text-6xl text-300 mb-3"></i>
+          <h2 class="text-2xl font-bold text-700 mb-2">
+            No assets found
+          </h2>
+          <p class="text-600 mb-4">
+            Add your first asset to get started
+          </p>
+        </div>
+        <p-button 
+          label="Add asset"
+          icon="pi pi-plus" 
+          (onClick)="navigateToCreate()"
+          styleClass="p-button-lg">
+        </p-button>
+      </div>
+      
+      <!-- Grid view -->
+      <div *ngIf="currentViewMode === 'grid' && !isLoading && items.length > 0" class="grid mt-3">
+        <div class="col-12 md:col-6 lg:col-4" *ngFor="let item of items">
+          <p-card 
+            styleClass="inventory-card"
+          >
+            <div class="flex flex-column gap-3" (click)="onRowSelect(item)" style="cursor: pointer;">
+              <!-- Header Section -->
+              <div class="flex flex-column gap-2">
+                <h3 class="text-xl font-bold text-primary m-0">{{ item.title }}</h3>
+                <div class="flex align-items-center gap-2">
+                  <i class="pi pi-hashtag text-primary text-sm"></i>
+                  <span class="text-sm text-500">{{ 'inventory.table.code' | translate }}:</span>
+                  <span class="text-sm font-semibold text-900">{{ item.code || '-' }}</span>
+                </div>
+              </div>
+              
+              <!-- Details Section -->
+              <div class="flex flex-column gap-2 pt-3 border-top-1 surface-border">
+                <div class="flex align-items-center gap-2 py-1">
+                  <i class="pi pi-user text-primary"></i>
+                  <span class="text-sm text-600 flex-1">{{ 'inventory.table.billingPerson' | translate }}:</span>
+                  <span class="text-sm font-semibold text-900">{{ item.billing_person || '-' }}</span>
+                </div>
+                <div class="flex align-items-center gap-2 py-1">
+                  <i class="pi pi-calendar text-primary"></i>
+                  <span class="text-sm text-600 flex-1">{{ 'inventory.table.billingDate' | translate }}:</span>
+                  <span class="text-sm font-semibold text-900">{{ formatDate(item.billing_date) }}</span>
+                </div>
+                <div class="flex align-items-center gap-2 py-1">
+                  <i class="pi pi-calendar text-primary"></i>
+                  <span class="text-sm text-600 flex-1">{{ 'inventory.table.returnDate' | translate }}:</span>
+                  <span class="text-sm font-semibold text-900">{{ formatDate(item.return_date) }}</span>
+                </div>
+              </div>
+            </div>
+            <ng-template pTemplate="footer">
+              <div class="flex justify-content-end gap-2 pt-2">
+                <!-- Edit button -->
+                <button
+                  pButton
+                  type="button"
+                  class="p-button-text p-button-sm"
+                  icon="pi pi-pencil"
+                  (click)="$event.stopPropagation(); onEdit(item)"
+                  [pTooltip]="'common.edit' | translate"
+                  [label]="'common.edit' | translate"
+                ></button>
+                <!-- Delete button -->
+                <button
+                  pButton
+                  type="button"
+                  class="p-button-text p-button-sm p-button-danger"
+                  icon="pi pi-trash"
+                  (click)="$event.stopPropagation(); onDelete(item)"
+                  [pTooltip]="'common.delete' | translate"
+                  [label]="'common.delete' | translate"
+                ></button>
+              </div>
+            </ng-template>
+          </p-card>
+        </div>
+      </div>
+      
+      <!-- Empty state for grid view -->
+      <div *ngIf="currentViewMode === 'grid' && !isLoading && items.length === 0" class="flex flex-column align-items-center justify-content-center p-6">
+        <i class="pi pi-list text-6xl text-400 mb-4"></i>
+        <p class="text-xl text-500">{{ 'common.no_data' | translate }}</p>
+      </div>
+      
+      <!-- Pagination for grid view -->
+      <div *ngIf="currentViewMode === 'grid' && !isLoading && totalRecords > 0" class="mt-4">
+        <p-paginator
+          [rows]="rowsPerPage"
+          [totalRecords]="totalRecords"
+          [first]="(currentPage - 1) * rowsPerPage"
+          [rowsPerPageOptions]="[5, 10, 20, 50, 100]"
+          [showPageLinks]="true"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="{first} - {last} of {totalRecords}"
+          (onPageChange)="onPageChange($event)"
+        ></p-paginator>
+      </div>
     </div>
   </div>
 </ng-container>

@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import { IPost, PostStatus } from './post.interface';
+import { IPost, PostStatus, PostPriority, IPostPoll, IPostRecipients } from './post.interface';
 import toJson from '../../plugins/toJson';
 import { advancedResultsPlugin } from '@plugins/advancedResults';
 import { IAdvancedResultsModel } from '@plugins/advancedResults.interface';
@@ -35,6 +35,52 @@ const PostSchema: Schema<IPost> = new mongoose.Schema(
       type: String,
       enum: Object.values(PostStatus),
       default: PostStatus.DRAFT,
+    },
+    priority: {
+      type: String,
+      enum: Object.values(PostPriority),
+      default: PostPriority.NORMAL,
+    },
+    pinned: {
+      type: Boolean,
+      default: false,
+    },
+    likedBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
+    recipients: {
+      branches: [{ type: String }],
+      taxis: [{ type: String }],
+      users: [{ type: String }],
+    },
+    scheduled_at: {
+      type: Date,
+    },
+    expires_at: {
+      type: Date,
+    },
+    allow_reactions: {
+      type: Boolean,
+      default: true,
+    },
+    allow_replies: {
+      type: Boolean,
+      default: true,
+    },
+    poll: {
+      question: { type: String },
+      allowMultiple: { type: Boolean, default: false },
+      options: [
+        {
+          id: { type: String, required: true },
+          text: { type: String, required: true },
+          voteCount: { type: Number, default: 0 },
+        },
+      ],
+      closed_at: { type: Date },
     },
     featured_image: {
       type: String,

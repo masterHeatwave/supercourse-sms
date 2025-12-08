@@ -98,6 +98,7 @@
               [(ngModel)]="period.title"
               [ngModelOptions]="{standalone: true}"
               class="w-full"
+              style="border: 2px solid #ced4da;"
             />
           </div>
 
@@ -134,10 +135,21 @@
           </div>
         </div>
 
-        <div class="col-12">
+        <div class="col-12 mt-4">
           <div *ngIf="period.periodRange.startDate && period.periodRange.endDate" class="timeline-container mt-3">
             <div class="timeline-track">
-              <div class="timeline-progress"></div>
+              <!-- Terms visualization as colored segments -->
+              <div class="timeline-terms-container">
+                <div
+                  *ngFor="let term of period.terms; let t = index"
+                  class="timeline-term-segment"
+                  [style.left.%]="getTermPosition(period, term).left"
+                  [style.width.%]="getTermPosition(period, term).width"
+                  [style.background-color]="getTermColor(t)"
+                  [pTooltip]="term.title + ': ' + (term.startDate | date:'MMM dd') + ' - ' + (term.endDate | date:'MMM dd')"
+                  tooltipPosition="top">
+                </div>
+              </div>
               <div class="timeline-handle timeline-start">
                 <span class="timeline-date">{{ period.periodRange.startDate | date:'MMM. dd, yyyy' }}</span>
               </div>

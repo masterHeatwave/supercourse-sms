@@ -6,12 +6,12 @@ import { AcademicPeriodsService } from '@gen-api/academic-periods/academic-perio
 import { UsersService } from '@gen-api/users/users.service';
 import { InventoryService } from '@gen-api/inventory/inventory.service';
 import { MaterialsService } from '@gen-api/materials/materials.service';
-import { CustomerService } from '@services/customer.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@store/app.state';
 import { take, takeUntil } from 'rxjs/operators';
 import { CustomersService } from '@gen-api/customers/customers.service';
 import { Subject } from 'rxjs';
+import { SUBJECT_OPTIONS, LEVEL_OPTIONS } from '../../../utils/subject-mapping.util';
 
 @Injectable({
     providedIn: 'root'
@@ -22,13 +22,11 @@ export class ClassFormFields implements OnDestroy {
     private usersService = inject(UsersService);
     private inventoryService = inject(InventoryService);
     private materialsService = inject(MaterialsService);
-    private customerService = inject(CustomerService);
     private customersApiService = inject(CustomersService);
     private store = inject(Store<AppState>);
     
     private classInfoFields: FormlyFieldConfig[] = [];
     private dataLoaded = false;
-    private academicPeriodsLoaded = false;
     private academicPeriodsData: any[] = [];
     private teachersData: any[] = [];
     private studentsData: any[] = [];
@@ -37,18 +35,26 @@ export class ClassFormFields implements OnDestroy {
     private activeAcademicYear: any = null;
     private currentBranchName: string = 'Loading...';
     private destroy$ = new Subject<void>();
+    
+    // Track individual loading states
+    private loadingStates = {
+        academicPeriods: false,
+        teachers: false,
+        students: false,
+        materials: false,
+        branches: false
+    };
 
     constructor() {
         this.classInfoFields = this.buildClassInfoFields();
         this.setupAuthStateSubscription();
-        
-        // Load data after a short delay to ensure auth state is ready
-        setTimeout(() => {
-            this.loadDynamicData();
-        }, 200);
+        this.loadDynamicData();
     }
 
-    getClassInfoFields(): FormlyFieldConfig[] {
+    getClassInfoFields(defaultValues?: any, isEditMode: boolean = false): FormlyFieldConfig[] {
+        if (defaultValues) {
+            return this.buildClassInfoFields(defaultValues, isEditMode);
+        }
         return this.classInfoFields;
     }
 
@@ -56,42 +62,62 @@ export class ClassFormFields implements OnDestroy {
         return this.activeAcademicYear?.id || null;
     }
 
-    // Method to refresh fields when data is updated
-    refreshFields(): FormlyFieldConfig[] {
-        this.classInfoFields = this.buildClassInfoFields();
-        return this.classInfoFields;
+    /**
+     * Get academic periods for the currently active academic year (both is_current and is_manual_active)
+     * Used in create mode
+     */
+    getFilteredAcademicPeriods(): any[] {
+        if (!this.activeAcademicYear?.id) {
+            console.error('[ClassFormFields] No active academic year found');
+            return [];
+        }
+
+        console.log('[ClassFormFields] Active academic year:', this.activeAcademicYear);
+
+        console.log('[ClassFormFields] Academic periods data:', this.academicPeriodsData);
+
+        // Filter periods that belong to the active academic year
+        return this.academicPeriodsData.filter((period: any) => {
+            const yearId = typeof period.academic_year === 'object' 
+                ? period.academic_year?.id || period.academic_year?._id 
+                : period.academic_year;
+            
+            return yearId === this.activeAcademicYear.id;
+        });
     }
 
-    public refreshBranchData(): void {
-        console.log('Manually refreshing branch data...');
-        const currentBranchId = this.getCurrentBranchId();
-        if (currentBranchId) {
-            this.reloadDataForBranch(currentBranchId);
-        } else {
-            this.clearAllData();
+    /**
+     * Get academic periods for a specific academic year ID
+     * Used in edit mode
+     */
+    getAcademicPeriodsByYearId(yearId: string): any[] {
+        if (!yearId) {
+            return [];
         }
+
+        return this.academicPeriodsData.filter((period: any) => {
+            const periodYearId = typeof period.academic_year === 'object' 
+                ? period.academic_year?.id || period.academic_year?._id 
+                : period.academic_year;
+            
+            return periodYearId === yearId;
+        });
     }
 
-    private attemptBranchLoad(): void {
-        const currentBranchId = this.getCurrentBranchId();
-        console.log('Attempting branch load for ID:', currentBranchId);
-        
-        if (currentBranchId) {
-            console.log('Branch ID found, loading data...');
-            this.reloadDataForBranch(currentBranchId);
-        } else {
-            console.log('No branch ID found, clearing data...');
-            this.clearAllData();
-        }
-    }
 
     // Method to get fields with data loaded
     async getClassInfoFieldsWithData(): Promise<FormlyFieldConfig[]> {
         if (!this.dataLoaded) {
-            // Wait for data to be loaded
+            // Wait for data to be loaded with a timeout
             await new Promise<void>((resolve) => {
+                const timeout = setTimeout(() => {
+                    console.warn('Timeout waiting for form data to load');
+                    resolve();
+                }, 5000);
+
                 const checkDataLoaded = () => {
                     if (this.dataLoaded) {
+                        clearTimeout(timeout);
                         resolve();
                     } else {
                         setTimeout(checkDataLoaded, 100);
@@ -116,339 +142,225 @@ export class ClassFormFields implements OnDestroy {
 
 
     private loadAcademicPeriods(): void {
-        this.academicPeriodsService.getAcademicPeriods().subscribe({
-            next: (response: any) => {
-                // Handle different possible response structures
-                let academicPeriodsArray = [];
-                
-                if (response?.data) {
-                    if (Array.isArray(response.data)) {
-                        // Direct array
-                        academicPeriodsArray = response.data;
-                    } else if (response.data.results && Array.isArray(response.data.results)) {
-                        // AdvancedResults plugin response structure
-                        academicPeriodsArray = response.data.results;
-                    } else if (response.data.data && Array.isArray(response.data.data)) {
-                        // Nested data structure
-                        academicPeriodsArray = response.data.data;
+        this.academicPeriodsService.getAcademicPeriods()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (response: any) => {
+                    const academicPeriodsArray = this.extractDataFromResponse(response);
+                    
+                    if (academicPeriodsArray.length > 0) {
+                        this.academicPeriodsData = academicPeriodsArray;
+                        this.classInfoFields = this.buildClassInfoFields();
                     } else {
-                        console.error('Unexpected academic periods data structure:', response.data);
+                        console.error('No academic periods found in response');
                     }
-                }
-                
-                if (academicPeriodsArray.length > 0) {
-                    this.academicPeriodsData = academicPeriodsArray;
-                    this.academicPeriodsLoaded = true;
-                    this.classInfoFields = this.buildClassInfoFields();
+                    this.loadingStates.academicPeriods = true;
                     this.markDataLoadedIfReady();
-                } else {
-                    console.error('No academic periods found in response');
+                },
+                error: (error) => {
+                    console.error('Error loading academic periods:', error);
+                    this.loadingStates.academicPeriods = true; // Mark as loaded even on error to prevent infinite loading
+                    this.markDataLoadedIfReady();
                 }
-            },
-            error: (error) => console.error('Error loading academic periods:', error)
-        });
+            });
+    }
+
+    private extractDataFromResponse(response: any): any[] {
+        if (!response?.data) {
+            return [];
+        }
+
+        if (Array.isArray(response.data)) {
+            return response.data;
+        } else if (response.data.results && Array.isArray(response.data.results)) {
+            return response.data.results;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+            return response.data.data;
+        }
+
+        console.error('Unexpected data structure:', response.data);
+        return [];
     }
 
     private markDataLoadedIfReady(): void {
-        if (this.academicPeriodsLoaded && !this.dataLoaded) {
+        // Check if all critical data is loaded
+        const allLoaded = this.loadingStates.academicPeriods && 
+                         this.loadingStates.teachers && 
+                         this.loadingStates.students && 
+                         this.loadingStates.materials &&
+                         this.loadingStates.branches;
+        
+        if (allLoaded && !this.dataLoaded) {
             this.dataLoaded = true;
+            console.log('All form data loaded successfully');
         }
     }
 
     private loadTeachers(): void {
-        // Get current branch ID for filtering
         const currentBranchId = this.getCurrentBranchId();
         
         if (!currentBranchId) {
             console.warn('No branch selected, cannot load teachers');
+            this.loadingStates.teachers = true;
+            this.markDataLoadedIfReady();
             return;
         }
 
-        // Load teachers filtered by branch and TEACHER role
         this.usersService.getUsersStaff({
             branch: currentBranchId,
             role: 'TEACHER'
-        } as any).subscribe({
-            next: (response: any) => {
-                // Handle different possible response structures
-                let teachersArray = [];
-                
-                if (response?.data) {
-                    if (Array.isArray(response.data)) {
-                        // Direct array
-                        teachersArray = response.data;
-                    } else if (response.data.results && Array.isArray(response.data.results)) {
-                        // AdvancedResults plugin response structure
-                        teachersArray = response.data.results;
-                    } else if (response.data.data && Array.isArray(response.data.data)) {
-                        // Nested data structure
-                        teachersArray = response.data.data;
+        } as any)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (response: any) => {
+                    const teachersArray = this.extractDataFromResponse(response);
+                    
+                    if (teachersArray.length > 0) {
+                        this.teachersData = teachersArray;
+                        this.classInfoFields = this.buildClassInfoFields();
                     } else {
-                        console.error('Unexpected teachers data structure:', response.data);
+                        console.warn(`No teachers found for branch ${currentBranchId} with TEACHER role`);
                     }
+                    this.loadingStates.teachers = true;
+                    this.markDataLoadedIfReady();
+                },
+                error: (error) => {
+                    console.error('Error loading teachers:', error);
+                    this.loadingStates.teachers = true;
+                    this.markDataLoadedIfReady();
                 }
-                
-                if (teachersArray.length > 0) {
-                    this.teachersData = teachersArray;
-                    this.classInfoFields = this.buildClassInfoFields();
-                    console.log(`Loaded ${teachersArray.length} teachers for branch ${currentBranchId} with TEACHER role`);
-                } else {
-                    console.warn(`No teachers found for branch ${currentBranchId} with TEACHER role`);
-                }
-            },
-            error: (error) => console.error('Error loading teachers:', error)
-        });
+            });
     }
 
     private loadStudents(): void {
-        // Get current branch ID for filtering
         const currentBranchId = this.getCurrentBranchId();
         
         if (!currentBranchId) {
             console.warn('No branch selected, cannot load students');
+            this.loadingStates.students = true;
+            this.markDataLoadedIfReady();
             return;
         }
 
-        // Load students filtered by branch
         this.usersService.getUsersStudents({
             branch: currentBranchId
-        } as any).subscribe({
-            next: (response: any) => {
-                
-                // Handle different possible response structures
-                let studentsArray = [];
-                
-                if (response?.data) {
-                    if (Array.isArray(response.data)) {
-                        // Direct array
-                        studentsArray = response.data;
-                    } else if (response.data.results && Array.isArray(response.data.results)) {
-                        // AdvancedResults plugin response structure
-                        studentsArray = response.data.results;
-                    } else if (response.data.data && Array.isArray(response.data.data)) {
-                        // Nested data structure
-                        studentsArray = response.data.data;
+        } as any)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (response: any) => {
+                    const studentsArray = this.extractDataFromResponse(response);
+                    
+                    if (studentsArray.length > 0) {
+                        this.studentsData = studentsArray;
+                        this.classInfoFields = this.buildClassInfoFields();
                     } else {
-                        console.error('Unexpected students data structure:', response.data);
+                        console.warn(`No students found for branch ${currentBranchId}`);
                     }
+                    this.loadingStates.students = true;
+                    this.markDataLoadedIfReady();
+                },
+                error: (error) => {
+                    console.error('Error loading students:', error);
+                    this.loadingStates.students = true;
+                    this.markDataLoadedIfReady();
                 }
-                
-                if (studentsArray.length > 0) {
-                    this.studentsData = studentsArray;
-                    this.classInfoFields = this.buildClassInfoFields();
-                    console.log(`Loaded ${studentsArray.length} students for branch ${currentBranchId}`);
-                    console.log('Students data:', this.studentsData);
-                    console.log('Students options:', this.studentsData.map((student: any) => ({
-                        label: `${student.firstname} ${student.lastname}`,
-                        value: student.id
-                    })));
-                } else {
-                    console.warn(`No students found for branch ${currentBranchId}`);
-                }
-            },
-            error: (error) => console.error('Error loading students:', error)
-        });
+            });
     }
 
     private loadMaterials(): void {
-        this.materialsService.getMaterialsAssigned().subscribe({
-            next: (response: any) => {
-                
-                // Handle different possible response structures
-                let materialsArray = [];
-                
-                if (response?.data) {
-                    if (Array.isArray(response.data)) {
-                        // Direct array
-                        materialsArray = response.data;
-                    } else if (response.data.results && Array.isArray(response.data.results)) {
-                        // AdvancedResults plugin response structure
-                        materialsArray = response.data.results;
-                    } else if (response.data.data && Array.isArray(response.data.data)) {
-                        // Nested data structure
-                        materialsArray = response.data.data;
+        this.materialsService.getMaterialsAssigned()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (response: any) => {
+                    const materialsArray = this.extractDataFromResponse(response);
+                    
+                    if (materialsArray.length > 0) {
+                        this.materialsData = materialsArray;
+                        this.classInfoFields = this.buildClassInfoFields();
                     } else {
-                        console.error('Unexpected materials data structure:', response.data);
+                        console.error('No materials found in response');
                     }
+                    this.loadingStates.materials = true;
+                    this.markDataLoadedIfReady();
+                },
+                error: (error: any) => {
+                    console.error('Error loading assigned materials:', error);
+                    // Fallback to inventory service if materials service fails
+                    this.loadMaterialsFallback();
                 }
-                
-                if (materialsArray.length > 0) {
-                    this.materialsData = materialsArray;
-                    this.classInfoFields = this.buildClassInfoFields();
-                } else {
-                    console.error('No materials found in response');
+            });
+    }
+
+    private loadMaterialsFallback(): void {
+        this.inventoryService.getInventory()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (fallbackResponse: any) => {
+                    const fallbackArray = this.extractDataFromResponse(fallbackResponse);
+                    
+                    if (fallbackArray.length > 0) {
+                        this.materialsData = fallbackArray;
+                        this.classInfoFields = this.buildClassInfoFields();
+                    } else {
+                        console.error('No inventory fallback data found');
+                    }
+                    this.loadingStates.materials = true;
+                    this.markDataLoadedIfReady();
+                },
+                error: (fallbackError) => {
+                    console.error('Error loading inventory fallback:', fallbackError);
+                    this.loadingStates.materials = true;
+                    this.markDataLoadedIfReady();
                 }
-            },
-            error: (error: any) => {
-                console.error('Error loading assigned materials:', error);
-                // Fallback to inventory service if materials service fails
-                this.inventoryService.getInventory().subscribe({
-                    next: (fallbackResponse: any) => {
-                        
-                        // Handle different possible response structures for fallback
-                        let fallbackArray = [];
-                        
-                        if (fallbackResponse?.data) {
-                            if (Array.isArray(fallbackResponse.data)) {
-                                // Direct array
-                                fallbackArray = fallbackResponse.data;
-                            } else if (fallbackResponse.data.results && Array.isArray(fallbackResponse.data.results)) {
-                                // AdvancedResults plugin response structure
-                                fallbackArray = fallbackResponse.data.results;
-                            } else if (fallbackResponse.data.data && Array.isArray(fallbackResponse.data.data)) {
-                                // Nested data structure
-                                fallbackArray = fallbackResponse.data.data;
-                            } else {
-                                console.error('Unexpected inventory fallback data structure:', fallbackResponse.data);
-                            }
-                        }
-                        
-                        if (fallbackArray.length > 0) {
-                            this.materialsData = fallbackArray;
-                            this.classInfoFields = this.buildClassInfoFields();
-                        } else {
-                            console.error('No inventory fallback data found');
-                        }
-                    },
-                    error: (fallbackError) => console.error('Error loading inventory fallback:', fallbackError)
-                });
-            }
-        });
+            });
     }
 
     private loadBranches(): void {
-        // Get current branch ID for filtering
         const currentBranchId = this.getCurrentBranchId();
         
         if (!currentBranchId) {
             console.warn('No branch selected, cannot load branches');
             this.currentBranchName = 'No Branch Selected';
             this.classInfoFields = this.buildClassInfoFields();
+            this.loadingStates.branches = true;
+            this.markDataLoadedIfReady();
             return;
         }
 
-        console.log(`Loading branch data for ID: ${currentBranchId}`);
         this.currentBranchName = 'Loading...';
-        this.classInfoFields = this.buildClassInfoFields(); // Show loading state
+        this.classInfoFields = this.buildClassInfoFields();
 
-        // Load branches - for now just load the current branch
-        this.customersApiService.getCustomersId(currentBranchId).subscribe({
-            next: (response: any) => {
-                console.log('Branch API response:', response);
-                if (response?.data) {
-                    const branchData = response.data;
-                    this.branchesData = [branchData]; // Single branch for now
-                    this.currentBranchName = branchData.name || branchData.nickname || 'Current Branch';
-                    this.activeAcademicYear = branchData.active_academic_year;
-                    
-                    console.log(`Loaded branch: ${this.currentBranchName} (${currentBranchId})`);
-                    console.log('Branch data:', branchData);
-                    console.log('Branches data array:', this.branchesData);
-                    console.log('Default branch value:', this.getDefaultBranchValue());
-                    
-                    // Force rebuild fields with new data
+        this.customersApiService.getCustomersId(currentBranchId)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (response: any) => {
+                    if (response?.data) {
+                        const branchData = response.data;
+                        this.branchesData = [branchData];
+                        this.currentBranchName = branchData.name || branchData.nickname || 'Current Branch';
+                        this.activeAcademicYear = branchData.active_academic_year;
+                        
+                        this.classInfoFields = this.buildClassInfoFields();
+                    } else {
+                        console.warn('No data in branch response');
+                        this.currentBranchName = 'No Branch Available';
+                        this.classInfoFields = this.buildClassInfoFields();
+                    }
+                    this.loadingStates.branches = true;
+                    this.markDataLoadedIfReady();
+                },
+                error: (error) => {
+                    console.error('Error loading branch:', error);
+                    this.currentBranchName = 'Error Loading Branch';
                     this.classInfoFields = this.buildClassInfoFields();
-                    console.log('Rebuilt class info fields with branch data');
-                } else {
-                    console.warn('No data in branch response');
-                    this.currentBranchName = 'No Branch Available';
-                    this.classInfoFields = this.buildClassInfoFields();
-                }
-            },
-            error: (error) => {
-                console.error('Error loading branch:', error);
-                this.currentBranchName = 'Error Loading Branch';
-                this.classInfoFields = this.buildClassInfoFields();
-            }
-        });
-    }
-
-    public fetchCurrentBranchName(): void {
-        this.store.select(state => state.auth.currentCustomerId)
-            .pipe(take(1))
-            .subscribe(currentCustomerId => {
-                if (currentCustomerId) {
-                    this.customersApiService.getCustomersId(currentCustomerId).subscribe({
-                        next: (response: any) => {
-                            if (response?.data) {
-                                const branchName = response.data.name || response.data.nickname || 'Current Branch';
-                                this.currentBranchName = branchName;
-                                this.activeAcademicYear = response.data.active_academic_year;
-                                this.updateBranchFieldImmediate(branchName);
-                                this.classInfoFields = this.buildClassInfoFields();
-                            }
-                        },
-                        error: (error) => {
-                            console.error('Error fetching current branch:', error);
-                            this.currentBranchName = 'Current Branch';
-                            this.updateBranchFieldImmediate('Current Branch');
-                        }
-                    });
-                } else {
-                    this.currentBranchName = 'No Branch Selected';
-                    this.updateBranchFieldImmediate('No Branch Selected');
+                    this.loadingStates.branches = true;
+                    this.markDataLoadedIfReady();
                 }
             });
     }
 
-    private initializeBranchField(): void {
-        this.store.select(state => state.auth.currentCustomerId)
-            .pipe(take(1))
-            .subscribe(currentCustomerId => {
-                if (currentCustomerId) {
-                    this.customersApiService.getCustomersId(currentCustomerId).subscribe({
-                        next: (response: any) => {
-                            if (response?.data) {
-                                const branchName = response.data.name || response.data.nickname || 'Current Branch';
-                                this.currentBranchName = branchName;
-                                this.activeAcademicYear = response.data.active_academic_year;
-                                this.updateBranchFieldImmediate(branchName);
-                                this.classInfoFields = this.buildClassInfoFields();
-                            }
-                        },
-                        error: (error) => {
-                            console.error('Error fetching current branch:', error);
-                            this.currentBranchName = 'Current Branch';
-                            this.updateBranchFieldImmediate('Current Branch');
-                        }
-                    });
-                } else {
-                    this.currentBranchName = 'No Branch Selected';
-                    this.updateBranchFieldImmediate('No Branch Selected');
-                }
-            });
-    }
-
-    private updateBranchFieldImmediate(branchName: string): void {
-        // Since we're rebuilding fields dynamically, we need to update the branch field
-        // in the current field structure
-        const branchField = this.findFieldByKey('branch');
-        if (branchField?.props) {
-            branchField.defaultValue = branchName;
-            if (branchField.formControl) {
-                branchField.formControl.patchValue(branchName);
-            }
-        }
-    }
-
-    private findFieldByKey(key: string): FormlyFieldConfig | null {
-        const findInFields = (fields: FormlyFieldConfig[]): FormlyFieldConfig | null => {
-            for (const field of fields) {
-                if (field.key === key) {
-                    return field;
-                }
-                if (field.fieldGroup) {
-                    const found = findInFields(field.fieldGroup);
-                    if (found) return found;
-                }
-            }
-            return null;
-        };
-        return findInFields(this.classInfoFields);
-    }
 
     private getCurrentBranchId(): string | null {
-        // Get current state synchronously
         let currentState: any = null;
         this.store.select(state => state.auth)
             .pipe(take(1))
@@ -456,71 +368,44 @@ export class ClassFormFields implements OnDestroy {
                 currentState = authState;
             });
         
-        console.log('Current auth state:', currentState);
-        console.log('Current customer ID:', currentState?.currentCustomerId);
-        
         return currentState?.currentCustomerId || null;
     }
 
     private setupAuthStateSubscription(): void {
-        // Subscribe to auth state changes to react to branch/role changes
         this.store.select(state => state.auth)
             .pipe(takeUntil(this.destroy$))
             .subscribe(authState => {
-                console.log('Auth state changed:', authState);
-                console.log('Current customer ID:', authState?.currentCustomerId);
-                
                 if (authState?.currentCustomerId) {
-                    // Branch changed, reload all data
-                    console.log('Branch available, reloading data...');
                     this.reloadDataForBranch(authState.currentCustomerId);
                 } else {
-                    // No branch selected, clear data
-                    console.log('No branch selected, clearing data...');
                     this.clearAllData();
                 }
             });
-
-        // Also check immediately on setup with multiple attempts
-        setTimeout(() => {
-            this.attemptBranchLoad();
-        }, 100);
-        
-        // Retry after 500ms if first attempt fails
-        setTimeout(() => {
-            if (this.currentBranchName === 'Loading...' || this.currentBranchName === 'No Branch Selected') {
-                this.attemptBranchLoad();
-            }
-        }, 500);
-        
-        // Final retry after 1 second
-        setTimeout(() => {
-            if (this.currentBranchName === 'Loading...' || this.currentBranchName === 'No Branch Selected') {
-                this.attemptBranchLoad();
-            }
-        }, 1000);
     }
 
     private reloadDataForBranch(branchId: string): void {
-        console.log(`Branch changed to: ${branchId}, reloading data...`);
-        
         // Clear existing data
         this.teachersData = [];
         this.studentsData = [];
         this.branchesData = [];
         this.currentBranchName = 'Loading...';
         
+        // Reset loading states
+        this.loadingStates.teachers = false;
+        this.loadingStates.students = false;
+        this.loadingStates.branches = false;
+        this.dataLoaded = false;
+        
         // Rebuild fields immediately to show loading state
         this.classInfoFields = this.buildClassInfoFields();
         
         // Reload all data for the new branch
-        this.loadBranches(); // Load branches first
+        this.loadBranches();
         this.loadTeachers();
         this.loadStudents();
     }
 
     private clearAllData(): void {
-        console.log('No branch selected, clearing all data...');
         this.teachersData = [];
         this.studentsData = [];
         this.branchesData = [];
@@ -560,30 +445,41 @@ export class ClassFormFields implements OnDestroy {
     }
 
 
-    private buildClassInfoFields(): FormlyFieldConfig[] {
+    private buildClassInfoFields(providedDefaults?: any, isEditMode: boolean = false): FormlyFieldConfig[] {
         const isDev = environment.development;
         
         // Generate faker data for development (only for non-API dependent fields)
         const defaultValues = {
-            academicPeriod: '',
-            academicYear: this.activeAcademicYear?.id || '',
-            name: isDev ? `Class ${faker.helpers.arrayElement(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])}` : '',
-            classColor: isDev ? faker.color.rgb() : '#ff0000',
-            classId: isDev ? faker.string.alphanumeric({ length: 6, casing: 'upper' }) : '',
-            subject: '',
-            level: '',
-            notes: isDev ? faker.lorem.paragraph() : '',
-            teachers: [],
-            students: [],
-            materials: [],
-            branch: this.getBranchIdForForm()
+            academicPeriod: providedDefaults?.academicPeriod || '',
+            academicYear: providedDefaults?.academicYear || this.activeAcademicYear?.id || '',
+            name: providedDefaults?.name || (isDev ? `Class ${faker.helpers.arrayElement(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])}` : ''),
+            classColor: providedDefaults?.classColor || (isDev ? faker.color.rgb() : '#ff0000'),
+            subject: providedDefaults?.subject || '',
+            level: providedDefaults?.level || '',
+            notes: providedDefaults?.notes || (isDev ? faker.lorem.paragraph() : ''),
+            teachers: providedDefaults?.teachers || [],
+            students: providedDefaults?.students || [],
+            materials: providedDefaults?.materials || [],
+            branch: providedDefaults?.branch || this.getBranchIdForForm()
         };
 
         // Academic year is now automatically set from customer data
 
         // Build academic period options
+        // In create mode: filter periods from the active academic year (both is_current and is_manual_active)
+        // In edit mode: filter periods from the selected academic year
+        let periodsToShow = this.academicPeriodsData;
+        
+        if (isEditMode && providedDefaults?.academicYear) {
+            // Edit mode: show periods for the selected academic year
+            periodsToShow = this.getAcademicPeriodsByYearId(providedDefaults.academicYear);
+        } else if (!isEditMode && this.activeAcademicYear?.id) {
+            // Create mode: show periods for the active academic year
+            periodsToShow = this.getFilteredAcademicPeriods();
+        }
+
         const academicPeriodOptions = [
-            ...this.academicPeriodsData.map((period: any) => ({
+            ...periodsToShow.map((period: any) => ({
                 label: period.name,
                 value: period.id
             }))
@@ -690,18 +586,7 @@ export class ClassFormFields implements OnDestroy {
                       props: {
                         required: true,
                         placeholder: 'Subject',
-                        selectOptions: [
-                          { label: 'ENG', value: 'english' },
-                          { label: 'FRA', value: 'french' },
-                          { label: 'ESP', value: 'spanish' },
-                          { label: 'ITA', value: 'italian' },
-                          { label: 'DEU', value: 'german' },
-                          { label: 'POR', value: 'portuguese' },
-                          { label: 'RUS', value: 'russian' },
-                          { label: 'ARAB', value: 'arabic' },
-                          { label: 'CHI', value: 'chinese' },
-                          { label: 'JAP', value: 'japanese' }
-                        ]
+                        selectOptions: SUBJECT_OPTIONS
                       }
                     },
                     {
@@ -712,15 +597,7 @@ export class ClassFormFields implements OnDestroy {
                       props: {
                         required: true,
                         placeholder: 'Level',
-                        selectOptions: [
-                          { label: 'Pre-Junior', value: 'pre-junior' },
-                          { label: 'A Junior', value: 'a-junior' },
-                          { label: 'B Junior', value: 'b-junior' },
-                          { label: 'C Junior', value: 'c-junior' },
-                          { label: 'A Senior', value: 'a-senior' },
-                          { label: 'B Senior', value: 'b-senior' },
-                          { label: 'C Senior', value: 'c-senior' }
-                        ]
+                        selectOptions: LEVEL_OPTIONS
                       }
                     }
                   ]

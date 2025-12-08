@@ -11,6 +11,7 @@ import {
   removeUserSchema,
 } from './taxi-validate.schema';
 import { ITaxiCreateDTO, ITaxiUpdateDTO } from './taxi.interface';
+import { IUser } from '@components/users/user.interface';
 
 export class TaxiController {
   private taxiService: TaxiService;
@@ -72,13 +73,13 @@ export class TaxiController {
   });
 
   deleteTaxi = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    await this.taxiService.deleteTaxi(req.params.id);
+    const taxi = await this.taxiService.deleteTaxi(req.params.id);
 
     jsonResponse(res, {
       status: StatusCodes.OK,
       success: true,
-      data: {},
-      message: 'Taxi successfully deleted',
+      data: taxi,
+      message: 'Taxi successfully archived',
     });
   });
 
@@ -123,6 +124,76 @@ export class TaxiController {
   getTaxisByUserId = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const userId = req.params.userId;
     const taxis = await this.taxiService.getTaxisByUserId(userId);
+
+    jsonResponse(res, {
+      status: StatusCodes.OK,
+      success: true,
+      count: taxis.length,
+      data: taxis,
+    });
+  });
+
+  getTaxiSessions = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const taxiId = req.params.id;
+    const result = await this.taxiService.getTaxiSessions(taxiId);
+
+    jsonResponse(res, {
+      status: StatusCodes.OK,
+      success: true,
+      count: result.count,
+      data: result,
+    });
+  });
+
+  getMyTaxis = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const reqUser = req.user as IUser;
+    const queryParams = queryTaxiSchema.parse(req.query);
+
+    // For teachers, get taxis in their branches
+    // For students, get taxis they are enrolled in
+    const userRoles = reqUser?.roles?.map((role: any) => role.title) || [];
+    const isTeacher = userRoles.includes('TEACHER');
+    const isStudent = userRoles.includes('STUDENT');
+
+    let scopedQuery = { ...queryParams };
+
+    if (isTeacher) {
+      // Teachers see taxis in their default branch or first branch
+      const defaultBranch = reqUser.default_branch || (reqUser.branches && reqUser.branches[0]);
+      if (defaultBranch) {
+        scopedQuery.branch = defaultBranch.toString();
+      }
+    } else if (isStudent) {
+      // Students see taxis they are enrolled in
+      scopedQuery.userId = (reqUser._id as any).toString();
+    }
+
+    const taxis = await this.taxiService.getAllTaxis(scopedQuery);
+
+    jsonResponse(res, {
+      status: StatusCodes.OK,
+      success: true,
+      count: taxis.length,
+      data: taxis,
+    });
+  });
+
+  getChildrenTaxis = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const reqUser = req.user as IUser;
+    const queryParams = queryTaxiSchema.parse(req.query);
+
+    // Parents see taxis for their children
+    const parentEmail = reqUser?.email;
+    if (!parentEmail) {
+      return jsonResponse(res, {
+        status: StatusCodes.BAD_REQUEST,
+        message: 'Authenticated user has no email',
+        success: false,
+      });
+    }
+
+    // Get children's taxis by finding students with this parent's email in contacts
+    const taxis = await this.taxiService.getTaxisByParentEmail(parentEmail, queryParams);
 
     jsonResponse(res, {
       status: StatusCodes.OK,

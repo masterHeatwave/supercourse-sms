@@ -15,3 +15,18 @@ export const selectParentCurrentCustomerId = createSelector(
   selectAuth,
   (auth: IAuthState) => auth.parentCurrentCustomerId
 );
+
+export const selectCurrentRoleId = createSelector(
+  selectAuth,
+  (auth: IAuthState) => auth.currentRoleId
+);
+
+export const selectCurrentRoleTitle = createSelector(
+  selectAuth,
+  (auth: IAuthState) => auth.currentRoleTitle
+);
+
+export const selectUser = createSelector(
+  selectAuth,
+  (auth: IAuthState) => auth.user
+);

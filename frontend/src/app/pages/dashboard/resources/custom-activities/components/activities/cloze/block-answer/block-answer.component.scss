@@ -35,7 +35,7 @@
 }
 
 .div-editable:empty::before {
-  content: 'Insert a text';
+  content: attr(data-placeholder);
   pointer-events: none;
 }
 

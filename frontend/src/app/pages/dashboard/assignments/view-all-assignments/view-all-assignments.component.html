@@ -1,1 +1,25 @@
-<p>view-all-assignments works!</p>
+<div class="grid m-0 min-h-full">
+
+    <div class="col-12 pt-3 px-3">
+
+        <main class="flex flex-column flex-grow-1 gap-5 min-h-full">
+
+            <div class="flex flex-column flex-grow-0">
+                @if(['ADMIN', 'MANAGER', 'TEACHER'].includes(currentRoleTitle)) {
+                <assignment-toolbar-staff></assignment-toolbar-staff>
+                } <!-- @else if(currentRoleTitle === 'STUDENT') {
+                    <assignment-toolbar-student></assignment-toolbar-student>
+                } @else if(currentRoleTitle === 'PARENT') {
+                    <assignment-toolbar-parent></assignment-toolbar-parent>
+                } -->
+            </div>
+
+            <div class="flex flex-column flex-grow-1">
+                <app-list-staff></app-list-staff>
+            </div>
+
+        </main>
+
+    </div>
+
+</div>

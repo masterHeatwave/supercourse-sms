@@ -1,6 +1,6 @@
 <ng-container *ngIf="sessions$ | async as sessions">
   <div class="flex flex-column gap-4 px-4">
-    <div class="flex justify-content-end mb-3 mt-3">
+    <div class="flex justify-content-end mb-3 mt-3" *ngIf="!isLoading && sessions.sessions.length > 0">
       <p-button icon="pi pi-calendar-clock" [label]="'sessions.list.view_timetable' | translate" styleClass="p-button-outlined mr-2" (onClick)="navigateToTimetable()"> </p-button>
       <p-button icon="pi pi-plus" styleClass="p-button-text border-circle" (onClick)="navigateToCreate()"> </p-button>
       <p-button icon="pi pi-download" styleClass="p-button-text border-circle ml-2" (onClick)="downloadExcel()"> </p-button>
@@ -15,7 +15,21 @@
       <!-- Add spinner with overlay when loading -->
       <app-spinner *ngIf="isLoading" [overlay]="true"></app-spinner>
 
+      <!-- Show message when no sessions exist -->
+      <div *ngIf="!isLoading && sessions.sessions.length === 0" class="flex flex-column align-items-center justify-content-center p-6">
+        <i class="pi pi-calendar-times" style="font-size: 4rem; color: var(--text-color-secondary); margin-bottom: 1rem;"></i>
+        <h3 class="text-color-secondary mb-2">{{ 'sessions.list.no_sessions_title' | translate }}</h3>
+        <p class="text-color-secondary mb-4">{{ 'sessions.list.no_sessions_message' | translate }}</p>
+        <p-button 
+          icon="pi pi-plus" 
+          [label]="'sessions.list.create_first_session' | translate" 
+          (onClick)="navigateToCreate()"
+        ></p-button>
+      </div>
+
+      <!-- Show table when sessions exist -->
       <app-primary-table
+        *ngIf="!isLoading && sessions.sessions.length > 0"
         [data]="sessions.sessions"
         [columns]="tableColumns"
         [rows]="10"

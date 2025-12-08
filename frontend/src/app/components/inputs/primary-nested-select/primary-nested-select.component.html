@@ -1,0 +1,20 @@
+<div class="primary-nested-select flex flex-column gap-2 {{ styleClass }}">
+  <p-treeSelect
+    [options]="options"
+    [(ngModel)]="value"
+    (ngModelChange)="handleChange($event)"
+    [placeholder]="placeholder"
+    [showClear]="showClear"
+    [filter]="filter"
+    [disabled]="disabled"
+    [selectionMode]="selectionMode"
+    [display]="display"
+    [metaKeySelection]="metaKeySelection"
+    class="w-full primary-nested-select-treeselect"
+    [class.ng-invalid]="false"
+    [class.ng-dirty]="false"
+    styleClass="primary-nested-select-control"
+  >
+  </p-treeSelect>
+</div>
+

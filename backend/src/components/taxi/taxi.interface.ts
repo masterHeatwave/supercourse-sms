@@ -6,6 +6,7 @@ import { ICustomer } from '@components/customers/customer.interface';
 
 export interface ITaxi extends Document {
   name: string;
+  code: string;
   color: string;
   branch: ICustomer | string;
   subject: string;
@@ -16,10 +17,13 @@ export interface ITaxi extends Document {
   cefr_level?: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
   users: string[];
   scap_products: string[];
+  archived: boolean;
+  notes?: string;
 }
 
 export interface ITaxiCreateDTO {
   name: string;
+  code?: string;
   color?: string;
   branch?: string;
   subject?: string;
@@ -30,11 +34,14 @@ export interface ITaxiCreateDTO {
   cefr_level?: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
   users?: string[];
   scap_products?: string[];
+  archived?: boolean;
+  notes?: string;
 }
 
 export interface ITaxiUpdateDTO {
   id: string;
   name?: string;
+  code?: string;
   color?: string;
   branch?: string;
   subject?: string;
@@ -45,6 +52,8 @@ export interface ITaxiUpdateDTO {
   cefr_level?: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
   users?: string[];
   scap_products?: string[];
+  archived?: boolean;
+  notes?: string;
 }
 
 /**

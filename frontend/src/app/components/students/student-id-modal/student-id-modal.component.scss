@@ -89,32 +89,8 @@
 
 .qr-code {
   margin-top: 8px;
-}
-
-.qr-placeholder {
-  width: 60px;
-  height: 60px;
-  border: 2px solid #333;
   display: flex;
-  align-items: center;
   justify-content: center;
-}
-
-.qr-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 1px;
-  width: 50px;
-  height: 50px;
-}
-
-.qr-cell {
-  background: white;
-  border: 1px solid #ddd;
-}
-
-.qr-cell.qr-filled {
-  background: #333;
 }
 
 /* Center - School Logo */
@@ -125,44 +101,17 @@
   align-items: center;
 }
 
-.school-logo {
+.customer-avatar {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
+  gap: 8px;
 }
 
-.logo-shield {
-  width: 80px;
-  height: 80px;
-  background: #2196F3;
-  border: 3px solid white;
-  border-radius: 8px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.logo-content {
+.customer-name {
+  font-weight: 600;
+  color: #333;
   text-align: center;
-}
-
-.logo-symbols {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2px;
-  margin-bottom: 4px;
-}
-
-.symbol {
-  font-size: 0.8rem;
-  line-height: 1;
-}
-
-.logo-year {
-  color: white;
-  font-weight: bold;
-  font-size: 0.8rem;
 }
 
 /* Right Side */

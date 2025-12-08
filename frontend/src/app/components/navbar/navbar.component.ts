@@ -7,7 +7,7 @@ import { FormsModule } from '@angular/forms';
 import type { MenuItem } from 'primeng/api';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
-import { filter, takeUntil } from 'rxjs/operators';
+import { filter, takeUntil, take } from 'rxjs/operators';
 import { DividerModule } from 'primeng/divider';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { Store } from '@ngrx/store';
@@ -21,6 +21,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { MessagingContainerComponent } from '@components/messaging/messaging-container/messaging-container.component';
 
+import { RoleAccessService, PageAccess } from '@services/role-access.service';
 
 @Component({
   selector: 'app-navbar',
@@ -45,6 +46,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
   childMenuItems: any;
   childrenOptions: { label: string; value: string; id: string }[] = [];
   isImpersonating = false;
+  canAccessSettings = false;
+  canAccessSchoolSettings = false;
 
   private destroy$ = new Subject<void>();
 
@@ -53,7 +56,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private store: Store<AppState>,
     private customersService: CustomersService,
     public translate: TranslateService,
-    private http: HttpClient
+    private http: HttpClient,
+    private roleAccessService: RoleAccessService
   ) { }
 
   ngOnInit() {
@@ -64,6 +68,24 @@ export class NavbarComponent implements OnInit, OnDestroy {
       )
       .subscribe(() => {
         this.updatePageTitle();
+      });
+
+    // Subscribe to role access to check if user can access settings
+    this.roleAccessService.hasAccess(PageAccess.SETTINGS)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(canAccess => {
+        this.canAccessSettings = canAccess;
+        // Update menu items when access changes
+        this.updateMenuItems();
+      });
+
+    // Subscribe to role access to check if user can access school settings (ADMIN only)
+    this.roleAccessService.hasAccess(PageAccess.SETTINGS_SCHOOL_INFO_EDIT)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(canAccess => {
+        this.canAccessSchoolSettings = canAccess;
+        // Update menu items when access changes
+        this.updateMenuItems();
       });
 
     // Subscribe to the auth state to get current user
@@ -142,6 +164,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       value: role.title,
       id: role.id
     }));
+
   }
 
   updateMenuItems() {
@@ -179,41 +202,24 @@ export class NavbarComponent implements OnInit, OnDestroy {
         isHeader: true
       },
       {
-        label: 'View Profile',
-        icon: 'pi pi-user',
-        command: () => {
-          // eslint-disable-next-line no-console
-          console.log('View Profile clicked');
-        }
-      },
-      {
         label: 'Account Settings',
         icon: 'pi pi-cog',
         command: () => {
-          // eslint-disable-next-line no-console
-          console.log('Settings clicked');
+          this.router.navigate(['/dashboard/account']);
         }
       },
       {
         label: 'School',
         isHeader: true
       },
-      {
-        label: 'View School',
-        icon: 'pi pi-building',
-        command: () => {
-          // eslint-disable-next-line no-console
-          console.log('View School clicked');
-        }
-      },
-      {
+      ...(this.canAccessSchoolSettings ? [{
         label: 'School Settings',
         icon: 'pi pi-cog',
         command: () => {
 
           window.location.href = '/dashboard/settings';
         }
-      },
+      }] : []),
       {
         separator: true
       },
@@ -229,6 +235,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   onRoleChange(role: any) {
     if (role && role.id && role.value) {
+      console.log('🔄 Role Change Requested:', {
+        roleId: role.id,
+        roleTitle: role.value,
+        roleLabel: role.label,
+        previousRole: this.selectedRole
+      });
+
       this.selectedRole = role.value;
 
       // Dispatch the action to update the role in the state
@@ -239,8 +252,21 @@ export class NavbarComponent implements OnInit, OnDestroy {
         })
       );
 
+      // Log the updated auth state before reload
+      this.store.select((state: AppState) => state.auth).pipe(
+        take(1)
+      ).subscribe(authState => {
+        console.log('✅ Auth state after role change:', {
+          currentRoleId: authState.currentRoleId,
+          currentRoleTitle: authState.currentRoleTitle
+        });
+      });
+
       // Force a refresh to update the auth header with the new role
-      window.location.reload();
+      setTimeout(() => {
+        console.log('🔃 Reloading page with new role...');
+        window.location.reload();
+      }, 100);
     }
   }
 
@@ -293,15 +319,24 @@ export class NavbarComponent implements OnInit, OnDestroy {
     const segments = currentUrl.split('/').filter((segment) => segment);
 
     if (segments.length > 0) {
+      let title = '';
+
       // If we're in edit or view mode (URL contains 'edit' or a UUID-like string)
       if (segments.includes('edit') || segments[segments.length - 1].match(/^[0-9a-f]{24}$/i)) {
         // Get the parent section (e.g., 'staff' from /dashboard/staff/edit/123)
         const parentSection = segments[segments.indexOf('dashboard') + 1];
-        this.currentPageTitle = this.formatTitle(parentSection);
+        title = parentSection.charAt(0).toUpperCase() + parentSection.slice(1);
       } else {
         // Normal case - use the last segment
         const lastSegment = segments[segments.length - 1];
-        this.currentPageTitle = this.formatTitle(lastSegment);
+        title = lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
+      }
+
+      // Special formatting for specific pages
+      if (title.toLowerCase() === 'elibrary') {
+        this.currentPageTitle = 'E-library';
+      } else {
+        this.currentPageTitle = this.formatTitle(title);
       }
     } else {
       this.currentPageTitle = 'Dashboard';

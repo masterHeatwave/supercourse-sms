@@ -20,6 +20,7 @@ import { AcademicYearFieldsService } from './fields';
 import { AcademicYear, AcademicService } from '@services/academic.service';
 import { catchError, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-academic-year-form',
@@ -93,7 +94,8 @@ export class AcademicYearFormComponent implements OnInit, OnChanges {
     private academicService: AcademicService, 
     private messageService: MessageService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private location: Location
   ) {
     this.fields = this.academicYearFieldsService.getAcademicYearFields();
   }
@@ -284,15 +286,20 @@ export class AcademicYearFormComponent implements OnInit, OnChanges {
           return of(null);
         })
       )
-      .subscribe((response) => {
+      .subscribe((response: any) => {
         if (response) {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'Academic year created successfully'
-          });
-          // Navigate back to academic years list
-          this.router.navigate(['/dashboard/settings/academic-years']);
+          const academicYearId = response.data?.id;
+          if (academicYearId) {
+            // Create periods for the academic year
+            this.createPeriodsForAcademicYear(academicYearId);
+          } else {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Success',
+              detail: 'Academic year created successfully'
+            });
+            this.location.back();
+          }
         }
       });
   }
@@ -321,20 +328,15 @@ export class AcademicYearFormComponent implements OnInit, OnChanges {
       )
       .subscribe((response) => {
         if (response) {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'Academic year updated successfully'
-          });
-          // Navigate back to academic years list
-          this.router.navigate(['/dashboard/settings/academic-years']);
+          // Update periods for the academic year
+          this.updatePeriodsForAcademicYear(this.academicYearId!);
         }
       });
   }
 
   cancel() {
-    // Navigate back to academic years list
-    this.router.navigate(['/dashboard/settings/academic-years']);
+    // Navigate back without hard refresh
+    this.location.back();
   }
 
   addPeriod() {
@@ -549,5 +551,248 @@ export class AcademicYearFormComponent implements OnInit, OnChanges {
     this.displayTermDialog = false;
     this.currentTermPeriodIndex = null;
     this.termDialogModel = { title: '', startDate: null, endDate: null };
+  }
+
+  private createPeriodsForAcademicYear(academicYearId: string) {
+    if (!this.model.periods || this.model.periods.length === 0) {
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Academic year created successfully'
+      });
+      this.router.navigate(['/dashboard/settings/academic-years']);
+      return;
+    }
+
+    // Filter out incomplete periods
+    const validPeriods = this.model.periods.filter((period: any) => 
+      period.title && period.periodRange?.startDate && period.periodRange?.endDate
+    );
+
+    if (validPeriods.length === 0) {
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Academic year created successfully'
+      });
+      this.router.navigate(['/dashboard/settings/academic-years']);
+      return;
+    }
+
+    // Create periods sequentially
+    this.createPeriodsSequentially(academicYearId, validPeriods, 0);
+  }
+
+  private createPeriodsSequentially(academicYearId: string, periods: any[], index: number) {
+    if (index >= periods.length) {
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Academic year and periods created successfully'
+      });
+      this.router.navigate(['/dashboard/settings/academic-years']);
+      return;
+    }
+
+    const period = periods[index];
+    const periodData = {
+      name: period.title,
+      start_date: new Date(period.periodRange.startDate).toISOString(),
+      end_date: new Date(period.periodRange.endDate).toISOString(),
+      academic_year: academicYearId
+    };
+
+    this.academicService.createAcademicPeriod(periodData)
+      .pipe(
+        catchError((error) => {
+          console.error('Error creating period:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: `Failed to create period: ${period.title}`
+          });
+          return of(null);
+        })
+      )
+      .subscribe((response: any) => {
+        if (response) {
+          // Create subperiods (terms) for this period if they exist
+          if (period.terms && period.terms.length > 0) {
+            this.createSubperiodsForPeriod(response.data?.id, period.terms);
+          }
+        }
+        // Continue with next period
+        this.createPeriodsSequentially(academicYearId, periods, index + 1);
+      });
+  }
+
+  private createSubperiodsForPeriod(periodId: string, subperiods: any[]) {
+    subperiods.forEach((subperiod: any) => {
+      if (subperiod.title && subperiod.startDate && subperiod.endDate) {
+        const subperiodData = {
+          name: subperiod.title,
+          start_date: new Date(subperiod.startDate).toISOString(),
+          end_date: new Date(subperiod.endDate).toISOString(),
+          academic_period: periodId
+        };
+
+        this.academicService.createAcademicSubperiod(subperiodData)
+          .pipe(
+            catchError((error) => {
+              console.error('Error creating subperiod:', error);
+              return of(null);
+            })
+          )
+          .subscribe();
+      }
+    });
+  }
+
+  private updatePeriodsForAcademicYear(academicYearId: string) {
+    // For updates, we need to handle existing periods properly
+    // First, get existing periods to compare with new ones
+    this.academicService.getAcademicPeriods(academicYearId)
+      .pipe(
+        catchError((error) => {
+          console.error('Error loading existing periods:', error);
+          return of([]);
+        })
+      )
+      .subscribe((existingPeriods: any[]) => {
+        this.handlePeriodUpdates(academicYearId, existingPeriods);
+      });
+  }
+
+  private handlePeriodUpdates(academicYearId: string, existingPeriods: any[]) {
+    if (!this.model.periods || this.model.periods.length === 0) {
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Academic year updated successfully'
+      });
+      this.router.navigate(['/dashboard/settings/academic-years']);
+      return;
+    }
+
+    // Filter out incomplete periods
+    const validPeriods = this.model.periods.filter((period: any) => 
+      period.title && period.periodRange?.startDate && period.periodRange?.endDate
+    );
+
+    if (validPeriods.length === 0) {
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Academic year updated successfully'
+      });
+      this.router.navigate(['/dashboard/settings/academic-years']);
+      return;
+    }
+
+    // Check if periods have IDs (meaning they already exist)
+    const periodsWithIds = validPeriods.filter((period: any) => period.id);
+    const newPeriods = validPeriods.filter((period: any) => !period.id);
+
+    if (periodsWithIds.length > 0) {
+      // Update existing periods
+      this.updateExistingPeriods(periodsWithIds);
+    }
+
+    if (newPeriods.length > 0) {
+      // Create new periods
+      this.createNewPeriods(academicYearId, newPeriods);
+    } else {
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Academic year updated successfully'
+      });
+      this.router.navigate(['/dashboard/settings/academic-years']);
+    }
+  }
+
+  private updateExistingPeriods(periods: any[]) {
+    let completedUpdates = 0;
+    const totalUpdates = periods.length;
+
+    periods.forEach((period: any) => {
+      const periodData = {
+        name: period.title,
+        start_date: new Date(period.periodRange.startDate).toISOString(),
+        end_date: new Date(period.periodRange.endDate).toISOString()
+      };
+
+      this.academicService.updateAcademicPeriod(period.id, periodData)
+        .pipe(
+          catchError((error) => {
+            console.error('Error updating period:', error);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: `Failed to update period: ${period.title}`
+            });
+            return of(null);
+          })
+        )
+        .subscribe((response: any) => {
+          completedUpdates++;
+          if (completedUpdates === totalUpdates) {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Success',
+              detail: 'Academic year and periods updated successfully'
+            });
+            this.location.back();
+          }
+        });
+    });
+  }
+
+  private createNewPeriods(academicYearId: string, periods: any[]) {
+    this.createPeriodsSequentially(academicYearId, periods, 0);
+  }
+
+  /**
+   * Calculate the position and width of a term segment on the timeline
+   */
+  getTermPosition(period: any, term: any): { left: number; width: number } {
+    if (!period.periodRange?.startDate || !period.periodRange?.endDate || !term.startDate || !term.endDate) {
+      return { left: 0, width: 0 };
+    }
+
+    const periodStart = new Date(period.periodRange.startDate).getTime();
+    const periodEnd = new Date(period.periodRange.endDate).getTime();
+    const termStart = new Date(term.startDate).getTime();
+    const termEnd = new Date(term.endDate).getTime();
+
+    const periodDuration = periodEnd - periodStart;
+
+    // Calculate left position as percentage
+    const left = ((termStart - periodStart) / periodDuration) * 100;
+
+    // Calculate width as percentage
+    const width = ((termEnd - termStart) / periodDuration) * 100;
+
+    return {
+      left: Math.max(0, Math.min(100, left)),
+      width: Math.max(0, Math.min(100 - left, width))
+    };
+  }
+
+  /**
+   * Get a distinct color for each term
+   */
+  getTermColor(index: number): string {
+    const colors = [
+      '#3b82f6', // blue
+      '#10b981', // green
+      '#f59e0b', // amber
+      '#ef4444', // red
+      '#8b5cf6', // purple
+      '#ec4899', // pink
+      '#06b6d4', // cyan
+      '#f97316', // orange
+    ];
+    return colors[index % colors.length];
   }
 }

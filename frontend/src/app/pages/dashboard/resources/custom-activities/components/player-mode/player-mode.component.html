@@ -8,13 +8,13 @@
     <ng-template pTemplate="header">
       <img alt="Card" src="/assets/images/custom-activities/single.png" />
     </ng-template>
-    <label>{{ constants.SINGLE_PLAYER_MODE_TEXT }}</label>
+    <label>{{ 'customActivities.single_player_button' | translate }}</label>
   </p-card>
 
   <p-card [class.selectedCard]="selectedMode === constants.MULTI_PLAYER_MODE_VALUE" (click)="onCardClick(constants.MULTI_PLAYER_MODE_VALUE)">
     <ng-template pTemplate="header">
       <img alt="Card" src="/assets/images/custom-activities/multi.png" />
     </ng-template>
-    <label>{{ constants.MULTI_PLAYER_MODE_TEXT }}</label>
+    <label>{{ 'customActivities.multiplayer_button' | translate }}</label>
   </p-card>
 </div>

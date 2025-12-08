@@ -1,9 +1,10 @@
 import mongoose, { Document } from 'mongoose';
 
-export interface IPopulateOption {
+export interface IAdvancedPopulateOption {
   path: string;
   model?: mongoose.Model<any>;
-  populate?: IPopulateOption | IPopulateOption[];
+  populate?: IAdvancedPopulateOption | IAdvancedPopulateOption[];
+  select?: string;
 }
 
 export interface IAdvancedResultsOptions {
@@ -11,7 +12,7 @@ export interface IAdvancedResultsOptions {
   limit?: string;
   sort?: string;
   select?: string;
-  populate?: string | IPopulateOption[];
+  populate?: string | IAdvancedPopulateOption[];
   query?: string;
   is_active?: string;
   archived?: string;

@@ -11,7 +11,11 @@
         <div class="text-3xl">{{ taxi?.subject || 'Loading...' }}</div>
     </div>
     <div>
-        <app-outline-button [borderColor]="'var(--primary-color)'" [backgroundColor]="'white'">
+        <app-outline-button
+            [borderColor]="'var(--primary-color)'"
+            [backgroundColor]="'white'"
+            [disabled]="!upcomingSession"
+            (click)="goToUpcomingSession()">
             Go to upcoming session
         </app-outline-button>
     </div>
@@ -39,6 +43,9 @@
                 <p-progressSpinner></p-progressSpinner>
             </div>
             <app-sessions *ngIf="!loadingSessions" [sessionsData]="sessions"></app-sessions>
+        </p-tabPanel>
+        <p-tabPanel header="Resources">
+            <app-resources [classId]="classId"></app-resources>
         </p-tabPanel>
     </p-tabView>
 </div>

@@ -1,1 +1,51 @@
-<p>toolbar-staff works!</p>
+<p-toolbar styleClass="shadow-1">
+  
+  <div class="p-toolbar-group-start">
+    <p-dropdown
+      [options]="allAcademicPeriods"
+      [(ngModel)]="selectedAcademicPeriod"
+      (onChange)="onAcademicPeriodChange();"
+      [disabled]="allAcademicPeriods.length === 0"
+      optionLabel="name"
+      
+      placeholder="{{'assignments.toolbar.select_an_academic_period' | translate}}"
+      styleClass="w-auto mr-3"
+    />
+    
+    @defer (when allAcademicSubperiods.length > 0) {
+      <p-multiSelect
+        [options]="allAcademicSubperiods"
+        [(ngModel)]="selectedAcademicSubperiods"
+        (onChange)="onAcademicSubperiodsChange();"
+        [disabled]="allAcademicSubperiods.length === 0"
+        optionLabel="name"
+        showHeader="false"
+        
+        placeholder="{{'assignments.toolbar.select_academic_subperiod' | translate}}"
+        styleClass="w-auto"
+      />
+    }
+  </div>
+  
+  <div class="p-toolbar-group-center">
+    <!-- //TODO: If selected academic year is different from the current, the create button should not be visible. -->
+    <a routerLink="create" routerLinkActive="active">
+        <p-button label="{{'assignments.toolbar.create' | translate}}" icon="pi pi-plus" text="true" severity="success" />
+    </a>
+    <!-- //TODO: If selected academic year is different from the current, the create button should not be visible. -->
+    <a routerLink="drafted" routerLinkActive="active">
+        <p-button label="{{'assignments.toolbar.drafted' | translate}}" icon="pi pi-inbox" text="true" severity="warning" />
+    </a>
+    
+    <a routerLink="deleted" routerLinkActive="active">
+        <p-button label="{{'assignments.toolbar.deleted' | translate}}" icon="pi pi-trash" text="true" severity="danger" />
+    </a>
+  </div>
+  
+  <div class="p-toolbar-group-end">
+    <p-button icon="pi pi-th-large" text="true" />
+    <p-button icon="pi pi-bars" text="true" />
+    <p-button icon="pi pi-file-export" text="true" />
+  </div>
+  
+</p-toolbar>

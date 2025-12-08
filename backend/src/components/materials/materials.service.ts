@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { config } from '@config/config';
 import Customer from '@components/customers/customer.model';
+import Taxi from '@components/taxi/taxi.model';
 import { ErrorResponse } from '@utils/errorResponse';
 import { logger } from '@utils/logger';
 
@@ -11,17 +12,17 @@ export class MaterialsService {
 
     logger.info('SMS API sending request with:', {
       url: url,
-      apiKey: config.API_KEY,
+      apiKey: config.SCAP_API_KEY,
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': config.API_KEY,
+        'x-api-key': config.SCAP_API_KEY,
       },
     });
 
     const response = await axios.get(url, {
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': config.API_KEY,
+        'x-api-key': config.SCAP_API_KEY,
       },
       timeout: 5000,
     });
@@ -42,8 +43,10 @@ export class MaterialsService {
       id: product._id,
       name: product.name,
       description: product.description,
-      price: product.price,
       category: product.category,
+      component_type: product.component_type,
+      icon_url: product.avatar?.file_path || null,
+      components: product.components || [],
     }));
 
     logger.info(`Transformed materials:`, materials);
@@ -124,6 +127,57 @@ export class MaterialsService {
       }
       logger.error('Failed to fetch assigned materials:', error.message);
       throw new ErrorResponse(`Failed to fetch assigned materials: ${error.message}`, 500);
+    }
+  }
+
+  async getMaterialsForTaxi(taxiId: string): Promise<any[]> {
+    try {
+      logger.info(`Materials Service: Looking for taxi with ID: ${taxiId}`);
+
+      // Find the taxi in SMS system
+      const taxi = await Taxi.findById(taxiId);
+      if (!taxi) {
+        logger.error(`Taxi not found with ID: ${taxiId}`);
+        throw new ErrorResponse('Taxi not found', 404);
+      }
+
+      logger.info(`Found taxi:`, {
+        id: taxi._id,
+        name: taxi.name,
+        scap_products: taxi.scap_products,
+      });
+
+      // Get the branch customer ID from the taxi
+      const branchCustomerId = taxi.branch?.toString();
+      if (!branchCustomerId) {
+        logger.error(`Taxi ${taxiId} has no branch assigned`);
+        throw new ErrorResponse('Taxi has no branch assigned', 400);
+      }
+
+      // Get all assigned materials for this branch
+      const allMaterials = await this.getAssignedMaterials(branchCustomerId);
+
+      // Filter materials to only include those in taxi.scap_products
+      if (!taxi.scap_products || taxi.scap_products.length === 0) {
+        logger.info(`Taxi ${taxiId} has no materials assigned (scap_products is empty)`);
+        return [];
+      }
+
+      const filteredMaterials = allMaterials.filter((material: any) => taxi.scap_products.includes(material.id));
+
+      logger.info(`Filtered materials for taxi ${taxiId}:`, {
+        totalAssigned: allMaterials.length,
+        taxiMaterials: taxi.scap_products.length,
+        filtered: filteredMaterials.length,
+      });
+
+      return filteredMaterials;
+    } catch (error: any) {
+      if (error instanceof ErrorResponse) {
+        throw error;
+      }
+      logger.error('Failed to fetch materials for taxi:', error.message);
+      throw new ErrorResponse(`Failed to fetch materials for taxi: ${error.message}`, 500);
     }
   }
 }

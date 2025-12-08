@@ -19,7 +19,7 @@ div {
   }
 
   .p-breadcrumb .p-menuitem-text {
-    color: var(--primary-color-text);
+    color: var(--primary-color-text) !important;
     background-color: var(--primary-color);
     padding: 10px;
     font-size: x-large;

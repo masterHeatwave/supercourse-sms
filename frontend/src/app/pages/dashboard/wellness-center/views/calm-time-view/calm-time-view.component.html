@@ -1,4 +1,4 @@
-<p-button (onClick)="onClick($event)">Back</p-button>
+<p-button (onClick)="onClick($event)">{{'wellnessCenter.back_button' | translate}}</p-button>
 
 <div class="video-container" *ngIf="videoList.length > 0; else noVideos">
   <div *ngFor="let videoItem of videoList" class="video-and-content">
@@ -20,5 +20,5 @@
 </div>
 
 <ng-template #noVideos>
-  <p>No videos to display.</p>
+  <p>{{ 'wellnessCenter.no_video_label' | translate }}</p>
 </ng-template>

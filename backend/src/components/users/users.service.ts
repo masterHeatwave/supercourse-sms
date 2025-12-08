@@ -16,8 +16,11 @@ import User from './user.model';
 import Customer from '@components/customers/customer.model';
 import Taxi from '@components/taxi/taxi.model';
 import Role from '@components/roles/role.model';
-import RoleModel from '@components/roles/role.model';
-import { requestContextLocalStorage } from '@config/asyncLocalStorage';
+import Permission from '@components/permissions/permission.model';
+import AcademicYear from '@components/academic/academic-years.model';
+import AcademicPeriod from '@components/academic/academic-periods.model';
+import Session from '@components/sessions/session.model';
+import SessionRecurring from '@components/sessions/session-recurring.model';
 
 const queryAll = async (params: IAdvancedResultsOptions, user: IUser) => {
   let overrides: Record<string, unknown> = {};
@@ -112,11 +115,24 @@ const queryAll = async (params: IAdvancedResultsOptions, user: IUser) => {
     sort: params.sort,
     select: params.select,
     populate: [
-      { path: 'roles', model: Role },
+      {
+        path: 'roles',
+        model: Role,
+        populate: {
+          path: 'permissions',
+          model: Permission,
+        },
+      },
       { path: 'branches', model: Customer },
       {
         path: 'taxis',
         model: Taxi,
+        select: 'name code color subject level archived branch academic_year academic_period',
+        populate: [
+          { path: 'branch', model: Customer, select: 'name slug' },
+          { path: 'academic_year', model: AcademicYear, select: 'name year' },
+          { path: 'academic_period', model: AcademicPeriod, select: 'name' },
+        ],
       },
       { path: 'customers', model: Customer },
     ],
@@ -126,7 +142,7 @@ const queryAll = async (params: IAdvancedResultsOptions, user: IUser) => {
   });
 };
 
-const querySingle = async (id: string, user_type?: IUserType) => {
+const querySingle = async (id: string, user_type?: IUserType, includeInactive: boolean = false) => {
   const isObjectId = /^[0-9a-fA-F]{24}$/.test(id);
 
   let query;
@@ -140,6 +156,11 @@ const querySingle = async (id: string, user_type?: IUserType) => {
 
   if (user_type) {
     query.where('user_type').equals(user_type);
+  }
+
+  // Add is_active filter unless includeInactive is true
+  if (!includeInactive) {
+    query.where('is_active').equals(true);
   }
 
   const user = await query.populate([
@@ -158,6 +179,12 @@ const querySingle = async (id: string, user_type?: IUserType) => {
     {
       path: 'taxis',
       model: Taxi,
+      select: 'name code color subject level archived branch academic_year academic_period',
+      populate: [
+        { path: 'branch', model: Customer, select: 'name slug' },
+        { path: 'academic_year', model: AcademicYear, select: 'name year' },
+        { path: 'academic_period', model: AcademicPeriod, select: 'name' },
+      ],
     },
     {
       path: 'roles',
@@ -263,9 +290,12 @@ const archive = async ({ id, archived }: IUserArchiveDTO): Promise<IUser | null>
 
 // Get all staff with optional search - uses queryAll with specific override
 const getAllStaff = async (params: IAdvancedResultsOptions, user: IUser) => {
-  const overrides: Record<string, unknown> = { user_type: { $in: [IUserType.TEACHER, IUserType.MANAGER] } };
+  const overrides: Record<string, unknown> = {
+    user_type: { $in: [IUserType.TEACHER, IUserType.MANAGER] },
+    is_active: true, // DEFAULT to active users
+  };
 
-  // Handle is_active filter
+  // Allow explicit override to show inactive users
   if (params.is_active !== undefined) {
     overrides.is_active = params.is_active === 'true';
   }
@@ -295,8 +325,8 @@ const searchStaff = async (params: IAdvancedResultsOptions, user: IUser) => {
 };
 
 // Get staff by ID - uses querySingle but checks for TEACHER or MANAGER types
-const getStaffById = async (id: string) => {
-  const user = await querySingle(id);
+const getStaffById = async (id: string, includeInactive: boolean = false) => {
+  const user = await querySingle(id, undefined, includeInactive);
   // Ensure the user is a staff member (TEACHER or MANAGER)
   if (user && [IUserType.TEACHER, IUserType.MANAGER].includes(user.user_type)) {
     return user;
@@ -323,6 +353,137 @@ const deleteStudent = async (id: string): Promise<IUser | null> => {
   return User.findByIdAndDelete(id);
 };
 
+// Get all students for a specific teacher based on sessions they teach
+const getStudentsForTeacher = async (teacherId: string, params: IAdvancedResultsOptions, user: IUser) => {
+  // Get unique student IDs from sessions where this teacher is assigned
+  const studentIdsFromSessions = await Session.distinct('students', {
+    teachers: teacherId,
+  });
+
+  // Also get student IDs from recurring session instances
+  const studentIdsFromRecurring = await SessionRecurring.distinct('students', {
+    teachers: teacherId,
+  });
+
+  // Combine and deduplicate student IDs
+  const allStudentIds = [...new Set([...studentIdsFromSessions, ...studentIdsFromRecurring])]
+    .map((id) => id?.toString())
+    .filter(Boolean);
+
+  // If no students found, return empty results
+  if (allStudentIds.length === 0) {
+    return {
+      results: [],
+      page: parseInt(params.page || '1', 10),
+      limit: parseInt(params.limit || '20', 10),
+      totalPages: 0,
+      totalResults: 0,
+    };
+  }
+
+  // Build overrides with student filter
+  const overrides: Record<string, unknown> = {
+    user_type: IUserType.STUDENT,
+    _id: { $in: allStudentIds },
+  };
+
+  // Handle is_active filter
+  if (params.is_active !== undefined) {
+    const isActive = params.is_active.toLowerCase() === 'true';
+    overrides.is_active = isActive;
+  }
+
+  // Handle archived filter
+  if (params.archived !== undefined) {
+    const isArchived = params.archived.toLowerCase() === 'true';
+    overrides.archived = isArchived;
+  }
+
+  // Handle branch filter
+  if (params.branch !== undefined && params.branch.trim() !== '') {
+    overrides.branches = { $in: [params.branch] };
+  }
+
+  // Handle role filter - filter by role title
+  if (params.role !== undefined && params.role.trim() !== '') {
+    overrides.roleTitle = params.role.trim();
+  }
+
+  // Handle filters from query params
+  if (params?.query) {
+    try {
+      const parsedQuery = JSON.parse(params.query);
+      if (Array.isArray(parsedQuery)) {
+        const isActiveFilter = parsedQuery.find((item) => item.is_active !== undefined);
+        const isArchivedFilter = parsedQuery.find((item) => item.archived !== undefined);
+
+        if (isActiveFilter) {
+          overrides.is_active = isActiveFilter.is_active;
+        }
+        if (isArchivedFilter) {
+          overrides.archived = isArchivedFilter.archived;
+        }
+      } else if (typeof parsedQuery === 'object' && parsedQuery !== null) {
+        if (parsedQuery.is_active !== undefined) {
+          overrides.is_active = parsedQuery.is_active;
+        }
+        if (parsedQuery.archived !== undefined) {
+          overrides.archived = parsedQuery.archived;
+        }
+      }
+    } catch (e) {
+      logger.error('Error parsing query params:', e);
+    }
+  }
+
+  // Handle role title filtering
+  if (overrides.roleTitle) {
+    const roleTitle = overrides.roleTitle;
+    delete overrides.roleTitle; // Remove from overrides as we'll handle it separately
+
+    // First, find the role by title
+    const role = await Role.findOne({ title: roleTitle });
+    if (!role) {
+      // If role doesn't exist, return empty results
+      return {
+        results: [],
+        page: parseInt(params.page || '1', 10),
+        limit: parseInt(params.limit || '20', 10),
+        totalPages: 0,
+        totalResults: 0,
+      };
+    }
+
+    // Add the role ID to the overrides
+    overrides.roles = { $in: [role._id] };
+  }
+
+  return await User.advancedResults({
+    page: params.page,
+    limit: params.limit,
+    sort: params.sort,
+    select: params.select,
+    populate: [
+      { path: 'roles', model: Role },
+      { path: 'branches', model: Customer },
+      {
+        path: 'taxis',
+        model: Taxi,
+        select: 'name code color subject level archived branch academic_year academic_period',
+        populate: [
+          { path: 'branch', model: Customer, select: 'name slug' },
+          { path: 'academic_year', model: AcademicYear, select: 'name year' },
+          { path: 'academic_period', model: AcademicPeriod, select: 'name' },
+        ],
+      },
+      { path: 'customers', model: Customer },
+    ],
+    query: params.query,
+    branch: params.branch,
+    overrides: overrides,
+  });
+};
+
 export default {
   queryAll,
   querySingle,
@@ -338,4 +499,5 @@ export default {
   getAllStaff,
   getStaffById,
   searchStaff,
+  getStudentsForTeacher,
 };

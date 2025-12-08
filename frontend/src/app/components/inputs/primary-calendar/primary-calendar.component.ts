@@ -67,4 +67,12 @@ export class PrimaryCalendarComponent extends FieldType<FieldTypeConfig> {
   get selectionMode() {
     return this.props['selectionMode'] || 'single';
   }
+
+  get labelPosition() {
+    return this.props['labelPosition'] || 'top'; // 'top' or 'left'
+  }
+
+  get labelBold() {
+    return this.props['labelBold'] || false; // Default to regular (not bold)
+  }
 } 

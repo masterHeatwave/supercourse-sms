@@ -1,0 +1,31 @@
+<div class="settings-layout">
+  <!-- Left Sidebar -->
+  <aside class="settings-sidebar bg-transparent">
+    <div class="settings-sidebar-header">
+      <h2>{{ 'settings.title' | translate }}</h2>
+    </div>
+    
+    <nav class="settings-sidebar-nav">
+      <ul class="settings-menu">
+        @for (item of menuItems; track item.id) {
+          <li class="settings-menu-item">
+            <a
+              [routerLink]="item.routerLink"
+              class="settings-menu-link"
+              [class.active]="isMenuItemActive(item)"
+            >
+              <i class="{{ item.icon }}"></i>
+              <span>{{ item.label | translate }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Right Content Area -->
+  <main class="settings-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>
+

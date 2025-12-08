@@ -26,8 +26,7 @@ export class AuthEffects {
   #customerService = inject(CustomerService);
   #http = inject(HttpClient);
 
-  // Flag to prevent multiple session expired messages
-  private hasShownSessionExpiredMessage = false;
+  // Note: Session expired message flag is now managed in the auth state
 
   login$ = createEffect(() =>
     this.#actions$.pipe(
@@ -61,9 +60,6 @@ export class AuthEffects {
       this.#actions$.pipe(
         ofType(AuthActions.loginSuccess),
         tap((response) => {
-          // Reset the session expired message flag on successful login
-          this.hasShownSessionExpiredMessage = false;
-
           // Log authentication data for debugging
           const roles = response.user?.roles || [];
 
@@ -113,8 +109,12 @@ export class AuthEffects {
         this.#authService.postAuthLogout().pipe(
           map(() => AuthActions.logoutSuccess()),
           catchError((error: ApiErrorResponse<any>) => {
-            this.showErrorMessage(error);
-            return of(AuthActions.logoutFailure({ error }));
+            // Don't show error messages for 401 on logout - this is expected when token is expired
+            if (error.status !== 401) {
+              this.showErrorMessage(error);
+            }
+            // Always treat logout as successful, even if the API call fails
+            return of(AuthActions.logoutSuccess());
           }),
           tap(() => this.#loadingService.setLoading(false))
         )
@@ -127,8 +127,6 @@ export class AuthEffects {
       this.#actions$.pipe(
         ofType(AuthActions.logoutSuccess),
         tap(() => {
-          // Reset the session expired message flag on logout
-          this.hasShownSessionExpiredMessage = false;
           this.#router.navigate(['/login']);
           this.#store.dispatch(AuthActions.clearCustomerContext());
         })
@@ -163,9 +161,10 @@ export class AuthEffects {
     () =>
       this.#actions$.pipe(
         ofType(AuthActions.refreshFailure),
-        tap(() => {
-          if (!this.hasShownSessionExpiredMessage) {
-            this.hasShownSessionExpiredMessage = true;
+        withLatestFrom(this.#store.select((state: any) => state.auth.hasShownSessionExpiredMessage)),
+        tap(([action, hasShownMessage]) => {
+          if (!hasShownMessage) {
+            this.#store.dispatch(AuthActions.setSessionExpiredMessageShown({ shown: true }));
             this.#messageService.add({
               severity: 'warn',
               summary: 'Session Expired',
@@ -182,9 +181,10 @@ export class AuthEffects {
     () =>
       this.#actions$.pipe(
         ofType(AuthActions.forceLogout),
-        tap(() => {
-          if (!this.hasShownSessionExpiredMessage) {
-            this.hasShownSessionExpiredMessage = true;
+        withLatestFrom(this.#store.select((state: any) => state.auth.hasShownSessionExpiredMessage)),
+        tap(([action, hasShownMessage]) => {
+          if (!hasShownMessage) {
+            this.#store.dispatch(AuthActions.setSessionExpiredMessageShown({ shown: true }));
             this.#messageService.add({
               severity: 'warn',
               summary: 'Session Expired',
@@ -233,6 +233,11 @@ export class AuthEffects {
   );
 
   private showErrorMessage(error: any) {
+    // Don't show notifications for errors that should be suppressed
+    if (error.error?.suppressNotification) {
+      return;
+    }
+    
     const errorMessage = error?.error?.message || 'An error occurred';
     this.#messageService.add({
       severity: 'error',

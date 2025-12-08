@@ -30,7 +30,7 @@ export class AppComponent implements OnInit {
     translate.use('en');
     
     // ✅ Initialize socket immediately
-    console.log('🚀 App initializing socket service');
+    // console.log.log('🚀 App initializing socket service');
   }
 
   ngOnInit() {
@@ -44,12 +44,12 @@ export class AppComponent implements OnInit {
         take(1) // Only take first emission
       )
       .subscribe(userId => {
-        console.log('🔐 User authenticated, initializing socket for userId:', userId);
+        // console.log.log('🔐 User authenticated, initializing socket for userId:', userId);
         
         // Socket service will automatically authenticate via its setupAuthSubscription
         // But we can also manually ensure connection is ready
         this.socketService.waitForConnection().then(() => {
-          console.log('✅ Socket ready for use');
+          // console.log.log('✅ Socket ready for use');
         });
       });
   }

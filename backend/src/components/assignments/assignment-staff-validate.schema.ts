@@ -20,9 +20,9 @@ const AssignmentTaskSchema = z
 
 const AssignmentAcademicTimeframeSchema = z
   .object({
-    academicYear: z.string(),
-    academicPeriod: z.string(),
-    academicTerm: z.string(),
+    academicYear: z.string().min(1, { message: 'Academic year ID is required' }),
+    academicPeriod: z.string().min(1, { message: 'Academic period ID is required' }),
+    academicTerm: z.string().min(1, { message: 'Academic term ID is required' }),
   })
   .openapi({
     title: 'AssignmentAcademicTimeframe',
@@ -100,7 +100,9 @@ export const createAssignmentForStaffSchema = z
     schoolID: z.string().min(1, { message: 'School ID is required' }),
     branchID: z.string().min(1, { message: 'Branch ID is required' }),
     staffID: z.string().min(1, { message: 'Staff ID is required' }),
-    staffRole: z.enum(['admin', 'manager', 'teacher']),
+    staffRole: z.enum(['admin', 'manager', 'teacher'], {
+      errorMap: () => ({ message: 'Staff role must be admin, manager, or teacher' }),
+    }),
     classID: z.string().optional(),
     studentsIDs: z.array(z.string()).optional(),
     title: z
@@ -111,11 +113,7 @@ export const createAssignmentForStaffSchema = z
     endDate: z.string().or(z.date()),
     description: z.string().optional(),
     tasks: z.array(AssignmentTaskSchema).optional(),
-    academicTimeframe: z.object({
-      academicYear: z.string().min(1, { message: 'Academic year is required' }),
-      academicPeriod: z.string().min(1, { message: 'Academic period is required' }),
-      academicTerm: z.string().min(1, { message: 'Academic term is required' }),
-    }),
+    academicTimeframe: AssignmentAcademicTimeframeSchema,
     isDrafted: z.boolean().optional().default(false),
   })
   .refine(
@@ -139,7 +137,11 @@ export const updateAssignmentForStaffSchema = z
     schoolID: z.string().optional(),
     branchID: z.string().optional(),
     staffID: z.string().optional(),
-    staffRole: z.enum(['admin', 'manager', 'teacher']).optional(),
+    staffRole: z
+      .enum(['admin', 'manager', 'teacher'], {
+        errorMap: () => ({ message: 'Staff role must be admin, manager, or teacher' }),
+      })
+      .optional(),
     classID: z.string().optional(),
     studentsIDs: z.array(z.string()).optional(),
     title: z
@@ -159,10 +161,27 @@ export const updateAssignmentForStaffSchema = z
       })
       .optional(),
     isDrafted: z.boolean().optional(),
+    draftDate: z.string().or(z.date()).optional(),
     isDeletedForMe: z.boolean().optional(),
+    deletedForMeDate: z.string().or(z.date()).optional(),
     isDeletedForEveryone: z.boolean().optional(),
+    deletedForEveryoneDate: z.string().or(z.date()).optional(),
     isPermanentlyDeleted: z.boolean().optional(),
   })
+  .refine(
+    (data) => {
+      if (data.startDate && data.endDate) {
+        const start = new Date(data.startDate);
+        const end = new Date(data.endDate);
+        return end > start;
+      }
+      return true;
+    },
+    {
+      message: 'End date must be after start date',
+      path: ['endDate'],
+    }
+  )
   .openapi({
     title: 'UpdateAssignmentForStaff',
     description: 'Schema for updating an existing assignment for staff',
@@ -170,25 +189,52 @@ export const updateAssignmentForStaffSchema = z
 
 export const queryAssignmentForStaffSchema = z
   .object({
-    schoolID: z.string().optional(),
     branchID: z.string().optional(),
-    staffID: z.string().optional(),
     staffRole: z.enum(['admin', 'manager', 'teacher']).optional(),
+    staffID: z.string().optional(),
     classID: z.string().optional(),
-    studentID: z.string().optional(),
-    search: z.string().optional(),
-    startDate: z.string().or(z.date()).optional(),
-    endDate: z.string().or(z.date()).optional(),
-    academicYear: z.string().optional(),
-    academicPeriod: z.string().optional(),
-    academicTerm: z.string().optional(),
+    academicYearID: z.string().optional(),
+    academicPeriodID: z.string().optional(),
+    academicSubperiodID: z.string().optional(),
     isDrafted: z.string().optional(),
     isDeletedForMe: z.string().optional(),
     isDeletedForEveryone: z.string().optional(),
-    isPermanentlyDeleted: z.string().optional(),
-    status: z.enum(['active', 'upcoming', 'past']).optional(),
   })
   .openapi({
     title: 'QueryAssignmentForStaff',
     description: 'Schema for querying assignments for staff',
   });
+
+export const getAssignmentByIDQuerySchema = z
+  .object({
+    staffID: z.string().min(1, { message: 'Staff ID is required for authorization' }),
+    staffRole: z.enum(['admin', 'manager', 'teacher'], {
+      errorMap: () => ({ message: 'Staff role must be admin, manager, or teacher' }),
+    }),
+    branchID: z.string().min(1, { message: 'Branch ID is required for authorization' }),
+  })
+  .openapi({
+    title: 'GetAssignmentByIDQuery',
+    description: 'Query parameters required for authorization when retrieving an assignment by ID',
+  });
+
+export const authorizationQuerySchema = z
+  .object({
+    staffID: z.string().min(1, { message: 'Staff ID is required for authorization' }),
+    staffRole: z.enum(['admin', 'manager', 'teacher'], {
+      errorMap: () => ({ message: 'Staff role must be admin, manager, or teacher' }),
+    }),
+    branchID: z.string().min(1, { message: 'Branch ID is required for authorization' }),
+  })
+  .openapi({
+    title: 'AuthorizationQuery',
+    description: 'Query parameters required for authorization across assignment operations',
+  });
+
+export const updateAssignmentQuerySchema = authorizationQuerySchema;
+export const draftAssignmentQuerySchema = authorizationQuerySchema;
+export const undraftAssignmentQuerySchema = authorizationQuerySchema;
+export const deleteAssignmentForMeQuerySchema = authorizationQuerySchema;
+export const restoreAssignmentForMeQuerySchema = authorizationQuerySchema;
+export const deleteAssignmentForEveryoneQuerySchema = authorizationQuerySchema;
+export const restoreAssignmentForEveryoneQuerySchema = authorizationQuerySchema;

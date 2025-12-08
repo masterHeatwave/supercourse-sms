@@ -42,13 +42,13 @@ const UserSchema: Schema<IUser> = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: [config.AUTH.LOGIN_STRATEGY === 'smsLoginStrategy', 'Please add phone'],
+      required: [true, 'Please add phone'],
       unique: true,
       sparse: true,
     },
     mobile: {
       type: String,
-      required: [true, 'Please add a mobile number'],
+      required: false,
       unique: true,
       sparse: true,
     },
@@ -122,6 +122,9 @@ const UserSchema: Schema<IUser> = new mongoose.Schema(
       default: true,
     },
     hire_date: {
+      type: Date,
+    },
+    registration_date: {
       type: Date,
     },
     facebook_link: {

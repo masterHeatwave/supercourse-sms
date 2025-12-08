@@ -1,5 +1,5 @@
 // primary-table.component.ts
-import { Component, Input, Output, EventEmitter, ContentChild, TemplateRef, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ContentChild, TemplateRef, SimpleChanges, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -9,7 +9,7 @@ import { CalendarModule } from 'primeng/calendar';
 import { PaginatorModule } from 'primeng/paginator';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { TooltipModule } from 'primeng/tooltip';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { environment } from '../../../../environments/environment';
 
@@ -32,7 +32,7 @@ import { environment } from '../../../../environments/environment';
   templateUrl: './primary-table.component.html',
   styleUrl: './primary-table.component.scss'
 })
-export class PrimaryTableComponent {
+export class PrimaryTableComponent implements AfterViewInit, OnDestroy {
   @Input() data: any[] = [];
   @Input() columns: {
     field: string;
@@ -74,6 +74,10 @@ export class PrimaryTableComponent {
   @Input() selection: any[] = [];
   @Input() dataKey: string = 'id';
   @Input() selectionEnabled: boolean = true;
+  @Input() archivedField: string = 'archived'; // Field name to check if item is archived
+  @Input() scrollHeight: string = 'calc(100vh - 250px)'; // Dynamic scroll height (fallback)
+  @Input() autoCalculateHeight: boolean = true; // Enable/disable automatic height calculation
+  @Input() showProfileImage: boolean = true; // Show/hide profile image in grid view
 
   @Output() pageChange = new EventEmitter<{ page: number; rows: number }>();
   @Output() rowSelect = new EventEmitter<any>();
@@ -85,9 +89,17 @@ export class PrimaryTableComponent {
   @Output() sortChange = new EventEmitter<{ field: string; order: number }>();
   @Output() selectionChange = new EventEmitter<any[]>();
   @Output() rowsPerPageChange = new EventEmitter<number>();
+  @Output() restoreRow = new EventEmitter<any>();
+
+  @ViewChild('tableContainer', { read: ElementRef }) tableContainer?: ElementRef;
+  @ViewChild('paginatorElement', { read: ElementRef }) paginatorElement?: ElementRef;
 
   private sortState: { field: string; order: number } | null = null;
   sortedData: any[] = [];
+  calculatedScrollHeight: string = '';
+  private resizeObserver?: ResizeObserver;
+  private resizeTimeout?: any;
+  private boundWindowResize?: () => void;
 
   booleanOptions = [
     { label: 'All', value: null },
@@ -103,14 +115,128 @@ export class PrimaryTableComponent {
   @ContentChild('behaviourTemplate') behaviourTemplate?: TemplateRef<any>;
   @ContentChild('rewardsTemplate') rewardsTemplate?: TemplateRef<any>;
 
-  constructor() {
+  constructor(
+    private elementRef: ElementRef,
+    private translateService: TranslateService
+  ) {
     this.globalFilterFields = this.columns.map((col) => col.field);
+  }
+
+  ngAfterViewInit() {
+    if (this.autoCalculateHeight) {
+      // Initial calculation after a short delay to ensure DOM is fully rendered
+      setTimeout(() => {
+        this.calculateTableHeight();
+      }, 100);
+
+      // Set up ResizeObserver to recalculate on window/container resize
+      this.setupResizeObserver();
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
+    if (this.resizeTimeout) {
+      clearTimeout(this.resizeTimeout);
+    }
+    if (this.boundWindowResize) {
+      window.removeEventListener('resize', this.boundWindowResize);
+    }
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['data']) {
       this.applySorting();
+      // Recalculate height when data changes (might affect pagination height)
+      if (this.autoCalculateHeight) {
+        setTimeout(() => {
+          this.calculateTableHeight();
+        }, 0);
+      }
     }
+  }
+
+  private setupResizeObserver() {
+    if (typeof ResizeObserver === 'undefined') {
+      // Fallback to window resize event for older browsers
+      this.boundWindowResize = this.debouncedCalculateHeight.bind(this);
+      window.addEventListener('resize', this.boundWindowResize);
+      return;
+    }
+
+    this.resizeObserver = new ResizeObserver(() => {
+      this.debouncedCalculateHeight();
+    });
+
+    // Observe the table container
+    if (this.tableContainer) {
+      this.resizeObserver.observe(this.tableContainer.nativeElement);
+    }
+
+    // Observe the window/viewport
+    this.resizeObserver.observe(document.body);
+  }
+
+  private debouncedCalculateHeight() {
+    // Clear existing timeout to debounce rapid resize events
+    if (this.resizeTimeout) {
+      clearTimeout(this.resizeTimeout);
+    }
+
+    // Calculate height after a short delay
+    this.resizeTimeout = setTimeout(() => {
+      this.calculateTableHeight();
+    }, 100);
+  }
+
+  private calculateTableHeight() {
+    if (!this.autoCalculateHeight) {
+      this.calculatedScrollHeight = this.scrollHeight;
+      return;
+    }
+
+    try {
+      const container = this.tableContainer?.nativeElement;
+      if (!container) {
+        this.calculatedScrollHeight = this.scrollHeight;
+        return;
+      }
+
+      // Get the container's position relative to viewport
+      const containerRect = container.getBoundingClientRect();
+      const containerTop = containerRect.top;
+
+      // Calculate paginator height
+      let paginatorHeight = 0;
+      const paginatorElement = container.querySelector('.custom-paginator');
+      if (paginatorElement) {
+        const paginatorRect = paginatorElement.getBoundingClientRect();
+        paginatorHeight = paginatorRect.height;
+      }
+
+      // Add some spacing/padding (adjust as needed)
+      const bottomPadding = 20; // Space below paginator
+      const tablePadding = 10; // Internal table padding
+
+      // Calculate available height: viewport height - top position - paginator - padding
+      const viewportHeight = window.innerHeight;
+      const availableHeight = viewportHeight - containerTop - paginatorHeight - bottomPadding - tablePadding;
+
+      // Ensure minimum height
+      const minHeight = 300;
+      const finalHeight = Math.max(availableHeight, minHeight);
+
+      this.calculatedScrollHeight = `${finalHeight}px`;
+    } catch (error) {
+      console.error('Error calculating table height:', error);
+      this.calculatedScrollHeight = this.scrollHeight;
+    }
+  }
+
+  getScrollHeight(): string {
+    return this.calculatedScrollHeight || this.scrollHeight;
   }
 
   onPageChange(event: any) {
@@ -215,8 +341,21 @@ export class PrimaryTableComponent {
     this.deleteRow.emit(item);
   }
 
+  onRestoreClick(item: any) {
+    this.restoreRow.emit(item);
+  }
+
   onViewClick(item: any) {
     this.viewRow.emit(item);
+  }
+
+  isArchived(item: any): boolean {
+    return !!item[this.archivedField];
+  }
+
+  // Check if item is a class (taxi)
+  isClass(item: any): boolean {
+    return item.model !== undefined || item.driver !== undefined || item.subject !== undefined;
   }
 
   onButtonClick(col: any, rowData: any) {
@@ -278,6 +417,15 @@ export class PrimaryTableComponent {
 
   // Helper methods for grid view
   getDisplayName(item: any): string {
+    // Handle classes
+    if (this.isClass(item)) {
+      return item.model || item.name || 'Unknown Class';
+    }
+    // Handle linked contacts
+    if (item.contactName) {
+      return item.contactName;
+    }
+    // Handle regular users/staff/students
     if (item.firstname && item.lastname) {
       return `${item.firstname} ${item.lastname}`.trim();
     }
@@ -319,7 +467,60 @@ export class PrimaryTableComponent {
     return '';
   }
 
+  getPermissionsCount(item: any): number {
+    if (!item.roles || !Array.isArray(item.roles)) {
+      return 0;
+    }
+
+    const allPermissions = new Set<string>();
+    item.roles.forEach((role: any) => {
+      if (role.permissions && Array.isArray(role.permissions)) {
+        role.permissions.forEach((permission: any) => {
+          if (permission.name) {
+            allPermissions.add(permission.name);
+          }
+        });
+      }
+    });
+
+    return allPermissions.size;
+  }
+
+  getTopPermissions(item: any): string[] {
+    if (!item.roles || !Array.isArray(item.roles)) {
+      return [];
+    }
+
+    const allPermissions = new Set<string>();
+    item.roles.forEach((role: any) => {
+      if (role.permissions && Array.isArray(role.permissions)) {
+        role.permissions.forEach((permission: any) => {
+          if (permission.name) {
+            allPermissions.add(permission.name);
+          }
+        });
+      }
+    });
+
+    // Return first 3 permissions, formatted nicely
+    return Array.from(allPermissions)
+      .slice(0, 3)
+      .map(p => this.formatPermissionName(p));
+  }
+
+  private formatPermissionName(permission: string): string {
+    // Convert permission names like "manage_users" to "Manage Users"
+    return permission
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+
   getProfileImageSrc(item: any): string {
+    // For linked contacts, use a default contact icon or no image
+    if (item.contactType) {
+      return 'assets/images/no-image.png';
+    }
     if (item.avatar) {
       // If avatar is already a full URL, return it as is
       if (item.avatar.startsWith('http') || item.avatar.startsWith('data:')) {
@@ -329,6 +530,16 @@ export class PrimaryTableComponent {
       return `${environment.assetUrl}/${item.avatar}`;
     }
     return 'assets/images/no-image.png';
+  }
+
+  getContactTypeValue(item: any): string {
+    if (!item.contactType) return '';
+    const relationshipMap: { [key: string]: string } = {
+      'parent_guardian': 'students.linked_contacts.parent_guardian',
+      'caretaker': 'students.linked_contacts.caretaker'
+    };
+    const key = relationshipMap[item.contactType] || item.contactType;
+    return this.translateService.instant(key);
   }
 
   onImageError(event: any) {

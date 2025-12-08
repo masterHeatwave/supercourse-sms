@@ -3,6 +3,7 @@ import { Component, EventEmitter, Output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { MoodsService } from '@gen-api/moods/moods.service';
 import { videoType } from '../../types/types';
+import { TranslateModule } from '@ngx-translate/core';
 
 interface VideoItem {
   id: string;
@@ -21,7 +22,7 @@ interface RelaxingMusicResponse {
 @Component({
   selector: 'app-relaxing-music-view',
   standalone: true,
-  imports: [ButtonModule, CommonModule],
+  imports: [ButtonModule, CommonModule, TranslateModule],
   templateUrl: './relaxing-music-view.component.html',
   styleUrl: './relaxing-music-view.component.scss'
 })

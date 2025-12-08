@@ -1,14 +1,16 @@
+// src/app/components/messaging/chat-window/chat-window.component.ts - FIXED VERSION
 import { Component, Input, Output, EventEmitter, OnDestroy, OnInit, OnChanges, 
   SimpleChanges, AfterViewInit, ViewChild, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { Chat, Message } from '../models/chat.models';
-import { Attachment, AttachmentUtils } from '../models/attachment.models';
+import { Attachment, AttachmentUtils, MessageAttachment } from '../models/attachment.models';
+import { AttachmentComponent } from '../attachment/attachment.component';
+import { AttachmentService } from '../../../services/messaging/attachment.service';
 import { SocketService } from '../../../services/socket/socket.service';
 import { MessagingWrapperService } from '../../../services/messaging/messaging-wrapper.service';  
 import { ChatMenuService, ChatMenuActions } from '../../../services/messaging/chat-menu.service';
-import { AttachmentComponent } from '../attachment/attachment.component';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { AvatarModule } from 'primeng/avatar';
 import { ChipModule } from 'primeng/chip';
@@ -23,19 +25,19 @@ import { Menu } from 'primeng/menu';
 import { ScrollPanel } from 'primeng/scrollpanel';
 import { TranslateModule } from '@ngx-translate/core';
 
-
 @Component({
   selector: 'app-chat-window',
   standalone: true,
   imports: [
     CommonModule, FormsModule, AvatarModule, ChipModule, ButtonModule, 
-    ScrollPanelModule, TooltipModule, TagModule, MenuModule, CardModule, AttachmentComponent,
-    InputTextareaModule, TranslateModule
+    ScrollPanelModule, TooltipModule, TagModule, MenuModule, CardModule, 
+    AttachmentComponent, InputTextareaModule, TranslateModule
   ],
   templateUrl: './chat-window.component.html',
   styleUrls: ['./chat-window.component.css']
 })
 export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
+
   @Input() chat!: Chat;
   @Input() currentUserId: string = '';
   @Output() chatUpdated = new EventEmitter<{chat: Chat, updates: any}>();
@@ -43,11 +45,11 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
 
   @ViewChild('scrollPanel', { static: false }) scrollPanel!: ScrollPanel;
 
-  // ✅ Inject services using inject()
   private api = inject(MessagingWrapperService);  
   private socket = inject(SocketService);
   private cdr = inject(ChangeDetectorRef);
   private chatMenuService = inject(ChatMenuService);
+  private attachmentService = inject(AttachmentService); 
   private typingTimeout: any;
 
   messages: Message[] = [];
@@ -65,9 +67,10 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     senderFullName?: string;
   } | null = null;
 
-  // Attachment state
+  // ✅ Attachment state
   isUploadingAttachments = false;
   uploadingFiles: File[] = [];
+  pendingAttachments: Attachment[] = [];
 
   private deletingChats = new Set<string>();
   private globalSubs: Subscription[] = []; 
@@ -79,7 +82,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
   typingFrom: string | null = null;
   online = false;
 
-  // Utility class for templates
   AttachmentUtils = AttachmentUtils;
 
   ngOnInit() {
@@ -98,6 +100,23 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     }
   }
 
+  ngOnDestroy() {
+    if (this.typingTimeout) {
+      clearTimeout(this.typingTimeout);
+    }
+    
+    if (this.currentChatId) {
+      this.socket.leaveChat(this.currentChatId);
+    }
+    
+    this.globalSubs.forEach(s => s.unsubscribe());
+    this.cleanupChatSpecificSubscriptions();
+    window.removeEventListener('scrollToSession', null as any);
+  }
+
+  // ========================================
+  // SESSION SCROLL FUNCTIONALITY
+  // ========================================
   private setupSessionScrollListener(): void {
     window.addEventListener('scrollToSession', (event: any) => {
       const { sessionId, timestamp } = event.detail;
@@ -105,11 +124,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     });
   }
 
-  /**
-   * ✅ Find and scroll to messages from a specific session
-   */
   private scrollToSessionInMessages(sessionId: string, timestamp?: number): void {
-
     if (!this.messages || this.messages.length === 0) {
       console.warn('⚠️ No messages found to scroll to');
       return;
@@ -118,7 +133,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     let targetIndex = 0;
 
     if (timestamp) {
-      // Find message closest to the timestamp
       const targetDate = new Date(timestamp);
       let closestDistance = Infinity;
       let closestIndex = 0;
@@ -136,15 +150,11 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
       targetIndex = closestIndex;
     }
 
-    // Scroll to the target message
     setTimeout(() => {
       this.scrollToMessageIndex(targetIndex);
     }, 300);
   }
 
-  /**
-   * ✅ NEW: Scroll to a specific message by index
-   */
   private scrollToMessageIndex(index: number): void {
     try {
       const messageElements = document.querySelectorAll('app-chat-window .message-item');
@@ -152,13 +162,11 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
       if (messageElements.length > index) {
         const targetElement = messageElements[index] as HTMLElement;
         
-        // Highlight the message temporarily
         targetElement.classList.add('highlight-message');
         setTimeout(() => {
           targetElement.classList.remove('highlight-message');
         }, 3000);
 
-        // Scroll into view
         targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     } catch (error) {
@@ -166,12 +174,9 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     }
   }
 
-  onTypingIndicatorChange(): void {
-    // This is called when typingFrom changes
-    this.scrollToBottom();
-  }
-
-  // ========== SOCKET MANAGEMENT ==========
+  // ========================================
+  // SOCKET MANAGEMENT
+  // ========================================
   private setupGlobalSocketSubscriptions() {
     this.ensureSocketAuthentication().then(() => {
       this.isSocketReady = true;
@@ -216,37 +221,29 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     });
   }
 
-  private updateBulkMessageReadStatus(data: { chatId: string; userId: string; readAt: Date; messageIds: string[] }): void {
-    // Only update if this is our current chat
-    if (!this.chat || data.chatId !== this.chat._id) return;
-    
-    // Only update if the reader is not the current user (we're the sender)
-    if (data.userId === this.currentUserId) return;
-    
-    let updatedCount = 0;
-    
-    this.messages.forEach(msg => {
-      if (data.messageIds.includes(msg._id) && msg.senderId === this.currentUserId) {
-        if (!msg.readBy) msg.readBy = [];
-        
-        const alreadyRead = msg.readBy.some(r => r.userId === data.userId);
-        if (!alreadyRead) {
-          msg.readBy.push({
-            userId: data.userId,
-            readAt: data.readAt
-          });
-          updatedCount++;
-        }
+  private async ensureSocketAuthentication(): Promise<void> {
+    return new Promise((resolve) => {
+      if (this.socket.isConnected()) {
+        resolve();
+        return;
       }
+
+      const authHandler = (data: any) => {
+        this.socket.socket.off('authenticated', authHandler);
+        resolve();
+      };
+
+      this.socket.socket.on('authenticated', authHandler);
+      this.socket.authenticate(this.currentUserId).catch(() => resolve());
+      
+      setTimeout(() => {
+        this.socket.socket.off('authenticated', authHandler);
+        resolve();
+      }, 3000);
     });
-    
-    if (updatedCount > 0) {
-      this.cdr.detectChanges();
-    }
   }
 
   private switchToChat() {
-    
     if (!this.chat || !this.chat._id || this.currentChatId === this.chat._id) {
       return;
     }
@@ -263,6 +260,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     this.typingFrom = null;
     this.online = false;
     this.cancelReply();
+    this.clearPendingAttachments();
 
     this.cdr.detectChanges();
   
@@ -279,8 +277,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
       checkReady();
     }
   }
-  
-  // ✅ FIXED: finalizeChatSwitch - Better error handling and retry
+
   private async finalizeChatSwitch() {
     if (!this.chat?._id) return;
     
@@ -311,48 +308,35 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     } catch (error) {
       console.error('❌ Error in finalizeChatSwitch:', error);
       
-      // Still try to load messages even if socket fails
       this.loadChatMessages();
       this.markChatAsRead();
     }
   }
 
-  onMessageInput(): void {
-    if (!this.chat?._id || !this.currentUserId) return;
-    
-    // Emit typing started
-    this.socket.emitTyping(this.chat._id, this.currentUserId, true);
-    
-    // Clear existing timeout
-    if (this.typingTimeout) {
-      clearTimeout(this.typingTimeout);
-    }
-    
-    // Set new timeout to stop typing after 2 seconds of inactivity
-    this.typingTimeout = setTimeout(() => {
-      this.socket.emitTyping(this.chat._id, this.currentUserId, false);
-    }, 2000);
+  private cleanupChatSpecificSubscriptions() {
+    this.chatSpecificSubs.forEach(s => s.unsubscribe());
+    this.chatSpecificSubs = [];
   }
-  
 
+  // ========================================
+  // MESSAGE LOADING & MANAGEMENT
+  // ========================================
   private loadChatMessages() {
     if (!this.chat?._id) return;
     
     this.api.getMessages(this.chat._id).subscribe({
       next: (msgs: Message[]) => {
+        
         this.messages = msgs;
         setTimeout(() => this.scrollToBottom(), 100);
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('=== Error loading messages:', err);
+        console.error('❌ Error loading messages:', err);
         
-        // ✅ FIX: Handle chat not found error
         if (err.status === 404) {
           console.error('❌ Chat not found. Notifying parent to remove it.');
-          // Emit event to parent to remove this invalid chat
           this.deleteChat.emit(this.chat);
-          
           alert('This conversation no longer exists. It will be removed from your chat list.');
         } else {
           alert('Failed to load messages. Please try again.');
@@ -360,8 +344,8 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
       }
     });
   }
-  
-  markChatAsRead() {
+
+  private markChatAsRead() {
     if (!this.chat?._id || !this.currentUserId) return;
     
     this.api.markChatAsRead(this.chat._id, this.currentUserId).subscribe({
@@ -380,7 +364,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
       error: (err) => {
         console.error('Error marking chat as read:', err);
         
-        // ✅ FIX: Handle chat not found error
         if (err.status === 404) {
           console.error('❌ Chat not found. Notifying parent to remove it.');
           this.deleteChat.emit(this.chat);
@@ -390,31 +373,25 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     });
   }
 
-  private async ensureSocketAuthentication(): Promise<void> {
-    return new Promise((resolve) => {
-      if (this.socket.isConnected()) {
-        resolve();
-        return;
+  private updateLocalMessageReadStatus() {
+    this.messages.forEach(msg => {
+      if (msg.senderId !== this.currentUserId) {
+        if (!msg.readBy) msg.readBy = [];
+        const alreadyRead = msg.readBy.some(r => r.userId === this.currentUserId);
+        if (!alreadyRead) {
+          msg.readBy.push({
+            userId: this.currentUserId,
+            readAt: new Date()
+          });
+        }
       }
-
-      const authHandler = (data: any) => {
-        this.socket.socket.off('authenticated', authHandler);
-        resolve();
-      };
-
-      this.socket.socket.on('authenticated', authHandler);
-      this.socket.authenticate(this.currentUserId).catch(() => resolve());
-      
-      setTimeout(() => {
-        this.socket.socket.off('authenticated', authHandler);
-        resolve();
-      }, 3000);
     });
   }
 
-  // ========== MESSAGE HANDLERS ==========
+  // ========================================
+  // MESSAGE HANDLERS (SOCKET EVENTS)
+  // ========================================
   private handleIncomingMessage(msg: Message & { chatId: string }) {
-    
     if (!this.chat || msg.chatId !== this.chat._id) {
       return;
     }
@@ -434,23 +411,26 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
   
     this.messages.push(msg);
     
-    this.chat.lastMessageContent = msg.content;
+    // Handle last message content with attachments
+    if (msg.content) {
+      this.chat.lastMessageContent = msg.content;
+    } else if (msg.attachments && msg.attachments.length > 0) {
+      this.chat.lastMessageContent = `📎 ${msg.attachments.length} attachment(s)`;
+    } else {
+      this.chat.lastMessageContent = '[Message]';
+    }
+    
     this.chat.lastMessageDate = msg.timestamp;
   
-    // ✅ FIX: If message is from another user, mark as read after a delay
     if (msg.senderId !== this.currentUserId) {
-      
       setTimeout(() => {
         this.api.markChatAsRead(this.chat._id, this.currentUserId).subscribe({
           next: () => {
-            
-            // Update local unread count
             if (!this.chat.unreadCount) {
               this.chat.unreadCount = {};
             }
             this.chat.unreadCount[this.currentUserId] = 0;
             
-            // ✅ Emit to parent (chat-list) to update unread count
             this.chatUpdated.emit({
               chat: this.chat,
               updates: { unreadCount: this.chat.unreadCount }
@@ -467,8 +447,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
   
     this.cdr.detectChanges();
     setTimeout(() => this.scrollToBottom(), 50);
-
-    this.loadChatMessages();
   }
 
   private updateMessageDeliveryStatus(data: { messageId: string; userId: string; deliveredAt: Date }) {
@@ -488,12 +466,10 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
   }
 
   private updateMessageReadStatus(data: { messageId: string; userId: string; readAt: Date; chatId: string }) {
-    // ✅ FIX: Check both current chat and if we're the sender
     if (!this.chat || data.chatId !== this.chat._id) {
       return;
     }
     
-    // Only update if the reader is not the current user (we're the sender)
     if (data.userId === this.currentUserId) {
       return;
     }
@@ -503,7 +479,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
       return;
     }
     
-    // Only update our sent messages
     if (message.senderId !== this.currentUserId) {
       return;
     }
@@ -520,20 +495,47 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     }
   }
 
+  private updateBulkMessageReadStatus(data: { chatId: string; userId: string; readAt: Date; messageIds: string[] }): void {
+    if (!this.chat || data.chatId !== this.chat._id) return;
+    
+    if (data.userId === this.currentUserId) return;
+    
+    let updatedCount = 0;
+    
+    this.messages.forEach(msg => {
+      if (data.messageIds.includes(msg._id) && msg.senderId === this.currentUserId) {
+        if (!msg.readBy) msg.readBy = [];
+        
+        const alreadyRead = msg.readBy.some(r => r.userId === data.userId);
+        if (!alreadyRead) {
+          msg.readBy.push({
+            userId: data.userId,
+            readAt: data.readAt
+          });
+          updatedCount++;
+        }
+      }
+    });
+    
+    if (updatedCount > 0) {
+      this.cdr.detectChanges();
+    }
+  }
+
   private handleTypingIndicator(data: { chatId: string; userId: string; isTyping: boolean }) {
     if (!this.chat || data.chatId !== this.chat._id || data.userId === this.currentUserId) return;
 
     if (data.isTyping) {
       this.typingFrom = data.userId;
       this.cdr.detectChanges();
-      setTimeout(() => this.scrollToBottom(), 50);
+      setTimeout(() => this.scrollToBottom(), 10);
     
       setTimeout(() => {
         if (this.typingFrom === data.userId) {
           this.typingFrom = null;
           this.cdr.detectChanges();
         }
-      }, 5000);
+      }, 1000);
     } else {
       this.typingFrom = null;
     }
@@ -562,57 +564,96 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     this.cdr.detectChanges();
   }
 
-  // ========== ATTACHMENT HANDLERS ==========
+  // ========================================
+  // ATTACHMENT HANDLERS
+  // ========================================
   onUploadStart(files: File[]): void {
-    console.log('Upload started with files:', files);
     this.isUploadingAttachments = true;
     this.uploadingFiles = [...files];
     this.cdr.detectChanges();
   }
 
   onUploadComplete(attachments: Attachment[]): void {
-    console.log('Upload completed with attachments:', attachments);
+    
+    // ✅ Validate attachment structure
+    attachments.forEach((att, index) => {
+    
+      
+      if (!att._id || !att.filename || !att.key) {
+        console.error('❌ Invalid attachment structure:', att);
+      }
+    });
+    
     this.isUploadingAttachments = false;
     this.uploadingFiles = [];
+    
+    // ✅ Add to pending attachments
+    this.pendingAttachments.push(...attachments);
+    
     this.cdr.detectChanges();
     this.scrollToBottom();
   }
 
   onUploadError(error: string): void {
-    console.error('Upload error:', error);
+    console.error('❌ Upload error:', error);
     this.isUploadingAttachments = false;
     this.uploadingFiles = [];
     this.cdr.detectChanges();
+    alert(`Upload failed: ${error}`);
   }
 
-  downloadAttachment(attachment: Attachment): void {
-    if (attachment.status !== 'ready' || attachment.virusScanStatus !== 'clean') {
+  openAttachment(att: MessageAttachment | Attachment) {
+    if (!att || !att.key) {
+      console.error('❌ No key available for attachment');
+      alert('Cannot open attachment: No file key');
       return;
     }
-
-    this.api.downloadAttachment(attachment._id).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = attachment.originalName;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+    
+    // ✅ Get a FRESH signed URL from the backend
+    this.attachmentService.downloadFile(att.key).subscribe({
+      next: (response) => {
+        if (response.url) {
+          window.open(response.url, '_blank');
+        } else {
+          alert('Failed to open attachment');
+        }
       },
-      error: (error) => {
-        console.error('Download failed:', error);
+      error: (err) => {
+        console.error('❌ Error:', err);
+        if (err.status === 404) {
+          alert('Attachment not found');
+        } else {
+          alert('Failed to open attachment');
+        }
       }
     });
   }
 
-  // ========== CHAT OPERATIONS ==========
+  clearPendingAttachments(): void {
+    this.pendingAttachments = [];
+    this.cdr.detectChanges();
+  }
+
+  removePendingAttachment(attachment: Attachment): void {
+    this.pendingAttachments = this.pendingAttachments.filter(a => a._id !== attachment._id);
+    this.cdr.detectChanges();
+  }
+
+  // ========================================
+  // MESSAGE SENDING
+  // ========================================
+  canSendMessage(): boolean {
+    const hasContent = this.newMessage && this.newMessage.trim().length > 0;
+    const hasAttachments = this.pendingAttachments.length > 0;
+    return hasContent || hasAttachments;
+  }
+
   sendMessage() {
-    
     const content = this.newMessage.trim();
-    if (!content) {
-      console.warn('⚠️ Message content is empty');
+    
+    // ✅ Allow sending if there's content OR pending attachments
+    if (!content && this.pendingAttachments.length === 0) {
+      console.warn('⚠️ Cannot send empty message without attachments');
       return;
     }
     
@@ -639,11 +680,39 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
       return;
     }
 
-  
-    // ✅ Use wrapper service method
-    this.api.sendMessage(this.currentUserId, recipientIds, content, this.chat._id, replyToMessageId).subscribe({
+    // ✅ Prepare attachments array - Map _id to fileId
+    const attachments = this.pendingAttachments.length > 0 
+      ? this.pendingAttachments.map(att => {
+          // ✅ Validate required fields
+          if (!att._id) {
+            console.error('❌ Attachment missing _id:', att);
+            throw new Error('Attachment missing ID');
+          }
+          if (!att.key) {
+            console.error('❌ Attachment missing key:', att);
+            throw new Error('Attachment missing storage key');
+          }
+          
+          return {
+            fileId: att._id,
+            filename: att.filename || 'unknown',
+            key: att.key,
+            size: att.size || 0,
+            contentType: att.contentType || 'application/octet-stream'
+          };
+        })
+      : undefined;
+
+    // ✅ Send message with attachments
+    this.api.sendMessageWithAttachments(
+      this.currentUserId, 
+      recipientIds, 
+      content, 
+      this.chat._id, 
+      attachments,
+      replyToMessageId
+    ).subscribe({
       next: (sentMessage) => {
-        
         const existingMessage = this.messages.find(m => m._id === sentMessage._id);
         
         if (!existingMessage) {
@@ -655,54 +724,156 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
           }
         }
         
-        this.chat.lastMessageContent = content;
+        // Update last message content
+        if (content) {
+          this.chat.lastMessageContent = content;
+        } else if (attachments && attachments.length > 0) {
+          this.chat.lastMessageContent = `📎 ${attachments.length} attachment(s)`;
+        }
         this.chat.lastMessageDate = new Date();
         
+        // ✅ Clear form
         this.newMessage = '';
+        this.pendingAttachments = [];
         this.cancelReply(); 
+        
         this.cdr.detectChanges();
         this.scrollToBottom();
       },
       error: (error) => {
         console.error('❌ Error sending message:', error);
+        console.error('❌ Error response:', error.error);
+        console.error('❌ Error status:', error.status);
         
-        // ✅ FIX: Show user-friendly error messages
         if (error.status === 404) {
           alert('Chat not found. Please refresh the page.');
         } else if (error.status === 403) {
           alert('You do not have permission to send messages in this chat.');
         } else if (error.status === 400) {
-          alert('Invalid message. Please try again.');
+          const errorMsg = error.error?.error || error.error?.message || 'Invalid message';
+          alert(`Cannot send message: ${errorMsg}`);
         } else {
           alert('Failed to send message. Please check your connection and try again.');
         }
       }
     });
   }
-  
 
-  emitTyping() {
-    if (this.chat && this.socket.isConnected()) {
-      this.socket.emitTyping(this.chat._id, this.currentUserId, true);
+  onMessageInput(): void {
+    if (!this.chat?._id || !this.currentUserId) return;
+    
+    this.socket.emitTyping(this.chat._id, this.currentUserId, true);
+    
+    if (this.typingTimeout) {
+      clearTimeout(this.typingTimeout);
+    }
+    
+    this.typingTimeout = setTimeout(() => {
+      this.socket.emitTyping(this.chat._id, this.currentUserId, false);
+    }, 2000);
+  }
+
+  handleKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.sendMessage();
+    }
+    
+    if (event.key === 'Escape' && this.replyingToMessage) {
+      this.cancelReply();
     }
   }
 
-  private updateLocalMessageReadStatus() {
-    this.messages.forEach(msg => {
-      if (msg.senderId !== this.currentUserId) {
-        if (!msg.readBy) msg.readBy = [];
-        const alreadyRead = msg.readBy.some(r => r.userId === this.currentUserId);
-        if (!alreadyRead) {
-          msg.readBy.push({
-            userId: this.currentUserId,
-            readAt: new Date()
-          });
+  // ========================================
+  // REPLY FUNCTIONALITY
+  // ========================================
+  startReply(message: Message) {
+    this.replyingToMessage = {
+      _id: message._id,
+      content: message.content,
+      timestamp: message.timestamp,
+      senderId: message.senderId,
+      senderUsername: message.senderUsername,
+      senderFullName: message.senderFullName
+    };
+    
+    setTimeout(() => {
+      const textarea = document.querySelector('textarea');
+      if (textarea) textarea.focus();
+    }, 100);
+    
+    this.cdr.detectChanges();
+  }
+
+  cancelReply() {
+    this.replyingToMessage = null;
+    this.cdr.detectChanges();
+  }
+
+  getReplyToSenderName(replyMessage: any): string {
+    if (replyMessage.senderId === this.currentUserId) return 'You';
+    if (replyMessage.senderUsername) return replyMessage.senderUsername.split('@')[0];
+    if (replyMessage.senderFullName) return replyMessage.senderFullName;
+    
+    if (this.chat.participantsDetails && replyMessage.senderId) {
+      const sender = this.chat.participantsDetails.find(u => u.userId === replyMessage.senderId);
+      if (sender) {
+        return sender.displayName || `${sender.firstname || ''} ${sender.lastname || ''}`.trim() || 'Unknown User';
+      }
+    }
+    
+    return 'Unknown User';
+  }
+
+  // ========================================
+  // MESSAGE OPERATIONS
+  // ========================================
+  deleteMessage(message: Message) {
+    if (message.senderId !== this.currentUserId || !confirm('Delete this message?')) return;
+  
+    this.api.deleteMessage(message._id).subscribe({
+      next: () => {
+        this.messages = this.messages.filter(m => m._id !== message._id);
+        if (this.replyingToMessage && this.replyingToMessage._id === message._id) {
+          this.cancelReply();
         }
+        this.updateChatLastMessage();
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error deleting message:', error);
       }
     });
   }
 
-  // ========== MENU OPERATIONS ==========
+  private updateChatLastMessage(): void {
+    if (!this.chat) return;
+  
+    const sortedMessages = [...this.messages].sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  
+    if (sortedMessages.length > 0) {
+      const lastMessage = sortedMessages[0];
+      this.chat.lastMessageContent = lastMessage.content;
+      this.chat.lastMessageDate = lastMessage.timestamp;
+    } else {
+      this.chat.lastMessageContent = 'No messages yet';
+      this.chat.lastMessageDate = this.chat.createdAt || new Date();
+    }
+  
+    this.chatUpdated.emit({
+      chat: this.chat,
+      updates: {
+        lastMessageContent: this.chat.lastMessageContent,
+        lastMessageDate: this.chat.lastMessageDate
+      }
+    });
+  }
+
+  // ========================================
+  // MENU OPERATIONS
+  // ========================================
   showChatMenu(event: Event, menu: Menu) {
     event.stopPropagation();
     if (!this.chat) return;
@@ -748,96 +919,11 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     menu.toggle(event);
   }
 
-  // ========== REPLY FUNCTIONALITY ==========
-  startReply(message: Message) {
-    this.replyingToMessage = {
-      _id: message._id,
-      content: message.content,
-      timestamp: message.timestamp,
-      senderId: message.senderId,
-      senderUsername: message.senderUsername,
-      senderFullName: message.senderFullName
-    };
-    
-    setTimeout(() => {
-      const textarea = document.querySelector('textarea');
-      if (textarea) textarea.focus();
-    }, 100);
-    
-    this.cdr.detectChanges();
-  }
-
-  cancelReply() {
-    this.replyingToMessage = null;
-    this.cdr.detectChanges();
-  }
-
-  getReplyToSenderName(replyMessage: any): string {
-    if (replyMessage.senderId === this.currentUserId) return 'You';
-    if (replyMessage.senderUsername) return replyMessage.senderUsername.split('@')[0];
-    if (replyMessage.senderFullName) return replyMessage.senderFullName;
-    
-    if (this.chat.participantsDetails && replyMessage.senderId) {
-      const sender = this.chat.participantsDetails.find(u => u.userId === replyMessage.senderId);
-      if (sender) {
-        return sender.displayName || `${sender.firstname || ''} ${sender.lastname || ''}`.trim() || 'Unknown User';
-      }
-    }
-    
-    return 'Unknown User';
-  }
-
-  // ========== MESSAGE OPERATIONS ==========
-  deleteMessage(message: Message) {
-    if (message.senderId !== this.currentUserId || !confirm('Delete this message?')) return;
-  
-    // ✅ Use wrapper service method
-    this.api.deleteMessage(message._id).subscribe({
-      next: () => {
-        this.messages = this.messages.filter(m => m._id !== message._id);
-        if (this.replyingToMessage && this.replyingToMessage._id === message._id) {
-          this.cancelReply();
-        }
-        this.updateChatLastMessage();
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error deleting message:', error);
-      }
-    });
-  }
-
-  private updateChatLastMessage(): void {
-    if (!this.chat) return;
-  
-    const sortedMessages = [...this.messages].sort((a, b) => 
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
-  
-    if (sortedMessages.length > 0) {
-      const lastMessage = sortedMessages[0];
-      this.chat.lastMessageContent = lastMessage.content;
-      this.chat.lastMessageDate = lastMessage.timestamp;
-    } else {
-      this.chat.lastMessageContent = 'No messages yet';
-      this.chat.lastMessageDate = this.chat.createdAt || new Date();
-    }
-  
-    this.chatUpdated.emit({
-      chat: this.chat,
-      updates: {
-        lastMessageContent: this.chat.lastMessageContent,
-        lastMessageDate: this.chat.lastMessageDate
-      }
-    });
-  }
-
   private handleChatDeletion(chat: Chat): void {
     if (this.deletingChats.has(chat._id)) return;
 
     this.deletingChats.add(chat._id);
 
-    // ✅ Use wrapper service method
     this.api.deleteChat(chat._id).subscribe({
       next: () => {
         this.deletingChats.delete(chat._id);
@@ -854,7 +940,9 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     });
   }
 
-  // ========== UTILITY METHODS ==========
+  // ========================================
+  // UTILITY METHODS
+  // ========================================
   private scrollToBottom() {
     setTimeout(() => {
       try {
@@ -887,23 +975,9 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     }, 100);
   }
 
-  private cleanupChatSpecificSubscriptions() {
-    this.chatSpecificSubs.forEach(s => s.unsubscribe());
-    this.chatSpecificSubs = [];
-  }
-
-  handleKeydown(event: KeyboardEvent) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      this.sendMessage();
-    }
-    
-    if (event.key === 'Escape' && this.replyingToMessage) {
-      this.cancelReply();
-    }
-  }
-
-  // ========== MESSAGE STATUS METHODS ==========
+  // ========================================
+  // MESSAGE STATUS METHODS
+  // ========================================
   getMessageStatus(msg: Message): 'sent' | 'delivered' | 'read' {
     if (!this.isSent(msg)) return 'sent';
     if (msg.readBy && msg.readBy.length > 0) return 'read';
@@ -911,7 +985,9 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
     return 'sent';
   }
 
-  // ========== UI HELPER METHODS ==========
+  // ========================================
+  // UI HELPER METHODS
+  // ========================================
   getChatName(): string {
     if (this.chat.type === 'group' && this.chat.name) return this.chat.name;
 
@@ -943,7 +1019,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
   }
 
   getSenderName(msg: Message): string {
-    
     if (msg.senderUsername) return msg.senderUsername;
     if (msg.senderFullName) return msg.senderFullName;
   
@@ -1049,19 +1124,5 @@ export class ChatWindowComponent implements OnInit, OnDestroy, OnChanges, AfterV
 
   trackByMessageId(index: number, message: Message): string {
     return message._id;
-  }
-
-  ngOnDestroy() {
-    if (this.typingTimeout) {
-      clearTimeout(this.typingTimeout);
-    }
-    
-    if (this.currentChatId) {
-      this.socket.leaveChat(this.currentChatId);
-    }
-    
-    this.globalSubs.forEach(s => s.unsubscribe());
-    this.cleanupChatSpecificSubscriptions();
-    window.removeEventListener('scrollToSession', null as any);
   }
 }

@@ -15,10 +15,13 @@ import { InputTextareaModule } from 'primeng/inputtextarea';
 import { CheckboxModule } from 'primeng/checkbox';
 import { CalendarModule } from 'primeng/calendar';
 import { TagModule } from 'primeng/tag';
+import { RadioButtonModule } from 'primeng/radiobutton';
 import { TranslateModule } from '@ngx-translate/core';
+import * as XLSX from 'xlsx';
 
 interface CalendarCategory { id: string; name: string; color: string; }
 interface InviteeOption { label: string; value: string; }
+interface ExportFormat { label: string; value: string; icon: string; description: string; }
 
 @Component({
   selector: 'app-calendar-page',
@@ -37,6 +40,7 @@ interface InviteeOption { label: string; value: string; }
     CheckboxModule,
     CalendarModule,
     TagModule,
+    RadioButtonModule,
     TranslateModule
   ],
   templateUrl: './calendar.component.html',
@@ -70,9 +74,17 @@ export class CalendarComponent implements OnInit {
   // Dialog state
   showCreateDialog = false;
   showDetailsDialog = false;
+  showDownloadDialog = false;
 
   createForm!: FormGroup;
   selectedEvent: any = null;
+  selectedExportFormat = 'ics';
+
+  exportFormats: ExportFormat[] = [
+    { label: 'ICS', value: 'ics', icon: 'pi pi-calendar', description: 'calendar.export.ics_description' },
+    { label: 'Excel', value: 'xlsx', icon: 'pi pi-file-excel', description: 'calendar.export.xlsx_description' },
+    { label: 'CSV', value: 'csv', icon: 'pi pi-file', description: 'calendar.export.csv_description' }
+  ];
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
@@ -106,8 +118,93 @@ export class CalendarComponent implements OnInit {
 
   // Buttons
   onDownloadCalendar() {
-    // Stub: replace with real export later
-    console.log('Download calendar clicked');
+    this.showDownloadDialog = true;
+  }
+
+  confirmDownload() {
+    const events = this.calendarOptions.events as EventInput[];
+
+    switch (this.selectedExportFormat) {
+      case 'ics':
+        this.exportToICS(events);
+        break;
+      case 'xlsx':
+        this.exportToExcel(events);
+        break;
+      case 'csv':
+        this.exportToCSV(events);
+        break;
+    }
+
+    this.showDownloadDialog = false;
+  }
+
+  private exportToICS(events: EventInput[]) {
+    const icsContent = this.generateICSContent(events);
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    this.downloadFile(blob, 'calendar.ics');
+  }
+
+  private exportToExcel(events: EventInput[]) {
+    const data = this.eventsToExportData(events);
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook: XLSX.WorkBook = { Sheets: { 'Calendar Events': worksheet }, SheetNames: ['Calendar Events'] };
+    XLSX.writeFile(workbook, 'calendar-events.xlsx');
+  }
+
+  private exportToCSV(events: EventInput[]) {
+    const data = this.eventsToExportData(events);
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const csv = XLSX.utils.sheet_to_csv(worksheet);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    this.downloadFile(blob, 'calendar-events.csv');
+  }
+
+  private eventsToExportData(events: EventInput[]) {
+    return events.map(event => ({
+      Title: event.title || '',
+      Start: event.start ? new Date(event.start as string).toLocaleString() : '',
+      End: event.end ? new Date(event.end as string).toLocaleString() : '',
+      'All Day': event.allDay ? 'Yes' : 'No',
+      Location: event.extendedProps?.['location'] || '',
+      Description: event.extendedProps?.['description'] || '',
+      Invitees: event.extendedProps?.['invitees'] || '',
+      Category: event.extendedProps?.['category'] || '',
+      Creator: event.extendedProps?.['creator'] || ''
+    }));
+  }
+
+  private generateICSContent(events: EventInput[]): string {
+    const formatDate = (date: Date | string): string => {
+      const d = new Date(date);
+      return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    };
+
+    let ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Calendar Export//EN\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\n';
+
+    events.forEach(event => {
+      ics += 'BEGIN:VEVENT\r\n';
+      ics += `UID:${event.id || Math.random().toString(36).slice(2)}@calendar\r\n`;
+      ics += `DTSTAMP:${formatDate(new Date())}\r\n`;
+      if (event.start) ics += `DTSTART:${formatDate(event.start as string)}\r\n`;
+      if (event.end) ics += `DTEND:${formatDate(event.end as string)}\r\n`;
+      ics += `SUMMARY:${event.title || 'Untitled Event'}\r\n`;
+      if (event.extendedProps?.['location']) ics += `LOCATION:${event.extendedProps['location']}\r\n`;
+      if (event.extendedProps?.['description']) ics += `DESCRIPTION:${event.extendedProps['description']}\r\n`;
+      ics += 'END:VEVENT\r\n';
+    });
+
+    ics += 'END:VCALENDAR\r\n';
+    return ics;
+  }
+
+  private downloadFile(blob: Blob, filename: string) {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    window.URL.revokeObjectURL(url);
   }
 
   goToMyEvents() {

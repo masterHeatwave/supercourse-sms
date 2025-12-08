@@ -9,9 +9,14 @@ import { tenantAwarePlugin } from '@plugins/tenantAware';
 
 const AbsenceSchema: Schema<IAbsence> = new mongoose.Schema(
   {
+    session_type: {
+      type: String,
+      enum: ['Session', 'SessionRecurring'],
+      default: 'Session',
+    },
     session: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Session',
+      refPath: 'session_type',
       required: [true, 'Please add a session'],
     },
     student: {

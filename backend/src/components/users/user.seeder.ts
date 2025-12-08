@@ -41,11 +41,7 @@ const seedTenantUsers = async (tenantId: string) => {
       }
 
       const branches = await Customer.find({ parent_customer: tenantCustomer._id, is_primary: false });
-      if (!branches.length) {
-        throw new Error(
-          `[${tenantId}] No branches found for tenant '${tenantId}'. Ensure branches are seeded before users.`
-        );
-      }
+      // Note: Branches are now optional - they're only created when sub-customers are explicitly created
 
       const adminCode = await generateRandomCode();
       await User.create({
@@ -60,8 +56,12 @@ const seedTenantUsers = async (tenantId: string) => {
         passwordHash: bcrypt.hashSync('password123', 10),
         roles: [adminRole.id, managerRole.id, teacherRole.id, studentRole.id, parentRole.id],
         customers: [tenantCustomer.id],
-        branches: branches.map((b) => b.id),
+        branches: branches.map((b) => b.id), // Will be empty array if no branches exist
         is_active: true,
+        birthday: new Date('1990-01-01'),
+        address: '123 Admin Street',
+        city: 'Athens',
+        zipcode: '10001',
       });
 
       const userTypes = [
@@ -81,8 +81,15 @@ const seedTenantUsers = async (tenantId: string) => {
 
           const existingUser = await User.findOne({ email });
           if (!existingUser) {
-            // Randomly assign user to one of the branches
-            const randomBranch = branches[Math.floor(Math.random() * branches.length)];
+            // Randomly assign user to one of the branches (if any exist)
+            const randomBranch = branches.length > 0 ? branches[Math.floor(Math.random() * branches.length)] : null;
+
+            // Generate random birthday (between 5 and 70 years ago)
+            const minAge = type === IUserType.STUDENT ? 5 : 25;
+            const maxAge = type === IUserType.STUDENT ? 18 : 70;
+            const birthday = chance.birthday({
+              year: new Date().getFullYear() - chance.integer({ min: minAge, max: maxAge }),
+            });
 
             const userData: any = {
               username,
@@ -96,8 +103,13 @@ const seedTenantUsers = async (tenantId: string) => {
               passwordHash: bcrypt.hashSync('password123', 10),
               roles: [role.id],
               customers: [tenantCustomer.id],
-              branches: [randomBranch.id],
+              branches: randomBranch ? [randomBranch.id] : [],
               is_active: true,
+              // Additional fields
+              birthday,
+              address: chance.address(),
+              city: chance.city(),
+              zipcode: chance.zip(),
             };
 
             await User.create(userData);
@@ -132,6 +144,10 @@ const seedUsers = async () => {
           passwordHash: bcrypt.hashSync(config.ADMIN_USER.PASSWORD, 10),
           roles: [globalAdminRole._id],
           archived: false,
+          birthday: new Date('1985-01-01'),
+          address: '456 Global Admin Avenue',
+          city: 'Athens',
+          zipcode: '10002',
         });
       } else {
         logger.warn('Global ADMIN role not found, cannot seed global admin user.');
@@ -142,7 +158,6 @@ const seedUsers = async () => {
   }
 
   await seedTenantUsers('supercourse');
-  await seedTenantUsers('piedpiper');
 };
 
 export { seedTenantUsers };

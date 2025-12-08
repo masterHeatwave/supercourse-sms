@@ -2,6 +2,12 @@ export interface SessionData {
   id: string;
   start_date: string;
   end_date: string;
+  start_time?: string;
+  duration?: number;
+  is_cancelled?: boolean;
+  taxi?: any;
+  mode?: string;
+  absences?: any[];
   classroom?: any;
   teachers?: any[];
   students?: any[];

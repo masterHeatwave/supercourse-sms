@@ -17,14 +17,20 @@ router.put('/bulk', authorize([Role.ADMIN, Role.MANAGER]), sessionController.upd
 // Standard CRUD routes
 router
   .route('/')
-  .get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), sessionController.getAllSessions)
-  .post(authorize([Role.ADMIN, Role.MANAGER]), sessionController.createSession);
+  .get(
+    authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT, Role.PARENT_GUARDIAN]),
+    sessionController.getAllSessions
+  )
+  .post(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), sessionController.createSession);
 
 router
   .route('/:id')
-  .get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT]), sessionController.getSessionById)
-  .put(authorize([Role.ADMIN, Role.MANAGER]), sessionController.updateSession)
-  .delete(authorize([Role.ADMIN]), sessionController.deleteSession);
+  .get(
+    authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT, Role.PARENT_GUARDIAN]),
+    sessionController.getSessionById
+  )
+  .put(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), sessionController.updateSession)
+  .delete(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), sessionController.deleteSession);
 
 // Student/Teacher management routes
 router.post('/add-student', authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), sessionController.addStudent);
@@ -38,5 +44,8 @@ router.post(
   authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT]),
   sessionController.createOnlineSessionToken
 );
+// Scoped endpoints for role-based access
+router.get('/me', authorize([Role.TEACHER, Role.STUDENT]), sessionController.getMySessions);
+router.get('/children', authorize([Role.PARENT_GUARDIAN]), sessionController.getChildrenSessions);
 
 export default router;

@@ -1,18 +1,18 @@
 <div class="outer-div">
-  <label>My tools</label>
+  <label>{{ 'wellnessCenter.tools' | translate }}</label>
   <img src="assets/images/wellness-center/tools.png" width="auto" height="60" />
   <div class="inner-div">
     <div class="image-button-div">
       <img src="assets/images/wellness-center/meditation.png" />
-      <p-button (onClick)="navigateTo('meditation')">Meditation</p-button>
+      <p-button (onClick)="navigateTo('meditation')">{{ 'wellnessCenter.meditation_button' | translate }}</p-button>
     </div>
     <div class="image-button-div">
       <img src="assets/images/wellness-center/relaxingMusic.png" />
-      <p-button (onClick)="navigateTo('relaxing')">Relaxing music</p-button>
+      <p-button (onClick)="navigateTo('relaxing')">{{ 'wellnessCenter.relaxing_music_button' | translate }}</p-button>
     </div>
     <div class="image-button-div">
       <img src="assets/images/wellness-center/calmTime.png" />
-      <p-button (onClick)="navigateTo('calm')">Calm time</p-button>
+      <p-button (onClick)="navigateTo('calm')">{{ 'wellnessCenter.calm_time_button' | translate }}</p-button>
     </div>
   </div>
 </div>

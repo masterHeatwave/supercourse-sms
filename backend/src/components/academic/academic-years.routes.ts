@@ -11,11 +11,23 @@ router
   .get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), academicYearController.getAllAcademicYears)
   .post(authorize([Role.ADMIN]), academicYearController.createAcademicYear);
 
-// Current route must be defined before :id route to avoid conflicts
+// Current routes must be defined before :id route to avoid conflicts
 router.get(
   '/current',
   authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]),
   academicYearController.getCurrentAcademicYear
+);
+
+router.get(
+  '/selected',
+  authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT]),
+  academicYearController.getCurrentlySelectedAcademicYear
+);
+
+router.get(
+  '/status/dual',
+  authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]),
+  academicYearController.getAcademicYearStatus
 );
 
 router

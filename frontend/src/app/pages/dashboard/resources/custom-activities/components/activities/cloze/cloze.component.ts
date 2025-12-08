@@ -1,12 +1,13 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { BlockAnswerComponent } from './block-answer/block-answer.component';
 import { DataService } from '../../../services/data.service';
 import { Question } from '../../../types';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'cloze-activity',
   standalone: true,
-  imports: [BlockAnswerComponent],
+  imports: [BlockAnswerComponent, TranslateModule],
   templateUrl: './cloze.component.html',
   styleUrl: './cloze.component.scss',
 })
@@ -25,10 +26,8 @@ export class ClozeComponent {
   @Input() document = '';
   @Input() answers = [];
   @Input() imageURL = '';
-  
-  dataService = inject(DataService);
 
-  constructor() {
+  constructor(private dataService: DataService) {
     this.dataService.getQuestions().subscribe((questions: Question[]) => {
       this.questions = questions;
     });

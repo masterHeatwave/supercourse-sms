@@ -1,29 +1,16 @@
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  EventEmitter,
-  Input,
-  OnDestroy,
-  Output,
-  ViewChild,
-} from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ImageSelectorComponent } from '../../../image-selector/image-selector.component';
 import { ButtonModule } from 'primeng/button';
-import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'cloze-block-answer',
   standalone: true,
-  imports: [
-    CommonModule,
-    ImageSelectorComponent,
-    ButtonModule,
-    WarningDialogComponent,
-  ],
+  imports: [CommonModule, ImageSelectorComponent, ButtonModule, WarningDialogComponent, TranslateModule],
   templateUrl: './block-answer.component.html',
-  styleUrl: './block-answer.component.scss',
+  styleUrl: './block-answer.component.scss'
 })
 export class BlockAnswerComponent implements AfterViewInit, OnDestroy {
   @ViewChild('editableDiv', { static: true }) editableDiv!: ElementRef;
@@ -42,17 +29,18 @@ export class BlockAnswerComponent implements AfterViewInit, OnDestroy {
   @Output() blocksChanged: EventEmitter<object> = new EventEmitter<object>();
   @Output() imageURLChanged: EventEmitter<string> = new EventEmitter<string>();
 
-  constructor() {}
+  constructor(public translate: TranslateService) {
+    this.warningMessage = translate.instant('customActivities.please_select_other_text');
+    translate.onLangChange.subscribe(() => {
+      this.warningMessage = translate.instant('customActivities.please_select_other_text');
+    });
+  }
 
   ngAfterViewInit(): void {
-    if (this.editableDiv) {
+    /*if (this.editableDiv) {
       const editableDiv = this.editableDiv.nativeElement;
-      editableDiv.addEventListener('keydown', (event: KeyboardEvent) =>
-        this.handleKeyDown(event)
-      );
-      editableDiv.addEventListener('keyup', (event: KeyboardEvent) =>
-        this.handleKeyUp(event)
-      );
+      editableDiv.addEventListener('keydown', (event: KeyboardEvent) => this.handleKeyDown(event));
+      editableDiv.addEventListener('keyup', (event: KeyboardEvent) => this.handleKeyUp(event));
 
       if (this.document != '' && this.strings.length > 0) {
         this.editableDiv.nativeElement.innerText = this.document;
@@ -60,29 +48,97 @@ export class BlockAnswerComponent implements AfterViewInit, OnDestroy {
         let startIndex = 0;
         let index = 0;
         let childIndex = 0;
-        let result = this.editableDiv.nativeElement.innerText.replace(
-          /_+/g,
-          () => {
-            const word = replacements[index];
-            const currentChildIndex = childIndex++;
-            const text = this.editableDiv.nativeElement.innerText;
-            const match = text.match(/_+/);
-            if (match) {
-              startIndex = match.index;
-            }
-            setTimeout(
-              () => this.selectReplacedWord(word, currentChildIndex, startIndex),
-              0
-            );
-            index++;
-            childIndex++;
-            return word;
+        let result = this.editableDiv.nativeElement.innerText.replace(/_+/g, () => {
+          const word = replacements[index];
+          const currentChildIndex = childIndex++;
+          const text = this.editableDiv.nativeElement.innerText;
+          const match = text.match(/_+/);
+          if (match) {
+            startIndex = match.index;
           }
-        );
+          setTimeout(() => this.selectReplacedWord(word, currentChildIndex, startIndex), 0);
+          index++;
+          childIndex++;
+          return word;
+        });
 
         this.editableDiv.nativeElement.innerText = result;
       }
       if (this.imageURL !== '') {
+        this.imageURLChanged.emit(this.imageURL);
+      }
+    }*/
+    if (!this.editableDiv) return;
+
+    const editableDiv = this.editableDiv.nativeElement;
+    editableDiv.addEventListener('keydown', (event: KeyboardEvent) => this.handleKeyDown(event));
+    editableDiv.addEventListener('keyup', (event: KeyboardEvent) => this.handleKeyUp(event));
+
+    if (this.document && this.strings.length > 0) {
+      editableDiv.innerHTML = '';
+
+      const underscoreRegex = /_+/g;
+      let lastIndex = 0;
+      let stringIndex = 0;
+
+      let match: RegExpExecArray | null;
+      while ((match = underscoreRegex.exec(this.document)) !== null) {
+        // Append text before underscores
+        if (match.index > lastIndex) {
+          const textBefore = this.document.slice(lastIndex, match.index);
+          editableDiv.appendChild(document.createTextNode(textBefore));
+        }
+
+        // Replace underscores with the next word from strings array
+        if (stringIndex < this.strings.length) {
+          const word = this.strings[stringIndex++];
+          const span = document.createElement('span');
+          span.innerText = word; // set text
+          span.style.border = '2px solid green';
+          span.style.borderRadius = '5px';
+          span.style.color = 'green';
+          span.style.display = 'inline';
+          span.style.position = 'relative';
+
+          // Close button
+          const closeButton = document.createElement('button');
+          closeButton.innerText = 'X';
+          closeButton.setAttribute('contenteditable', 'false');
+          closeButton.style.position = 'absolute';
+          closeButton.style.top = '-15px';
+          closeButton.style.right = '-15px';
+          closeButton.style.backgroundColor = 'red';
+          closeButton.style.color = 'white';
+          closeButton.style.border = 'none';
+          closeButton.style.borderRadius = '50%';
+          closeButton.style.width = '20px';
+          closeButton.style.height = '20px';
+          closeButton.style.cursor = 'pointer';
+          closeButton.style.userSelect = 'none';
+          closeButton.addEventListener('click', () => {
+            closeButton.remove();
+            const textNode = document.createTextNode(span.innerText);
+            span.parentNode?.replaceChild(textNode, span);
+            this.updateStrings(editableDiv);
+          });
+
+          span.appendChild(closeButton);
+          editableDiv.appendChild(span);
+        } else {
+          // Fallback if no string left
+          editableDiv.appendChild(document.createTextNode(match[0]));
+        }
+
+        lastIndex = match.index + match[0].length;
+      }
+
+      // Append remaining text after last underscore
+      if (lastIndex < this.document.length) {
+        editableDiv.appendChild(document.createTextNode(this.document.slice(lastIndex)));
+      }
+
+      // Emit initial strings
+      if (this.imageURL) {
         this.imageURLChanged.emit(this.imageURL);
       }
     }
@@ -123,9 +179,7 @@ export class BlockAnswerComponent implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.editableDiv) {
       const editableDiv = this.editableDiv.nativeElement;
-      editableDiv.removeEventListener('keydown', (event: KeyboardEvent) =>
-        this.handleKeyDown(event)
-      );
+      editableDiv.removeEventListener('keydown', (event: KeyboardEvent) => this.handleKeyDown(event));
     }
   }
 
@@ -197,12 +251,12 @@ export class BlockAnswerComponent implements AfterViewInit, OnDestroy {
       if (selection && selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
         if (this.isRangeInsideSpan(range) || this.hasSpanInRange(range)) {
-          alert('Please select other text.');
+          //alert('Please select other text.');
+          //this.warningMessage = this.translate.instant('customActivities.please_select_other_text');
+          this.isWarningDialogVisible = true;
           return;
         }
-        if (
-          this.editableDiv.nativeElement.contains(range.commonAncestorContainer)
-        ) {
+        if (this.editableDiv.nativeElement.contains(range.commonAncestorContainer)) {
           const selectedText = range.toString();
           const isAtEnd = this.isRangeAtEnd(range);
           if (selectedText.length > 0) {
@@ -269,7 +323,7 @@ export class BlockAnswerComponent implements AfterViewInit, OnDestroy {
     let modifiedString = clonedContent.innerText;
     let obj = {
       document: modifiedString,
-      answers: this.strings,
+      answers: this.strings
     };
 
     this.blocksChanged.emit(obj);

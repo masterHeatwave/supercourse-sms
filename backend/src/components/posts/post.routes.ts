@@ -25,4 +25,30 @@ router.patch('/:id/publish', authorize([Role.ADMIN, Role.MANAGER]), postControll
 
 router.patch('/:id/archive', authorize([Role.ADMIN, Role.MANAGER]), postController.archivePost);
 
+router.post(
+  '/:id/vote',
+  authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT, Role.PARENT]),
+  postController.voteOnPoll
+);
+
+router.get(
+  '/:id/results',
+  authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT, Role.PARENT]),
+  postController.getPollResults
+);
+
+router.patch('/:id/force-publish', authorize([Role.ADMIN, Role.MANAGER]), postController.forcePublishPost);
+
+router.post(
+  '/:id/like',
+  authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT, Role.PARENT]),
+  postController.likePost
+);
+
+router.post(
+  '/:id/unlike',
+  authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT, Role.PARENT]),
+  postController.unlikePost
+);
+
 export default router;

@@ -1,14 +1,20 @@
 <div>
-    <div style="margin:10px">
+    <div style="margin:20px">
 
-        <div class="flex justify-content-center">
-            <!-- <app-storage-bucket-size></app-storage-bucket-size> -->
-        </div>
-        <div class="flex justify-content-end ml-2 mr-4">
-            <!-- <app-storage-create-folder></app-storage-create-folder>
-            <app-storage-create-folder></app-storage-create-folder> -->
-        </div>
-        <!-- <app-storage-path-breadrumbs></app-storage-path-breadrumbs> -->
-        <app-list-files></app-list-files>
+        <p-tabView>
+            <div class="flex justify-content-end">
+                <app-storage-size></app-storage-size>
+            </div>
+            <p-tabPanel header="My files">
+                <div>
+                    <app-list-files></app-list-files>
+                </div>
+            </p-tabPanel>
+            <p-tabPanel header="Shared with me">
+                <!-- <app-storage-path-breadrumbs></app-storage-path-breadrumbs> -->
+                <!-- <app-storage-list-shared-files></app-storage-list-shared-files> -->
+            </p-tabPanel>
+        </p-tabView>
+
     </div>
 </div>

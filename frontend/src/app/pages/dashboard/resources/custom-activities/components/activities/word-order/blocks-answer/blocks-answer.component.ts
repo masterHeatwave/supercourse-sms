@@ -3,12 +3,13 @@ import { TextBlockComponent } from '../text-block/text-block.component';
 import { CommonModule } from '@angular/common';
 import { ImageSelectorComponent } from '../../../image-selector/image-selector.component';
 import { ButtonModule } from 'primeng/button';
-import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'blocks-answer',
   standalone: true,
-  imports: [TextBlockComponent, CommonModule, ImageSelectorComponent, ButtonModule, WarningDialogComponent],
+  imports: [TextBlockComponent, CommonModule, ImageSelectorComponent, ButtonModule, WarningDialogComponent, TranslateModule],
   templateUrl: './blocks-answer.component.html',
   styleUrl: './blocks-answer.component.scss'
 })
@@ -26,6 +27,8 @@ export class BlocksAnswerComponent {
   @Output() blocksChanged: EventEmitter<string> = new EventEmitter<string>();
   @Output() imageURLChanged: EventEmitter<string> = new EventEmitter<string>();
   @Output() deleteClicked: EventEmitter<void> = new EventEmitter<void>();
+
+  constructor(private translate: TranslateService) {}
 
   ngAfterViewInit() {
     if (this.strings.length > 0) {
@@ -54,7 +57,7 @@ export class BlocksAnswerComponent {
       this.textBlocks.push(Date.now());
       this.strings.push('');
     } else {
-      this.warningMessage = 'Insert up to 7 blocks of words.';
+      this.warningMessage = this.translate.instant('customActivities.insert_up_to_seven_blocks_of_words');
       this.isWarningDialogVisible = true;
     }
   }

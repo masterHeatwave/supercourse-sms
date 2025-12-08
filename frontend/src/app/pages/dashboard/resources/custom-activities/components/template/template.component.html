@@ -8,7 +8,7 @@
     [options]="dropdownOptions"
     [(ngModel)]="selectedGame"
     optionLabel="game"
-    placeholder="Select a game"
+    placeholder="{{ 'customActivities.select_a_game' | translate }}"
     (onChange)="onGameChange($event)"
   >
     <ng-template let-item pTemplate="item">

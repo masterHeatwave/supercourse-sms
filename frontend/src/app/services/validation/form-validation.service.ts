@@ -25,7 +25,11 @@ export class FormValidationService {
     
     // Add any additional errors (like contacts validation)
     if (additionalErrors && additionalErrors.length > 0) {
-      invalidFields.push(...additionalErrors);
+      additionalErrors.forEach((error) => {
+        if (!invalidFields.includes(error)) {
+          invalidFields.push(error);
+        }
+      });
     }
 
     if (invalidFields.length > 0) {

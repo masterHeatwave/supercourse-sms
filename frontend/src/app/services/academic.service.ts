@@ -13,6 +13,7 @@ export interface AcademicYear {
   numberOfPeriods: number;
   isActive: boolean;
   isCurrent: boolean;
+  isManualActive: boolean;
   notes?: string;
 }
 
@@ -44,7 +45,17 @@ export class AcademicService {
           return of([]);
         }
 
-        const years = response.data;
+        // Handle both paginated and non-paginated responses
+        const data = response.data;
+        const years = Array.isArray(data) 
+          ? data 
+          : (data?.results || data?.data || []);
+
+        // Ensure years is an array
+        if (!Array.isArray(years)) {
+          console.error('Expected array but got:', years);
+          return of([]);
+        }
 
         // Get periods for each year to count them
         const yearWithPeriodRequests: Observable<AcademicYear>[] = years.map((year: any) =>
@@ -57,6 +68,7 @@ export class AcademicService {
                 end_date: year.end_date,
                 numberOfPeriods: periodsResponse?.data?.length || 0,
                 isActive: year.is_current || false,
+                isManualActive: year.is_manual_active || false,
                 isCurrent: this.isCurrentAcademicYear(year.start_date, year.end_date),
                 notes: year.notes || ''
               })
@@ -94,6 +106,7 @@ export class AcademicService {
                   end_date: year.end_date,
                   numberOfPeriods: periodsResponse?.data?.length || 0,
                   isActive: year.is_current || false,
+                  isManualActive: year.is_manual_active || false,
                   isCurrent: this.isCurrentAcademicYear(year.start_date, year.end_date),
                   notes: year.notes || ''
                 })
@@ -126,6 +139,7 @@ export class AcademicService {
             end_date: year.end_date,
             numberOfPeriods: periodsResponse?.data?.length || 0,
             isActive: year.is_current || false,
+            isManualActive: year.is_manual_active || false,
             isCurrent: this.isCurrentAcademicYear(year.start_date, year.end_date),
             notes: year.notes || ''
           }))
@@ -142,6 +156,13 @@ export class AcademicService {
   }
 
   /**
+   * Get all academic periods (without filtering by year)
+   */
+  getAllAcademicPeriods(): Observable<AcademicPeriod[]> {
+    return this.academicPeriodsService.getAcademicPeriods().pipe(map((response: any) => response?.data || []));
+  }
+
+  /**
    * Create a new academic year
    */
   createAcademicYear(yearData: PostAcademicYearsBody) {
@@ -151,8 +172,8 @@ export class AcademicService {
   /**
    * Update an academic year
    */
-  updateAcademicYear(yearId: string, yearData: { name?: string; start_date?: string; end_date?: string; notes?: string; is_current?: boolean }) {
-    return this.academicYearsService.putAcademicYearsId(yearId, yearData);
+  updateAcademicYear(yearId: string, yearData: { name?: string; start_date?: string; end_date?: string; notes?: string; is_current?: boolean; is_manual_active?: boolean } & Record<string, any>) {
+    return this.academicYearsService.putAcademicYearsId(yearId, yearData as any);
   }
 
   /**
@@ -172,12 +193,12 @@ export class AcademicService {
   /**
    * Update an academic period
    */
-  updateAcademicPeriod(periodId: string, periodData: Omit<PutAcademicPeriodsIdBody, 'id'>) {
-    const updateData: PutAcademicPeriodsIdBody = {
+  updateAcademicPeriod(periodId: string, periodData: Omit<PutAcademicPeriodsIdBody, 'id'> & { is_active?: boolean }) {
+    const updateData: PutAcademicPeriodsIdBody & { is_active?: boolean } = {
       id: periodId,
       ...periodData
     };
-    return this.academicPeriodsService.putAcademicPeriodsId(periodId, updateData);
+    return this.academicPeriodsService.putAcademicPeriodsId(periodId, updateData as any);
   }
 
   /**

@@ -11,6 +11,7 @@ export enum AbsenceStatus {
 }
 
 export interface IAbsence extends Document {
+  session_type?: 'Session' | 'SessionRecurring';
   session: ISession | string;
   student: IUser | string;
   date: Date;
@@ -25,6 +26,7 @@ export interface IAbsence extends Document {
 }
 
 export interface IAbsenceCreateDTO {
+  session_type?: 'Session' | 'SessionRecurring';
   session: string;
   student: string;
   date: Date;
@@ -39,6 +41,7 @@ export interface IAbsenceCreateDTO {
 }
 
 export interface IAbsenceUpdateDTO {
+  session_type?: 'Session' | 'SessionRecurring';
   session?: string;
   student?: string;
   date?: Date;

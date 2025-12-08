@@ -59,4 +59,15 @@ export class PrimaryInputComponent extends FieldType<FieldTypeConfig> {
       this.showPassword = !this.showPassword;
     }
   }
+
+  getErrorMessage(errorKey: string): string {
+    const errorMessages: Record<string, string> = {
+      required: 'This field is required',
+      minlength: 'This field is too short',
+      maxlength: 'This field is too long',
+      email: 'Please enter a valid email address',
+      pattern: 'Invalid format'
+    };
+    return errorMessages[errorKey] || 'Invalid value';
+  }
 }

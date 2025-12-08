@@ -1,22 +1,15 @@
-import {
-  Component,
-  ElementRef,
-  EventEmitter,
-  Input,
-  Output,
-  SimpleChanges,
-  ViewChild,
-} from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { ImageSelectorComponent } from '../../../image-selector/image-selector.component';
 import { FormsModule } from '@angular/forms';
-import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'matching-pairs-item',
   standalone: true,
-  imports: [ImageSelectorComponent, FormsModule, WarningDialogComponent],
+  imports: [ImageSelectorComponent, FormsModule, WarningDialogComponent, TranslateModule],
   templateUrl: './matching-pairs-item.component.html',
-  styleUrl: './matching-pairs-item.component.scss',
+  styleUrl: './matching-pairs-item.component.scss'
 })
 export class MatchingPairsItemComponent {
   @Input() answerText: string = '';
@@ -61,9 +54,7 @@ export class MatchingPairsItemComponent {
   onInputChange(newValue: string) {
     if (this.answerText === '') {
       if (this.lastSoundElement) {
-        if (
-          this.lastSoundElement.classList.contains('image-sound-selected-style')
-        ) {
+        if (this.lastSoundElement.classList.contains('image-sound-selected-style')) {
           this.lastSoundElement.classList.remove('image-sound-selected-style');
           this.TTSText = '';
           this.lastSoundElement = null;
@@ -81,10 +72,7 @@ export class MatchingPairsItemComponent {
 
   soundClick(event: Event) {
     const target = event.target as HTMLElement;
-    if (
-      !target.classList.contains('image-sound-selected-style') &&
-      this.answerText !== ''
-    ) {
+    if (!target.classList.contains('image-sound-selected-style') && this.answerText !== '') {
       target.classList.add('image-sound-selected-style');
       this.lastSoundElement = target;
       this.TTSText = this.answerText;

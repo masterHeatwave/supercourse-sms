@@ -5,13 +5,14 @@ import { ButtonModule } from 'primeng/button';
 import * as Constants from '../../Constants';
 import { DataService } from '../../services/data.service';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-player-mode',
   standalone: true,
-  imports: [CardModule, ButtonModule, CommonModule],
+  imports: [CardModule, ButtonModule, CommonModule, TranslateModule],
   templateUrl: './player-mode.component.html',
-  styleUrl: './player-mode.component.scss',
+  styleUrl: './player-mode.component.scss'
 })
 export class PlayerModeComponent implements OnChanges {
   @Input() id!: number;
@@ -19,10 +20,7 @@ export class PlayerModeComponent implements OnChanges {
   @Input() selectedMode = '';
   constants = Constants;
 
-  constructor(
-    public navigationService: NavigationService,
-    private dataService: DataService
-  ) {}
+  constructor(public navigationService: NavigationService, private dataService: DataService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['hasData']) {

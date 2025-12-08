@@ -41,17 +41,17 @@
     "edit": "Επεξεργασία",
     "delete": "Διαγραφή",
     "retry": "Επανάληψη",
+    "yes": "Ναι",
+    "no": "Όχι",
     "grid_view": "Προβολή πλέγματος",
     "list_view": "Προβολή λίστας",
     "view": "Προβολή",
     "add": "Προσθήκη",
     "update": "Ενημέρωση",
     "create": "Δημιουργία",
-    "close": "Κλείσιμο"
-  },
-  "validation": {
-    "required": "Το πεδίο {{field}} είναι υποχρεωτικό",
-    "minlength": "Το πεδίο {{field}} πρέπει να έχει τουλάχιστον {{min}} χαρακτήρες"
+    "close": "Κλείσιμο",
+    "search": "Αναζήτηση",
+    "no_results_found": "Δεν βρέθηκαν αποτελέσματα"
   },
   "board": {
     "title": "Πίνακας",
@@ -70,9 +70,21 @@
         "select_datetime": "Επιλέξτε ημερομηνία και ώρα",
         "sample_date": "Σεπ. 01, 2024"
       },
-      "poll": { "add": "Προσθήκη νέας ψηφοφορίας" },
+      "poll": {
+        "add": "Προσθήκη νέας ψηφοφορίας",
+        "title": "Ψηφοφορία",
+        "question": "Ερώτηση ψηφοφορίας",
+        "question_placeholder": "Εισαγάγετε την ερώτηση της ψηφοφορίας",
+        "allow_multiple": "Να επιτρέπονται πολλαπλές ψήφοι",
+        "options": "Επιλογές ψηφοφορίας",
+        "option_placeholder": "Εισαγάγετε κείμενο επιλογής",
+        "add_option": "Προσθήκη επιλογής",
+        "remove": "Αφαίρεση ψηφοφορίας"
+      },
       "recipients": {
         "title": "Παραλήπτες:",
+        "placeholder": "Επιλέξτε παραλήπτες",
+        "search": "Αναζήτηση παραληπτών",
         "all": "Όλοι",
         "administrators": "Διαχειριστές",
         "non_academic_users": "Μη ακαδημαϊκοί χρήστες",
@@ -98,6 +110,8 @@
         "image_uploaded": "Η εικόνα μεταφορτώθηκε με επιτυχία",
         "feature_title": "Λειτουργία",
         "poll_todo": "Η λειτουργία ψηφοφορίας θα υλοποιηθεί",
+        "poll_min_options": "Η ψηφοφορία πρέπει να έχει τουλάχιστον 2 επιλογές",
+        "load_recipients_failed": "Αποτυχία φόρτωσης δεδομένων παραληπτών",
         "created": "Η ανάρτηση δημιουργήθηκε με επιτυχία",
         "create_failed": "Αποτυχία δημιουργίας ανάρτησης",
         "validation_error": "Σφάλμα επικύρωσης",
@@ -129,7 +143,16 @@
     "messages": {
       "could_not_load": "Δεν ήταν δυνατή η φόρτωση αναρτήσεων",
       "failed_to_fetch": "Αποτυχία λήψης αναρτήσεων",
-      "export_detail": "Η λειτουργία εξαγωγής θα υλοποιηθεί"
+      "export_detail": "Η λειτουργία εξαγωγής θα υλοποιηθεί",
+      "post_pinned": "Η ανάρτηση καρφιτσώθηκε με επιτυχία",
+      "post_unpinned": "Η ανάρτηση αποκαρφιτσώθηκε με επιτυχία",
+      "pin_toggle_failed": "Αποτυχία ενημέρωσης καρφιτσώσεως",
+      "post_liked": "Η ανάρτηση αγαπήθηκε με επιτυχία",
+      "post_unliked": "Η ανάρτηση απεγαπήθηκε με επιτυχία",
+      "like_toggle_failed": "Αποτυχία ενημέρωσης αγαπήσεως",
+      "confirm_delete": "Είστε σίγουροι ότι θέλετε να διαγράψετε την ανάρτηση \"{{title}}\"? Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.",
+      "post_deleted": "Η ανάρτηση διαγράφηκε με επιτυχία",
+      "delete_failed": "Αποτυχία διαγραφής ανάρτησης"
     }
   },
   "calendar": {
@@ -182,6 +205,13 @@
       "created_updated": "Ημερομηνία δημιουργίας / ενημέρωσης",
       "edit": "Επεξεργασία",
       "delete": "Διαγραφή"
+    },
+    "export": {
+      "title": "Λήψη ημερολογίου",
+      "select_format": "Επιλέξτε τη μορφή για την εξαγωγή του ημερολογίου σας:",
+      "ics_description": "Τυπική μορφή ημερολογίου (Google, Apple, Outlook)",
+      "xlsx_description": "Υπολογιστικό φύλλο Microsoft Excel",
+      "csv_description": "Αρχείο τιμών διαχωρισμένων με κόμμα"
     }
   },
   "staff": {
@@ -202,6 +232,11 @@
       "manager": "Υπεύθυνος",
       "teacher": "Καθηγητής"
     },
+    "empty": {
+      "title": "Δεν υπάρχουν μέλη προσωπικού",
+      "message": "Ξεκινήστε προσθέτοντας το πρώτο μέλος προσωπικού στο σύστημα.",
+      "add_staff": "Προσθήκη Νέου Προσωπικού"
+    },
     "single": {
       "upload_dialog": {
         "title": "Μεταφόρτωση εγγράφου",
@@ -218,6 +253,7 @@
       "address": "Διεύθυνση:",
       "registered_by": "Καταχωρήθηκε από:",
       "registered": "Ημερομηνία καταχώρησης:",
+      "registration_date": "Ημερομηνία εγγραφής:",
       "last_updated": "Τελευταία ενημέρωση:",
       "documents": "Έγγραφα",
       "no_documents": "Δεν υπάρχουν διαθέσιμα έγγραφα",
@@ -328,6 +364,11 @@
       "sessions_per_week": "Συνεδρίες/Εβδομάδα",
       "total_duration": "Συνολική διάρκεια",
       "days": "Ημέρες"
+    },
+    "empty": {
+      "title": "Δεν Βρέθηκαν Τάξεις",
+      "message": "Ξεκινήστε προσθέτοντας την πρώτη τάξη στο σύστημα.",
+      "add_class": "Προσθήκη Νέας Τάξης"
     }
   },
   "dashboard": {
@@ -361,6 +402,14 @@
     }
   },
   "sessions": {
+    "status": {
+      "scheduled": "Προγραμματισμένη",
+      "upcoming": "Επερχόμενη",
+      "live": "Σε εξέλιξη",
+      "in_progress": "Σε εξέλιξη",
+      "completed": "Ολοκληρωμένη",
+      "cancelled": "Ακυρωμένη"
+    },
     "list": {
       "view_timetable": "Προβολή προγράμματος",
       "ended": "Ολοκληρώθηκε",
@@ -370,7 +419,10 @@
       "no_classroom": "Χωρίς αίθουσα",
       "no_location": "Χωρίς τοποθεσία",
       "mode": { "recurring": "Επαναλαμβανόμενο", "one_time": "Μοναδικό" },
-      "na": "—"
+      "na": "—",
+      "no_sessions_title": "Δεν Βρέθηκαν Συνεδρίες",
+      "no_sessions_message": "Δεν υπάρχουν ακόμη διαθέσιμες συνεδρίες. Δημιουργήστε την πρώτη σας συνεδρία για να ξεκινήσετε.",
+      "create_first_session": "Δημιουργία Πρώτης Συνεδρίας"
     },
     "table": {
       "code": "Κωδικός",
@@ -495,18 +547,49 @@
       "none": "Καμία",
       "branch": "Παράρτημα",
       "branch_assigned": "Ανατέθηκε παράρτημα",
-      "no_branch_assigned": "Δεν έχει ανατεθεί παράρτημα"
+      "no_branch_assigned": "Δεν έχει ανατεθεί παράρτημα",
+      "view_students": "Προβολή Μαθητών",
+      "view_linked_contacts": "Προβολή συνδεδεμένων επαφών"
+    },
+    "empty": {
+      "title": "Δεν υπάρχουν μαθητές",
+      "message": "Ξεκινήστε προσθέτοντας τον πρώτο μαθητή στο σύστημα.",
+      "add_student": "Προσθήκη Νέου Μαθητή"
     },
     "errors": {
       "no_id": "Δεν δόθηκε αναγνωριστικό μαθητή",
       "fetch_failed": "Αποτυχία ανάκτησης δεδομένων μαθητή",
       "update_failed": "Αποτυχία ενημέρωσης μαθητή",
-      "delete_failed": "Αποτυχία διαγραφής μαθητή"
+      "delete_failed": "Αποτυχία διαγραφής μαθητή",
+      "linked_contact_required": "Οι μαθητές κάτω των 18 ετών πρέπει να έχουν τουλάχιστον μία συνδεδεμένη επαφή. Παρακαλώ προσθέστε μια επαφή στην ενότητα Συνδεδεμένες Επαφές.",
+      "linked_contact_required_title": "Απαιτείται Συνδεδεμένη Επαφή",
+      "email_validation_title": "Σφάλμα Επικύρωσης Email",
+      "email_must_differ_from_contacts": "Το email του μαθητή πρέπει να είναι διαφορετικό από όλα τα email των συνδεδεμένων επαφών."
     },
-    "messages": { 
-      "updated": "Ο μαθητής ενημερώθηκε με επιτυχία", 
+    "messages": {
+      "updated": "Ο μαθητής ενημερώθηκε με επιτυχία",
       "deleted": "Ο μαθητής διαγράφηκε με επιτυχία",
       "document_deleted": "Το έγγραφο διαγράφηκε με επιτυχία"
+    },
+    "linked_contacts": {
+      "title": "Συνδεδεμένες Επαφές",
+      "view_all": "Προβολή Όλων των Συνδεδεμένων Επαφών",
+      "name": "Όνομα",
+      "contact_type": "Τύπος Επαφής",
+      "student_name": "Όνομα Μαθητή",
+      "student_level": "Επίπεδο Μαθητή",
+      "student_class": "Τάξη Μαθητή",
+      "student_status": "Κατάσταση Μαθητή",
+      "phone": "Τηλέφωνο",
+      "email": "Email",
+      "address": "Διεύθυνση",
+      "branch": "Παράρτημα",
+      "relationship": "Σχέση",
+      "primary_contact": "Κύρια Επαφή",
+      "parent_guardian": "Γονέας & Κηδεμόνας",
+      "caretaker": "Φροντιστής",
+      "no_contacts": "Δεν υπάρχουν Συνδεδεμένες Επαφές",
+      "no_contacts_message": "Δεν βρέθηκαν συνδεδεμένες επαφές για κανέναν μαθητή."
     },
     "confirm_delete": {
       "header": "Διαγραφή μαθητή",
@@ -527,6 +610,8 @@
         "primary_contact": "Κύρια επαφή",
         "health_info": "Πληροφορίες υγείας",
         "siblings_attending": "Αδέλφια που φοιτούν",
+        "parent_customer": "Μητρικός οργανισμός",
+        "parent_email": "Email μητρικού οργανισμού",
         "general_notes": "Γενικές σημειώσεις"
       },
       "tabs": {
@@ -541,7 +626,8 @@
     "create": { "title": "Δημιουργία εγγραφής αποθέματος" },
     "edit": { "title": "Επεξεργασία εγγραφής αποθέματος" },
     "fields": {
-      "billingPerson": "Χρεώσιμο Πρόσωπο",
+      "billingPerson": "Κάτοχος Πόρου",
+      "borrower": "Δανειστής",
       "billingDate": "Ημερομηνία χρέωσης",
       "returnDate": "Ημερομηνία επιστροφής",
       "notes": "Σημειώσεις",
@@ -555,14 +641,16 @@
     "errors": {
       "customer_missing": "Ο πελάτης δεν είναι διαθέσιμος",
       "create_failed": "Αποτυχία δημιουργίας εγγραφής αποθέματος",
-      "update_failed": "Αποτυχία ενημέρωσης εγγραφής αποθέματος"
+      "update_failed": "Αποτυχία ενημέρωσης εγγραφής αποθέματος",
+      "date_range_invalid": "Η ημερομηνία επιστροφής πρέπει να είναι μετά την ημερομηνία χρέωσης"
     },
     "table": {
       "code": "Κωδικός",
       "title": "Τίτλος",
       "billingDate": "Ημ/νία χρέωσης",
       "returnDate": "Ημ/νία επιστροφής",
-      "billingPerson": "Χρεώσιμο Πρόσωπο"
+      "billingPerson": "Κάτοχος Πόρου",
+      "borrower": "Δανειστής"
     }
   },
   "assets": {
@@ -596,6 +684,16 @@
     "errors": { "delete_failed": "Αποτυχία διαγραφής στοιχείου Η-βιβλιοθήκης" }
   },
   "settings": {
+    "title": "Ρυθμίσεις",
+    "schoolInfo": "Πληροφορίες Σχολείου",
+    "schoolInfoDescription": "Διαχείριση βασικών πληροφοριών και λεπτομερειών του σχολείου σας",
+    "academicYears": "Ακαδημαϊκά Έτη",
+    "academicYearsDescription": "Διαμόρφωση και διαχείριση ακαδημαϊκών ετών, περιόδων και τριμήνων",
+    "classrooms": "Αίθουσες Διδασκαλίας",
+    "classroomsDescription": "Διαχείριση φυσικών αιθουσών και της διαθεσιμότητάς τους",
+    "staff": "Προσωπικό",
+    "staffDescription": "Διαχείριση μελών προσωπικού και των αναθέσεών τους",
+    "rolesDescription": "Διαμόρφωση ρόλων χρηστών και των δικαιωμάτων τους",
     "roles": {
       "title": "Ρόλοι",
       "search_placeholder": "Αναζήτηση στους ρόλους",
@@ -628,18 +726,446 @@
     "staff": "Προσωπικό",
     "students": "Μαθητές",
     "classes": "Τάξεις",
+    "classrooms": "Αίθουσες",
     "sessions": "Συνεδρίες",
     "timetable": "Πρόγραμμα",
     "board": "Αναρτήσεις",
     "calendar": "Ημερολόγιο",
-    "elibrary": "Η-βιβλιοθήκη",
+    "elibrary": "e-Βιβλιοθήκη",
     "assets": "Πόροι",
     "assignments": "Αναθέσεις",
     "progress": "Πρόοδος",
     "revision-center": "Κέντρο Επανάληψης",
     "wellness-center": "Κέντρο Ευεξίας",
-    "resources": "Πόροι"
+    "resources": "Πόροι",
+    "analytics": "Αναλυτικά Στοιχεία",
+    "finances": "Οικονομικά",
+    "marketing-tool": "Εργαλείο Μάρκετινγκ"
   },
+
+  "assignments": {
+    "toolbar": {
+      "select_an_academic_year": "Διαλέξτε ένα ακαδημαϊκό έτος",
+      "select_an_academic_period": "Διαλέξτε μια ακαδημαϊκή περίοδο",
+      "select_academic_subperiod": "Διαλέξτε μια ακαδημαϊκή υποπερίοδο",
+      "create": "Δημιουργία",
+      "drafted": "Πρόχειρα",
+      "deleted": "Διαγραμμένα",
+      "tile_view": "Προβολή Καρτών",
+      "list_view": "Προβολή Λίστας",
+      "export": "Εξαγωγή"
+    },
+    "table": {
+      "columns": {
+        "title": "Τίτλος",
+        "class": "Τάξη",
+        "start_date": "Ημ/νία Έναρξης",
+        "end_date": "Ημ/νία Λήξης",
+        "created_by": "Δημ/ηκε Από",
+        "created_at": "Δημ/ηκε Στις",
+        "updated_at": "Αν/ηκε Στις"
+      },
+      "rows": {
+        "me": "Εμένα",
+        "not_updated_yet": "—"
+      }
+    }
+  },
+  
+  "poll": {
+    "multiple_choice": "Πολλαπλές επιλογές",
+    "vote": "Ψηφοφορία",
+    "total_votes": "Συνολικές ψήφοι",
+    "you_voted": "Ψηφίσατε",
+    "vote_again": "Ψηφοφορία ξανά",
+    "closed": "Αυτή η ψηφοφορία είναι κλειστή",
+    "warning_title": "Προειδοποίηση",
+    "select_option": "Παρακαλώ επιλέξτε τουλάχιστον μία επιλογή",
+    "success_title": "Επιτυχία",
+    "vote_success": "Η ψήφος σας καταγράφηκε",
+    "error_title": "Σφάλμα",
+    "vote_error": "Αποτυχία υποβολής ψήφου. Παρακαλώ δοκιμάστε ξανά."
+  },
+  "resources": {
+    "titleForBooks": "Βιβλία",
+    "titleForFiles": "Αρχεία",
+    "titleForCustomActivities": "Προσαρμοσμένες Δραστηριότητες"
+  },
+  
+  "chatbot": {
+    "title": "Βοηθός",
+    "placeholder": "Γράψε ένα μήνυμα...",
+    "send_button": "Αποστολή"
+  },
+
+  "wellnessCenter": {
+    "title": "Η διάθεση μου",
+    "tools": "Τα εργαλεία μου",
+    "question": "Πως αισθάνεσαι αυτή τη στιγμή? Αισθάνομαι ",
+    "meditation_button": "Διαλογισμός",
+    "relaxing_music_button": "Χαλαρή μουσική",
+    "calm_time_button": "Ήρεμος χρόνος",
+    "class_placeholder": "Επέλεξε μία τάξη",
+    "semester_placeholder": "Επέλεξε ένα εξάμηνο",
+    "no_video_label": "Δεν υπάρχουν βίντεο για προβολή.",
+    "back_button": "Επιστροφή",
+    "month_label": "Μήνας",
+    "date_label": "Ημερομηνία",
+    "mood_label": "Διάθεση",
+    "happy": "Χαρούμενος",
+    "angry": "Θυμωμένος",
+    "disapointed": "Απογοητευμένος",
+    "proud": "Περήφανος",
+    "surprised": "Έκπληκτος",
+    "grateful": "Ευγνώμων",
+    "tired": "Κουρασμένος",
+    "excited": "Ενθουσιασμένος",
+    "sad": "Λυπημένος",
+    "stressed": "Στρεσσαρισμένος",
+    "satisfied": "Ικανοποιημένος",
+    "nervous": "Νευρικός",
+    "bored": "Βαριεστημένος",
+    "scared": "Τρομαγμένος",
+    "months": {
+      "0": "Ιανουάριος",
+      "1": "Φεβρουάριος",
+      "2": "Μάρτιος",
+      "3": "Απρίλιος",
+      "4": "Μάιος",
+      "5": "Ιούνιος",
+      "6": "Ιούλιος",
+      "7": "Αύγουστος",
+      "8": "Σεπτέμβριος",
+      "9": "Οκτώβριος",
+      "10": "Νοέμβριος",
+      "11": "Δεκέμβριος"
+    },
+    "moodSaved": "Η διάθεση αποθηκεύτηκε!",
+    "Wrong semester or semester missing.": "Λάθος εξάμηνο."
+  },
+
+  "analytics": {
+    "classes_button": "Τάξεις",
+    "engagement_button": "Συμμετοχή",
+    "my_activity_button": "Η δραστηριότητά μου",
+    "classes_overview": "Επισκόπηση τάξεων",
+    "teaching_stats": "Στατιστικά διδασκαλίας",
+    "school_performance": "Απόδοση σχολείου",
+    "active_classes": "Ενεργές τάξεις",
+    "active_students": "Ενεργοί μαθητές",
+    "active_parents": "Ενεργοί γονείς, κηδεμόνες, φροντιστές",
+    "students_per_class": "Μαθητές ανά τάξη",
+    "teaching_hours_per_class": "Ώρες διδασκαλίας ανά τάξη",
+    "teaching_hours": "Ώρες διδασκαλίας",
+    "weekly_sessions": "Εβδομαδιαίες συνεδρίες",
+    "avg_number": "Μέσος αριθμός",
+    "avg_numbers": "Μέσοι αριθμοί",
+    "assignment_completion": "Ολοκλήρωση εργασιών",
+    "overall_achievement": "Συνολική επίδοση",
+    "rewards_per_class": "Βραβεία ανά τάξη",
+    "student_engagement": "Συμμετοχή μαθητών",
+    "attendance": "Παρουσίες",
+    "highest_attendance_record": "Ρεκόρ υψηλότερης παρουσίας",
+    "lowest_attendance_record": "Ρεκόρ χαμηλότερης παρουσίας",
+    "assignments_completed_on_time": "Εργασίες που ολοκληρώθηκαν εγκαίρως",
+    "most_engaged_class": "Τάξη με τη μεγαλύτερη συμμετοχή",
+    "least_engaged_class": "Τάξη με τη μικρότερη συμμετοχή",
+    "popup_info": "Βασισμένο σε ποσοστό ολοκλήρωσης, παρουσίες και δεδομένα σύνδεσης στην πλατφόρμα.",
+    "daily_logins": "Ημερήσιες συνδέσεις",
+    "daily_time_spent_minutes": "Χρόνος που δαπανάται ημερησίως (λεπτά)",
+    "students": "Μαθητές",
+    "teachers": "Καθηγητές",
+    "parents": "Γονείς",
+    "admins": "Διαχειριστές",
+    "managers": "Υπεύθυνοι",
+    "weekly_time_spent": "Εβδομαδιαίος χρόνος που δαπανάται",
+    "weekly_average_duration_in_minutes": "Εβδομαδιαία μέση διάρκεια σε λεπτά",
+    "avg_duration_per_week": "Μέση διάρκεια ανά εβδομάδα (λεπτά)",
+    "weekly_time_spent_per_section": "Εβδομαδιαίος χρόνος ανά ενότητα",
+    "classes": "Τάξεις",
+    "lessons": "Μαθήματα",
+    "sessions": "Συνεδρίες",
+    "assignments": "Εργασίες",
+    "progress": "Πρόοδος",
+    "timetable": "Ωρολόγιο πρόγραμμα",
+    "board": "Πίνακας",
+    "calendar": "Ημερολόγιο",
+    "student_time_spent_per_activity": "Χρόνος που αφιερώθηκε ανά δραστηριότητα μαθητή",
+    "avg_time_per_activity": "Μέσος χρόνος ανά δραστηριότητα (λεπτά)",
+    "most_visited_assigned_interactive_activities": "Top 5 – Πιο επισκέψιμες ανατεθειμένες διαδραστικές δραστηριότητες",
+    "most_visited_interactive_activities": "Top 5 – Πιο επισκέψιμες διαδραστικές δραστηριότητες",
+    "interactive_activities": "Διαδραστικές δραστηριότητες",
+    "gameplay": "Τρόπος παιχνιδιού",
+    "time": "Χρόνος",
+    "plays": "Αναπαραγωγές",
+    "live_data": "Ζωντανά δεδομένα",
+    "online_admins": "Συνδεδεμένοι διαχειριστές",
+    "online_managers": "Συνδεδεμένοι υπεύθυνοι",
+    "online_teachers": "Συνδεδεμένοι καθηγητές",
+    "online_students": "Συνδεδεμένοι μαθητές",
+    "online_parents": "Συνδεδεμένοι γονείς",
+    "completed_assignments": "Ολοκληρωμένες εργασίες",
+    "assigned_tasks": "Ανατεθειμένες εργασίες",
+    "assigned_tasks_per_class": "Ανατεθειμένες εργασίες ανά τάξη",
+    "feedback": "Ανατροφοδότηση",
+    "feedback_offered": "Προσφερόμενη ανατροφοδότηση",
+    "stickers_awarded": "Απονεμημένα αυτοκόλλητα",
+    "time_you_spent_on_the_platform": "Χρόνος που αφιερώσατε στην πλατφόρμα",
+    "exclude_session_time": "Εξαίρεση χρόνου συνεδρίας",
+    "daily": "Ημερήσια",
+    "weekly": "Εβδομαδιαία",
+    "this_week": "Αυτή την εβδομάδα",
+    "school_button": "Σχολείο",
+    "platform_use_button": "Χρήση πλατφόρμας",
+    "learning_button": "Μάθηση",
+    "users_overview": "Επισκόπηση χρηστών",
+    "active_staff_members": "Ενεργά μέλη προσωπικού",
+    "students_per_teacher": "Μαθητές ανά καθηγητή",
+    "teaching_hours_per_teacher": "Ώρες διδασκαλίας ανά καθηγητή",
+    "fees_collected": "Εισπραχθέντα δίδακτρα",
+    "completed_sessions": "Ολοκληρωμένες συνεδρίες",
+    "student_progress": "Πρόοδος μαθητών",
+    "achievement": "Επίδοση (%)",
+    "wellness_videos": "Βίντεο ευεξίας",
+    "views": "Προβολές",
+    "browser_not_support_video_tag": "Το πρόγραμμα περιήγησής σας δεν υποστηρίζει την ετικέτα βίντεο.",
+    "loading_video": "Φόρτωση βίντεο...",
+    "choose_date": "Επιλέξτε ημερομηνία",
+    "today": "Σήμερα",
+    "clear": "Καθαρισμός",
+    "monthNames": [
+      "Ιανουάριος",
+      "Φεβρουάριος",
+      "Μάρτιος",
+      "Απρίλιος",
+      "Μάιος",
+      "Ιούνιος",
+      "Ιούλιος",
+      "Αύγουστος",
+      "Σεπτέμβριος",
+      "Οκτώβριος",
+      "Νοέμβριος",
+      "Δεκέμβριος"
+    ],
+    "monthNamesShort": ["Ιαν", "Φεβ", "Μάρ", "Απρ", "Μάι", "Ιούν", "Ιούλ", "Αύγ", "Σεπ", "Οκτ", "Νοέ", "Δεκ"],
+    "dayNames": ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"],
+    "dayNamesShort": ["Κυρ", "Δευ", "Τρί", "Τετ", "Πέμ", "Παρ", "Σαβ"],
+    "dayNamesMin": ["Κ", "Δ", "Τ", "Τ", "Π", "Π", "Σ"],
+    "h": "ω",
+    "m": "λ",
+    "s": "δ"
+  },
+
+  "customActivities": {
+    "private_interactive_activities": "Ιδιωτικές διαδραστικές δραστηριότητες",
+    "public_interactive_activities": "Δημόσιες διαδραστικές δραστηριότητες",
+    "create_interactive_activity": "Δημιουργία διαδραστικής δραστηριότητας",
+    "interactive_activities": "Διαδραστικές δραστηριότητες",
+    "class": "Τάξη",
+    "assigned_on": "Ανατέθηκε στις",
+    "assignment_bundle": "Δέσμη αναθέσεων",
+    "template": "Πρότυπο",
+    "title": "Τίτλος",
+    "type": "Τύπος",
+    "gameplay": "Τρόπος παιχνιδιού",
+    "created_by": "Δημιουργήθηκε από",
+    "created_on": "Δημιουργήθηκε στις",
+    "public": "Δημόσιο",
+    "description": "Περιγραφή",
+    "cefr": "Επίπεδο CEFR",
+    "select_cefr": "Επιλογή επιπέδου CEFR",
+    "tags": "Ετικέτες",
+    "select_tags": "Επιλογή ετικετών",
+    "activity_type": "Τύπος δραστηριότητας",
+    "settings": {
+      "label": "Ρυθμίσεις",
+      "eachSentenceAppearsInASeparatePage": "Κάθε πρόταση εμφανίζεται σε ξεχωριστή σελίδα",
+      "requireHyphensToMatch": "Απαίτηση αντιστοίχισης παυλών",
+      "matchCapitalLettersExactly": "Ακριβής αντιστοίχιση κεφαλαίων γραμμάτων",
+      "public": "Δημόσιο",
+      "numberItems": "Αρίθμηση στοιχείων",
+      "displayAnswers": "Εμφάνιση απαντήσεων",
+      "showAnagrams": "Εμφάνιση αναγραμματισμών",
+      "numberThePairs": "Αρίθμηση ζευγών",
+      "randomizeItems": "Τυχαία σειρά στοιχείων",
+      "randomizeAnswers": "Τυχαία σειρά απαντήσεων",
+      "hideMatchedCards": "Απόκρυψη αντιστοιχισμένων καρτών",
+      "numberTheBackOfTheCards": "Αρίθμηση πίσω όψης των καρτών"
+    },
+    "activity": "Δραστηριότητα",
+    "loading_activity": "Φόρτωση δραστηριότητας...",
+    "edit_player_mode_button": "Επεξεργασία λειτουργίας παίκτη",
+    "edit_content_button": "Επεξεργασία περιεχομένου",
+    "edit_template_button": "Επεξεργασία προτύπου",
+    "single_player_button": "Μονός παίκτης",
+    "multiplayer_button": "Πολλοί παίκτες",
+    "back_button": "Πίσω",
+    "continue_button": "Συνέχεια",
+    "save_button": "Αποθήκευση",
+    "text": "Κείμενο",
+    "add_block_button": "Προσθήκη ενότητας",
+    "choose_activity_type_button": "Επιλογή τύπου δραστηριότητας",
+    "choose_player_mode_button": "Επιλογή λειτουργίας παίκτη",
+    "add_content_button": "Προσθήκη περιεχομένου",
+    "choose_template_button": "Επιλογή προτύπου",
+    "freetext": "Ελεύθερο κείμενο",
+    "drag_and_drop": "Σύρε και άφησε",
+    "multiple_choice": "Πολλαπλής επιλογής",
+    "fill_in_the_gaps": {
+      "label": "Συμπλήρωση κενών",
+      "placeholder": "Εισαγάγετε μια πρόταση"
+    },
+    "cloze": {
+      "label": "Cloze (συμπλήρωση κειμένου)",
+      "placeholder": "Εισαγάγετε ένα κείμενο"
+    },
+    "letter_hunt": {
+      "label": "Κυνήγι γραμμάτων",
+      "placeholder": "Εισαγάγετε μια λέξη"
+    },
+    "matching_pairs": {
+      "label": "Αντιστοίχιση ζευγών",
+      "placeholder": "Εισαγάγετε μια πρόταση"
+    },
+    "group_sort": {
+      "label": "Ομαδοποίηση",
+      "placeholder": "Εισαγάγετε μια λέξη"
+    },
+    "word_order": {
+      "label": "Σειρά λέξεων",
+      "placeholder": "Εισαγάγετε έως 7 λέξεις"
+    },
+    "multiple_choice_quiz": {
+      "label": "Κουίζ πολλαπλής επιλογής",
+      "question_placeholder": "Εισαγάγετε μια ερώτηση",
+      "answer_placeholder": "Εισαγάγετε μια απάντηση"
+    },
+    "memory_matching_pairs": {
+      "label": "Αντιστοίχιση μνήμης",
+      "placeholder": "Εισαγάγετε μια πρόταση"
+    },
+    "sentences": "Προτάσεις",
+    "sentence": "Πρόταση",
+    "add_a_sentence": "Προσθήκη πρότασης",
+    "words": "Λέξεις",
+    "add_a_word": "Προσθήκη λέξης",
+    "pairs": "Ζεύγη",
+    "add_a_pair": "Προσθήκη ζεύγους",
+    "groups": "Ομάδες",
+    "items": "Στοιχεία",
+    "group_name": "Όνομα ομάδας",
+    "add_item": "Προσθήκη στοιχείου",
+    "add_group": "Προσθήκη ομάδας",
+    "separate_each_word": "Διαχωρίστε κάθε λέξη",
+    "custom_separated": "Προσαρμοσμένος διαχωρισμός",
+    "add_an_answer": "Προσθήκη απάντησης",
+    "add_a_question": "Προσθήκη ερώτησης",
+    "pairs_of_the_same_item": "Ζεύγη ίδιου στοιχείου",
+    "pairs_of_different_items": "Ζεύγη διαφορετικών στοιχείων",
+    "select_a_game": "Επιλογή παιχνιδιού",
+    "error_loading_activity": "Παρουσιάστηκε σφάλμα κατά τη φόρτωση της δραστηριότητας. Παρακαλώ δοκιμάστε ξανά.",
+    "error": "Σφάλμα",
+    "does_not_exist": "Αυτή η σελίδα δεν υπάρχει.",
+    "start_activity": "Έναρξη δραστηριότητας",
+    "players": "Παίκτες",
+    "questions": "Ερωτήσεις",
+    "answers": "Απαντήσεις",
+    "questions_will_repeat": "Οι ερωτήσεις θα επαναλαμβάνονται",
+    "please_select_other_text": "Παρακαλώ επιλέξτε άλλο κείμενο.",
+    "the_least_amount_of_questions_must_be_one": "Ο ελάχιστος αριθμός ερωτήσεων πρέπει να είναι μία.",
+    "you_cannot_have_less_than_one_group": "Δεν μπορείτε να έχετε λιγότερο από μία ομάδα.",
+    "you_cannot_have_less_than_one_item_in_each_group": "Δεν μπορείτε να έχετε λιγότερο από ένα στοιχείο σε κάθε ομάδα.",
+    "upload_from_this_computer": "Ανέβασμα από αυτόν τον υπολογιστή",
+    "generate_using_ai": "Δημιουργία με χρήση Τεχνητής Νοημοσύνης",
+    "search_on_pexels": "Αναζήτηση στο Pexels",
+    "wrong_file_type": "Λάθος τύπος αρχείου. Δοκιμάστε ξανά χρησιμοποιώντας μόνο αρχεία εικόνας.",
+    "error_while_upload": "Παρουσιάστηκε σφάλμα κατά τη μεταφόρτωση. Παρακαλώ δοκιμάστε ξανά.",
+    "error_during_delete": "Παρουσιάστηκε σφάλμα κατά τη διαγραφή. Παρακαλώ δοκιμάστε ξανά.",
+    "error_generating_ai": "Κάτι πήγε στραβά κατά τη δημιουργία με Τεχνητή Νοημοσύνη. Παρακαλώ δοκιμάστε ξανά.",
+    "error_searching_pexels": "Κάτι πήγε στραβά κατά την αναζήτηση στο Pexels. Παρακαλώ δοκιμάστε ξανά.",
+    "no_images_found": "Δεν βρέθηκαν εικόνες. Παρακαλώ δοκιμάστε ξανά την αναζήτηση.",
+    "delete": "διαγραφή",
+    "missing_fields": "Λείπουν κάποια πεδία.",
+    "choose_activity_type": "Επιλέξτε έναν τύπο δραστηριότητας για να συνεχίσετε.",
+    "choose_player_mode": "Επιλέξτε μια λειτουργία παίκτη για να συνεχίσετε.",
+    "uknown_navigation_error": "Άγνωστο σφάλμα πλοήγησης.",
+    "going_back_delete": "Επιστρέφοντας πίσω θα διαγραφούν όλα τα δεδομένα που εισαγάγατε.",
+    "you_cannot_have_less_than_one_pair": "Δεν μπορείτε να έχετε λιγότερο από 1 ζευγάρι.",
+    "least_amount_of_answers_two": "Ο ελάχιστος αριθμός απαντήσεων πρέπει να είναι 2.",
+    "insert_up_to_seven_blocks_of_words": "Εισάγετε έως και 7 ομάδες λέξεων.",
+    "user_answers": "Απαντήσεις χρήστη:",
+    "correct_answers": "Σωστές απαντήσεις:",
+    "not_used": "Δεν χρησιμοποιήθηκαν:"
+  },
+  
+  "account": {
+    "title": "Ρυθμίσεις Λογαριασμού",
+    "profileTab": "Προφίλ",
+    "securityTab": "Ασφάλεια",
+    "displayTab": "Εμφάνιση",
+    "notificationsTab": "Ειδοποιήσεις",
+    "profile": {
+      "loading": "Φόρτωση προφίλ...",
+      "error": "Αδυναμία φόρτωσης προφίλ",
+      "personalInfo": "Προσωπικές Πληροφορίες",
+      "firstName": "Όνομα",
+      "lastName": "Επώνυμο",
+      "email": "Email",
+      "phone": "Τηλέφωνο",
+      "role": "Ρόλος",
+      "department": "Τμήμα"
+    },
+    "security": {
+      "title": "Ασφάλεια",
+      "description": "Διαχειριστείτε τον κωδικό και τις ρυθμίσεις ασφαλείας σας",
+      "password": "Κωδικός",
+      "changePassword": "Αλλαγή Κωδικού",
+      "lastChanged": "Τελευταία αλλαγή",
+      "changePasswordBtn": "Αλλαγή Κωδικού",
+      "twoFactor": "Έλεγχος Ταυτότητας Δύο Παραγόντων",
+      "twoFactorAuth": "Έλεγχος Ταυτότητας Δύο Παραγόντων",
+      "status": "Κατάσταση",
+      "enabled": "Ενεργοποιημένο",
+      "disabled": "Απενεργοποιημένο",
+      "enable": "Ενεργοποίηση",
+      "disable": "Απενεργοποίηση",
+      "activeSessions": "Ενεργές Συνεδρίες",
+      "manageDevices": "Διαχείριση Συσκευών",
+      "viewActiveDevices": "Προβολή και διαχείριση των ενεργών συσκευών και συνεδριών σας",
+      "viewSessions": "Προβολή Συνεδριών"
+    },
+    "display": {
+      "title": "Εμφάνιση",
+      "description": "Προσαρμόστε τις προτιμήσεις εμφάνισης",
+      "language": "Γλώσσα",
+      "selectLanguage": "Επιλογή Γλώσσας",
+      "chooseLanguage": "Επιλέξτε γλώσσα",
+      "languageHint": "Οι αλλαγές θα εφαρμοστούν αμέσως",
+      "theme": "Θέμα",
+      "selectTheme": "Επιλογή Θέματος",
+      "chooseTheme": "Επιλέξτε θέμα",
+      "themeHint": "Επιλέξτε ανάμεσα σε ανοιχτό, σκούρο ή αυτόματο θέμα"
+    },
+    "notifications": {
+      "title": "Ειδοποιήσεις",
+      "description": "Διαχειριστείτε τις προτιμήσεις ειδοποιήσεων",
+      "emailNotifications": "Ειδοποιήσεις Email",
+      "pushNotifications": "Ειδοποιήσεις Push",
+      "emailSessions": "Ενημερώσεις Συνεδριών",
+      "emailSessionsDesc": "Λάβετε ειδοποιήσεις email για αλλαγές συνεδριών",
+      "emailAssignments": "Εργασίες",
+      "emailAssignmentsDesc": "Ειδοποιηθείτε για νέες εργασίες και προθεσμίες",
+      "emailAnnouncements": "Ανακοινώσεις",
+      "emailAnnouncementsDesc": "Λάβετε ανακοινώσεις σχολείου μέσω email",
+      "pushSessions": "Υπενθυμίσεις Συνεδριών",
+      "pushSessionsDesc": "Λάβετε ειδοποιήσεις push πριν ξεκινήσουν οι συνεδρίες",
+      "pushMessages": "Μηνύματα",
+      "pushMessagesDesc": "Λάβετε ειδοποιήσεις για νέα μηνύματα",
+      "pushReminders": "Υπενθυμίσεις",
+      "pushRemindersDesc": "Υπενθυμιστείτε για επερχόμενα γεγονότα και εργασίες"
+    }
+  },
+  
   "messages": {
     "title": "Μηνύματα",
     "new_chat": "Νέα Συνομιλία",
@@ -709,4 +1235,3 @@
     }  
   }
 }
-

@@ -29,9 +29,15 @@ export interface IAssignmentTask {
 
   taskStatus: 'new' | 'in-progress' | 'completed';
 
-  answers?: any;
+  taskInspected: boolean;
 
   answersRevealed: boolean;
+
+  incompleteWarnings: number;
+
+  submittedAt: Date;
+
+  answers?: any;
 }
 
 export interface IAssignmentAcademicTimeframe {
@@ -60,11 +66,27 @@ export interface IAssignmentForStudent extends Document {
 
   assignmentStatus: 'new' | 'in-progress' | 'completed';
 
+  assignmentInspected: boolean;
+
   academicTimeframe: IAssignmentAcademicTimeframe;
 
+  isDrafted: boolean;
+  draftDate?: Date;
   isDeletedForMe: boolean;
   deleteDateForMe?: Date;
   isDeletedForEveryone: boolean;
   deleteDateForEveryone?: Date;
   isPermanentlyDeleted: boolean;
 }
+
+//* eBook
+export interface IAssignmentTaskFieldsToUpdate {
+  attempts: number;
+  taskStatus: 'new' | 'in-progress' | 'completed';
+  incompleteWarnings: number;
+  duration: number;
+  answers: any;
+  score?: number;
+  submittedAt?: number;
+}
+//* eBook

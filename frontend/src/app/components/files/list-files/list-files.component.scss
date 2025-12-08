@@ -1,0 +1,84 @@
+.file-list-container {
+  position: relative;
+  width: 100%;
+ // min-height: calc(100vh - 50vh);
+}
+
+.regular-uploader.hidden {
+  display: none;
+}
+
+.drag-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 120, 212, 0.1);
+  border: 2px dashed #0078d4;
+  border-radius: 4px;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.drop-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #0078d4;
+  font-size: 1.25rem;
+}
+
+.table-item {
+  display: inline-block;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+// Paginator
+
+// :host ::ng-deep .p-element.p-dropdown-label.p-inputtext {
+//   padding: 5px 10px !important;
+// }
+
+// :host ::ng-deep .p-ripple.p-element.p-dropdown-item {
+//   padding: 5px !important;
+//   text-align: center !important;
+// }
+
+// table body
+:host ::ng-deep .p-datatable-tbody {
+  background-color: rgba(255, 255, 255, 1);
+}
+
+// Loader
+
+:host ::ng-deep .p-datatable-loading-overlay {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+:host ::ng-deep .p-datatable-loading-icon {
+  width: 25px;
+  height: 25px;
+  color: #007ad9;
+}
+
+// rows
+:host ::ng-deep .p-datatable-sm .p-datatable-tbody tr td {
+  padding: 2px 18px;
+  line-height: 2.5;
+  font-size: 16px;
+}
+
+// scroll
+:host ::ng-deep .p-datatable-scrollable {
+  height: calc(100vh - 50vh);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}

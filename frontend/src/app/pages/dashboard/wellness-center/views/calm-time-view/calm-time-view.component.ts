@@ -3,6 +3,7 @@ import { ButtonModule } from 'primeng/button';
 import { CommonModule } from '@angular/common';
 import { videoType } from '../../types/types';
 import { MoodsService } from '@gen-api/moods/moods.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 interface VideoItem {
   id: string;
@@ -21,7 +22,7 @@ interface CalmTimeResponse {
 @Component({
   selector: 'app-calm-time-view',
   standalone: true,
-  imports: [ButtonModule, CommonModule],
+  imports: [ButtonModule, CommonModule, TranslateModule],
   templateUrl: './calm-time-view.component.html',
   styleUrl: './calm-time-view.component.scss'
 })

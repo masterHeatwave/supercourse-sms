@@ -11,15 +11,68 @@
     <span class="text-600 font-medium">{{ 'login.authcard.subtitle' | translate }}</span>
   </div>
 
-  <form [formGroup]="form" (ngSubmit)="onSubmit()">
-    <formly-form [form]="form" [fields]="fields" [model]="model"></formly-form>
+  <div *ngIf="schoolsLoading" class="text-center py-4">
+    <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+    <p class="mt-2">Φόρτωση σχολείων...</p>
+  </div>
+
+  <form *ngIf="!schoolsLoading" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <!-- Email Field -->
+    <div class="mb-3">
+      <label for="email" class="block text-sm font-medium text-700 mb-2">
+        {{ 'login.authcard.username.label' | translate }}
+      </label>
+      <input 
+        id="email"
+        type="text" 
+        pInputText 
+        formControlName="email"
+        class="w-full"
+        [class.ng-invalid]="form.get('email')?.invalid && form.get('email')?.touched"
+      />
+    </div>
+
+    <!-- Password Field -->
+    <div class="mb-3">
+      <label for="password" class="block text-sm font-medium text-700 mb-2">
+        {{ 'login.authcard.password.label' | translate }}
+      </label>
+      <p-password 
+        id="password"
+        formControlName="password"
+        [feedback]="false"
+        [toggleMask]="true"
+        styleClass="w-full"
+        inputStyleClass="w-full"
+        [class.ng-invalid]="form.get('password')?.invalid && form.get('password')?.touched"
+      ></p-password>
+    </div>
+
+    <!-- School Dropdown -->
+    <div class="mb-3">
+      <label for="context" class="block text-sm font-medium text-700 mb-2">
+        Σχολείο
+      </label>
+      <app-primary-dropdown
+        formControlName="context"
+        [options]="schoolOptions"
+        placeholder="Επιλέξτε σχολείο"
+        styleClass="w-full"
+      ></app-primary-dropdown>
+    </div>
+
     <div class="w-full text-right mt-1">
       <a class="font-medium no-underline cursor-pointer" style="color: var(--primary-color)" [routerLink]="['/forgot-password']">
         {{ 'login.authcard.forgot-password.label' | translate }}
       </a>
     </div>
 
-    <app-primary-button styleClass="mt-5" [fullWidth]="true" [loading]="loading" type="submit">
+    <app-primary-button 
+      styleClass="mt-5" 
+      [fullWidth]="true" 
+      [loading]="loading" 
+      [disabled]="isFormDisabled"
+      type="submit">
       <span>{{ 'login.authcard.button.label' | translate }}</span>
     </app-primary-button>
   </form>

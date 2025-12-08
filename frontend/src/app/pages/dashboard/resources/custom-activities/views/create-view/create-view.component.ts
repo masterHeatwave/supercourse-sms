@@ -53,7 +53,7 @@ export class CreateViewComponent {
       this.currentBranchID = authState.currentCustomerId || authState.user?.branches[0] || '';
       this.currentRoleTitle = authState.currentRoleTitle || authState.user?.roles[0].title || '';
       this.currentUserID = authState.user?.id || '';
+      this.dataService.setData('userId', this.currentUserID);
     });
-    this.dataService.setData('userId', this.currentUserID);
   }
 }

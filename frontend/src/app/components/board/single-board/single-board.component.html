@@ -1,0 +1,150 @@
+<p-toast></p-toast>
+<app-confirm-dialog (onConfirmAction)="onConfirmDelete($event)"></app-confirm-dialog>
+<div class="p-4">
+  <div *ngIf="loading" class="flex justify-content-center p-5">
+    <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
+  </div>
+
+  <div *ngIf="!loading && post" class="p-4">
+    <!-- Back Button -->
+    <div class="mb-4">
+      <app-outline-button
+        [borderColor]="'var(--primary-color)'"
+        [textColor]="'var(--primary-color)'"
+        [hoverBackgroundColor]="'var(--primary-color)'"
+        [hoverTextColor]="'white'"
+        (click)="onBackClicked()">
+        <i class="pi pi-arrow-left mr-2"></i>
+        {{ 'common.back' | translate }}
+      </app-outline-button>
+    </div>
+
+    <!-- Post Title -->
+    <h1 class="text-4xl font-bold text-black mb-4">{{ post.title }}</h1>
+
+    <!-- Pin/Unpin Icon and Meta Information -->
+    <div class="flex align-items-center gap-3 mb-4 pb-3 border-bottom-1 border-200">
+      <!-- Pin/Unpin Button -->
+      <button
+        class="pin-button-circle"
+        [class.pinned]="post.pinned"
+        (click)="togglePin()"
+        [disabled]="isTogglingPin"
+      >
+        <i class="pi pi-thumbtack" [class.pi-spin]="isTogglingPin"></i>
+      </button>
+
+      <!-- Meta Information Pills -->
+      <div class="flex flex-wrap align-items-center gap-2 flex-1">
+        <!-- Date Pill -->
+        <div class="meta-pill">
+          <span class="meta-label">Date:</span>
+          <span class="meta-value">{{ formatDateLong(post.published_at || post.createdAt) }}</span>
+        </div>
+
+        <!-- Author Pill -->
+        <div class="meta-pill">
+          <span class="meta-label">Author:</span>
+          <span class="meta-value">{{ post.authorName }}</span>
+        </div>
+
+        <!-- Recipients Pill -->
+        <div class="meta-pill" *ngIf="getRecipientsLabel()">
+          <span class="meta-label">Recipients:</span>
+          <span class="meta-value">{{ getRecipientsLabel() }}</span>
+        </div>
+
+        <!-- Status Pill -->
+        <div class="meta-pill">
+          <span class="meta-label">Status:</span>
+          <span class="meta-value status-value" [style.color]="getStatusColor(post.status)">{{ getStatusLabel(post.status) }}</span>
+        </div>
+
+        <!-- Priority Pill -->
+        <div class="meta-pill">
+          <span class="meta-label">Priority:</span>
+          <span class="meta-value priority-value">
+            <i class="pi pi-circle-fill priority-dot" [style.color]="getPriorityConfig(post.priority).color"></i>
+            {{ getPriorityConfig(post.priority).label }}
+          </span>
+        </div>
+
+        <!-- Reactions Pill -->
+        <div *ngIf="post.allow_reactions !== false" class="meta-pill">
+          <span class="meta-label">Reactions:</span>
+          <span class="meta-value">
+            <i class="pi pi-heart reaction-heart"></i>
+            {{ getLikeCount() }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Featured Image -->
+    <img 
+      *ngIf="post.featured_image" 
+      [src]="getImageUrl(post.featured_image)" 
+      alt="Featured" 
+      class="w-full border-round mb-4" 
+      style="max-height: 400px; object-fit: cover;"
+    />
+
+    <!-- Post Content -->
+    <div class="prose mb-4" [innerHTML]="post.content"></div>
+
+    <!-- Poll Section -->
+    <div *ngIf="post.poll && post.poll.question && post.poll.options && post.poll.options.length > 0" class="poll-section mb-4">
+      <h2 class="poll-heading mb-3">Poll + Quiz</h2>
+      <h3 class="poll-title mb-3">{{ post.poll.question }}</h3>
+      <div *ngIf="hasUserVoted" class="poll-voted-message mb-3">
+        <i class="pi pi-check-circle text-primary mr-2"></i>
+        <span class="text-sm text-600">You have already voted on this poll</span>
+      </div>
+      <div class="poll-options">
+        <div *ngFor="let option of post.poll.options" class="poll-option">
+          <label class="poll-option-label" [class.poll-option-disabled]="hasUserVoted">
+            <input 
+              type="radio" 
+              [name]="'poll_' + post.id" 
+              [value]="option.id"
+              [checked]="isOptionSelected(option.id)"
+              [disabled]="hasUserVoted"
+              (change)="onPollOptionChange(option.id)"
+              class="poll-radio"
+            />
+            <span class="poll-option-text">{{ option.text }}</span>
+            <span *ngIf="option.voteCount !== undefined && option.voteCount > 0" class="poll-vote-count">({{ option.voteCount }})</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex gap-3 justify-content-end mt-5 pt-4 border-200">
+      <app-outline-button
+        [borderColor]="'#ef4444'"
+        [textColor]="'#ef4444'"
+        [hoverBackgroundColor]="'#ef4444'"
+        [hoverTextColor]="'white'"
+        [disabled]="isDeleting"
+        [loading]="isDeleting"
+        (click)="onDeleteClicked()"
+      >
+        {{ 'common.delete' | translate }}
+      </app-outline-button>
+
+      <app-outline-button
+        [borderColor]="'var(--primary-color)'"
+        [textColor]="'var(--primary-color)'"
+        [hoverBackgroundColor]="'var(--primary-color)'"
+        [hoverTextColor]="'white'"
+        [disabled]="isDeleting"
+        (click)="onEditClicked()"
+      >
+        {{ 'common.edit' | translate }}
+      </app-outline-button>
+    </div>
+
+  </div>
+</div>
+

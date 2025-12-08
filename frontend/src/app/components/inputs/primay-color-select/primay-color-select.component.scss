@@ -1,39 +1,74 @@
 .color-select {
-    position: relative;
     width: 100%;
 
-    .color-circle {
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        display: inline-block;
+    .color-picker-wrapper {
+        position: relative;
     }
 
-    .color-options {
-        position: absolute;
+    .custom-color-preview-wrapper {
+        position: relative;
+        
+        .hidden-picker {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            width: 0;
+            height: 0;
+        }
+
+        .hidden-color-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            width: 0;
+            height: 0;
+        }
+    }
+
+    .custom-color-preview {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
         width: 100%;
-        background-color: white;
-        z-index: 10;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-
-        &.hidden {
-            display: none;
-        }
-    }
-
-    .color-option {
-        &:hover {
-            background-color: #f8f9fa;
-        }
-    }
-
-    input {
-        background: transparent;
-        outline: none;
+        min-height: 40px;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--p-border-color, #d1d5db);
+        border-radius: 6px;
+        background-color: var(--p-surface-0, #ffffff);
         cursor: pointer;
+        transition: all 0.2s ease;
 
-        &::placeholder {
-            color: #6c757d;
+        &:hover {
+            border-color: var(--p-primary-color, #3b82f6);
+            box-shadow: 0 0 0 1px var(--p-primary-color, #3b82f6);
         }
+
+        &:focus-visible {
+            outline: 0;
+            box-shadow: 0 0 0 2px var(--p-primary-color, #3b82f6);
+        }
+
+        .color-circle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid var(--p-border-color, #d1d5db);
+            flex-shrink: 0;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .color-value {
+            color: var(--p-text-color, #374151);
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            flex-grow: 1;
+        }
+    }
+
+    .color-picker-wrapper.color-picker-invalid .custom-color-preview {
+        border-color: var(--p-red-500, #ef4444);
+        border-width: 2px;
     }
 }

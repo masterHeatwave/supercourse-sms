@@ -5,14 +5,14 @@
       [(ngModel)]="uniqueClass"
       (onChange)="classDropdownChange($event)"
       optionLabel="name"
-      placeholder="Select a class"
+      [placeholder]="'wellnessCenter.class_placeholder' | translate"
     />
     <p-dropdown
       [options]="subperiods"
       [(ngModel)]="selectedSemester"
       (onChange)="semesterDropdownChange($event)"
       optionLabel="name"
-      placeholder="Select a semester"
+      [placeholder]="'wellnessCenter.semester_placeholder' | translate"
     />
   </div>
   <div class="main-div">

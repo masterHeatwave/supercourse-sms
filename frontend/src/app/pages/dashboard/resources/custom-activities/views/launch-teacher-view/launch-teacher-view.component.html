@@ -17,17 +17,17 @@
       </div>-->
     <div *ngIf="activityData.playerMode === 'multiplayer'" style="display: flex; flex-direction: column">
       <div>
-        <label class="slider-label">Players:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+        <label class="slider-label">{{ 'customActivities.players' | translate }}:</label>
         <input type="range" min="2" [max]="maxPlayers" [(ngModel)]="players" (ngModelChange)="onPlayersChange()" />
         <label class="dropdown-label">{{ players }}</label>
-        <label class="message-label" *ngIf="players > questions">{{ playersMessage }}</label>
+        <label class="message-label" *ngIf="players > questions">{{ 'customActivities.questions_will_repeat' | translate }}</label>
       </div>
       <div>
-        <label class="slider-label">Questions:</label>
+        <label class="slider-label">{{ 'customActivities.questions' | translate }}:</label>
         <input type="range" min="2" [max]="maxQuestions" [(ngModel)]="questions" (ngModelChange)="onQuestionsChange()" />
         <label class="dropdown-label">{{ questions }}</label>
       </div>
     </div>
-    <p-button *ngIf="isLoading === false" (onClick)="startActivityClick()">Start activity</p-button>
+    <p-button *ngIf="isLoading === false" (onClick)="startActivityClick()">{{ 'customActivities.start_activity' | translate }}</p-button>
   </div>
 </div>

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { DataService } from './data.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +12,7 @@ export class NavigationService {
   selectedButtonId$: Observable<number> = this.selectedButtonIdSubject.asObservable();
   warning = false;
 
-  constructor(private dataService: DataService, private router: Router) {}
+  constructor(private dataService: DataService, private router: Router, private translate: TranslateService) {}
 
   getSelectedButtonId(): number {
     return this.selectedButtonIdSubject.getValue();
@@ -46,7 +47,7 @@ export class NavigationService {
 
   goBack() {
     if (this.warning) {
-      this.router.navigate(['/custom-activities']);
+      this.router.navigate(['/dashboard/resources/custom-activities']);
     }
   }
 
@@ -67,7 +68,15 @@ export class NavigationService {
             return '';
           } else {
             this.warning = true;
-            return 'Going back will delete all the data you entered.';
+            return this.translate.instant('customActivities.going_back_delete'); //'Going back will delete all the data you entered.';
+          }
+        } else {
+          if (this.warning) {
+            return '';
+          } else {
+            //have data = true and newValue is 1
+            this.warning = true;
+            return this.translate.instant('customActivities.going_back_delete'); //'Going back will cancel all the edits you made.';
           }
         }
       }

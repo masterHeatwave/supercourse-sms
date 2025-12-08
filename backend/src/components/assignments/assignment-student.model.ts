@@ -86,15 +86,32 @@ const AssignmentTaskSchema = new Schema<IAssignmentTask>(
       default: 'new',
     },
 
-    answers: {
-      type: Schema.Types.Mixed,
-      required: false,
+    taskInspected: {
+      type: Boolean,
+      required: true,
+      default: false,
     },
 
     answersRevealed: {
       type: Boolean,
       required: true,
       default: false,
+    },
+
+    incompleteWarnings: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+
+    submittedAt: {
+      type: Date,
+      required: false,
+    },
+
+    answers: {
+      type: Schema.Types.Mixed,
+      required: false,
     },
   },
   { _id: false }
@@ -189,11 +206,26 @@ const AssignmentForStudentSchema = new Schema<IAssignmentForStudent>(
       default: 'new',
     },
 
+    assignmentInspected: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+
     academicTimeframe: {
       type: AssignmentAcademicTimeframeSchema,
       required: true,
     },
 
+    isDrafted: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    draftDate: {
+      type: Date,
+      required: false,
+    },
     isDeletedForMe: {
       type: Boolean,
       required: true,

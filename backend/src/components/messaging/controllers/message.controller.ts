@@ -28,14 +28,7 @@ export class MessageController {
     try {
       const payload = sendMessageSchema.parse(req.body);
 
-      console.log(`📤 Sending message from ${payload.senderId}`);
-      if (payload.replyToMessageId) {
-        console.log(`↩️ Reply to message: ${payload.replyToMessageId}`);
-      }
-
       const message = await this.messageService.sendMessage(payload);
-
-      console.log(`✅ Message sent successfully: ${message._id}`);
 
       jsonResponse(res, {
         status: StatusCodes.CREATED,
@@ -77,8 +70,6 @@ export class MessageController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = Math.min(1000, parseInt(req.query.limit as string) || 50);
 
-      console.log(`📬 Fetching messages for chat ${chatId}, page ${page}`);
-
       const messages = await this.messageService.getMessagesByChatId(chatId, page, limit);
 
       res.json({
@@ -118,10 +109,6 @@ export class MessageController {
     try {
       const { chatId } = req.params;
       const { userId } = markChatAsReadSchema.parse({ chatId, ...req.body });
-  
-      // ✅ ADD THIS: Log what we're trying to access
-      console.log(`📖 Attempting to mark chat as read:`, { chatId, userId });
-      console.log(`   chatId type: ${typeof chatId}, valid ObjectId: ${mongoose.Types.ObjectId.isValid(chatId)}`);
   
       const updatedMessages = await this.messageService.markChatMessagesAsRead(chatId, userId);
   
@@ -200,8 +187,6 @@ export class MessageController {
     try {
       const { messageId } = req.params;
       const userId = req.body?.userId || req.query?.userId || req.user?._id?.toString() || undefined;
-
-      console.log(`🗑️ Deleting message ${messageId} by user ${userId || 'system'}`);
 
       const deletedMessage = await this.messageService.deleteMessage(messageId, userId as string | undefined);
 

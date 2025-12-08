@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { CustomersService } from '@gen-api/customers/customers.service';
+import { PublicService } from '@gen-api/public/public.service';
 import { AppState } from '@store/app.state';
 import { map, Observable, switchMap, of, catchError } from 'rxjs';
 import { AuthActions } from '@store/auth/auth.actions';
@@ -9,7 +10,11 @@ import { AuthActions } from '@store/auth/auth.actions';
   providedIn: 'root'
 })
 export class CustomerService {
-  constructor(private customersService: CustomersService, private store: Store<AppState>) {}
+  constructor(
+    private customersService: CustomersService,
+    private publicService: PublicService,
+    private store: Store<AppState>
+  ) {}
 
   /**
    * Get customer details by ID
@@ -87,5 +92,26 @@ export class CustomerService {
    */
   setCurrentCustomer(customerId: string): void {
     this.store.dispatch(AuthActions.setCurrentCustomer({ customerId }));
+  }
+
+  /**
+   * Get all main schools for login selection (public endpoint)
+   */
+  getPublicSchools(): Observable<Array<{ label: string; value: string }>> {
+    return this.publicService.getPublicCustomers().pipe(
+      map((response) => {
+        if (response?.data && Array.isArray(response.data)) {
+          return response.data.map((school) => ({
+            label: school.name,
+            value: school.slug
+          }));
+        }
+        return [];
+      }),
+      catchError(() => {
+        // Return empty array on error
+        return of([]);
+      })
+    );
   }
 }

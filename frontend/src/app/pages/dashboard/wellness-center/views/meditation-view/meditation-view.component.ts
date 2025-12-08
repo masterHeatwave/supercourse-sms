@@ -3,6 +3,7 @@ import { Component, EventEmitter, Output } from '@angular/core';
 import { MoodsService } from '@gen-api/moods/moods.service';
 import { ButtonModule } from 'primeng/button';
 import { videoType } from '../../types/types';
+import { TranslateModule } from '@ngx-translate/core';
 
 interface VideoItem {
   id: string;
@@ -21,7 +22,7 @@ interface MeditationResponse {
 @Component({
   selector: 'app-meditation-view',
   standalone: true,
-  imports: [ButtonModule, CommonModule],
+  imports: [ButtonModule, CommonModule, TranslateModule],
   templateUrl: './meditation-view.component.html',
   styleUrl: './meditation-view.component.scss'
 })

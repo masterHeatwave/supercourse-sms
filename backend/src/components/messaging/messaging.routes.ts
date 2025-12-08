@@ -3,13 +3,9 @@ import { Router } from 'express';
 import { ChatController } from './controllers/chat.controller';
 import { MessageController } from './controllers/message.controller';
 import { ChatNotificationController } from './controllers/chat-notification.controller';
-import { AttachmentController } from './controllers/attachment.controller';
-import { ReactionController } from './controllers/reactions.controller';
 import { ChatService } from './services/chat.service';
 import { MessageService } from './services/message.service';
 import { ChatNotificationService } from './services/chat-notification.service';
-import { AttachmentService } from './services/attachment.service';
-import { ReactionService } from './services/reactions.service';
 import { authorize } from '@middleware/authorize'; 
 
 const router = Router();
@@ -18,8 +14,6 @@ const router = Router();
 const chatService = new ChatService();
 const messageService = new MessageService();
 const notificationService = new ChatNotificationService();
-const attachmentService = new AttachmentService();
-const reactionService = new ReactionService();
 
 
 
@@ -27,16 +21,12 @@ const reactionService = new ReactionService();
 const chatController = new ChatController(chatService);
 const messageController = new MessageController(messageService);
 const notificationController = new ChatNotificationController(notificationService);
-const attachmentController = new AttachmentController(attachmentService);
-const reactionController = new ReactionController(reactionService);
 
 // Socket.IO setup function
 export const setupMessagingSocket = (io: any) => {
   chatService.setSocketIO(io);
   messageService.setSocketIO(io);
   notificationService.setSocketIO(io);
-  attachmentService.setSocketIO(io);
-  reactionService.setSocketIO(io);
 };
 
 // ==================== CHAT ROUTES ====================
@@ -62,9 +52,6 @@ router.delete('/messages/:messageId', authorize(), messageController.deleteMessa
 router.get('/incoming/:userId', authorize(), messageController.getIncomingMessages);
 router.get('/sent/:userId', authorize(), messageController.getSentMessages);
 
-// ==================== REACTION ROUTES ====================
-router.post('/messages/:id/reactions', authorize(), reactionController.addReaction);
-router.delete('/messages/:id/reactions', authorize(), reactionController.removeReaction);
 
 // ==================== NOTIFICATION ROUTES ====================
 // ✅ ADDED authorize() middleware to ALL notification routes
@@ -79,12 +66,5 @@ router.post('/notifications/system', authorize(['ADMIN']), notificationControlle
 router.post('/notifications/welcome', authorize(), notificationController.createWelcomeNotification);
 
 // ==================== ATTACHMENT ROUTES ====================
-router.post('/attachments/upload', authorize(), attachmentController.uploadAttachments);
-router.get('/attachments/chat/:chatId', authorize(), attachmentController.getChatAttachments);
-router.get('/attachments/message/:messageId', authorize(), attachmentController.getMessageAttachments);
-router.get('/attachments/:id', authorize(), attachmentController.getAttachmentById);
-router.get('/attachments/:id/download', authorize(), attachmentController.downloadAttachment);
-router.delete('/attachments/:id', authorize(), attachmentController.deleteAttachment);
-router.post('/attachments/status', authorize(), attachmentController.getUploadStatus);
 
 export default router;

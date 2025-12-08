@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FieldType, FieldTypeConfig } from '@ngx-formly/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FormlyModule } from '@ngx-formly/core';
 import { MultiSelectModule } from 'primeng/multiselect';
@@ -22,6 +22,8 @@ import { MessageModule } from 'primeng/message';
   styleUrls: ['./primary-multi-select.component.scss']
 })
 export class PrimaryMultiSelectComponent extends FieldType<FieldTypeConfig> {
+  private translateService = inject(TranslateService);
+
   get label() {
     return this.props['label'] || '';
   }
@@ -44,6 +46,14 @@ export class PrimaryMultiSelectComponent extends FieldType<FieldTypeConfig> {
 
   get disabled() {
     return this.props['disabled'] || false;
+  }
+
+  get emptyMessage(): string {
+    return this.props['emptyMessage'] || this.translateService.instant('common.no_results_found');
+  }
+
+  get emptyFilterMessage(): string {
+    return this.props['emptyFilterMessage'] || this.translateService.instant('common.no_results_found');
   }
 
   get errorMessage(): string {

@@ -4,6 +4,8 @@ logs
 npm-debug.log*
 
 public/*
+!public/Unity/
+!public/Unity/**
 
 .idea
 

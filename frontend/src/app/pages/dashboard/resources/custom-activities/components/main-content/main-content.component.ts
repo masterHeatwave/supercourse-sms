@@ -26,6 +26,8 @@ export class MainContentComponent {
     template: '',
     cefr: '',
     tags: [],
+    plays: 0,
+    totalDuration: 0.0,
     userId: '',
     settings: {},
     questions: []

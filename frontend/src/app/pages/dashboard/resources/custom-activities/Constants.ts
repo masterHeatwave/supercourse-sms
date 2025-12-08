@@ -31,7 +31,7 @@ export const PAIRS_OF_DIFF_ITEM_TEXT = 'Pairs of different items';
 
 //settings
 export const EACH_SENTENCE_APPEARS_IN_A_SEPARATE_PAGE_OPTION_VALUE = 'eachSentenceAppearsInASeparatePage';
-export const ANSWERS_ARE_CASE_SENSITIVE_OPTION_VALUE = 'answersAreCase-Sensitive';
+export const ANSWERS_ARE_CASE_SENSITIVE_OPTION_VALUE = 'answersAreCaseSensitive';
 export const ALLOW_EXTRA_POINTS_FOR_QUICK_RESPONSES_OPTION_VALUE = 'allowExtraPointsForQuickResponses';
 export const NUMBER_ITEMS_OPTION_VALUE = 'numberItems';
 export const PUBLIC_OPTION_VALUE = 'public';
@@ -42,6 +42,7 @@ export const SHOW_ANAGRAMS_OPTION_VALUE = 'showAnagrams';
 export const HIDE_MATCHED_PAIRS_OPTION_VALUE = 'hideMatchedPairs';
 export const NUMBER_THE_PAIRS_OPTION_VALUE = 'numberThePairs';
 export const DISPLAY_ALL_ITEMS_FROM_THE_START_OPTION_VALUE = 'displayAllItemsFromTheStart';
+export const DISPLAY_ANSWERS_VALUE = 'displayAnswers';
 export const RANDOMIZE_ITEMS_OPTION_VALUE = 'randomizeItems';
 export const RANDOMIZE_ANSWERS_OPTION_VALUE = 'randomizeAnswers';
 export const HIDE_MATCHED_CARDS_OPTION_VALUE = 'hideMatchedCards';
@@ -59,6 +60,7 @@ export const SHOW_ANAGRAMS_OPTION_TEXT = 'Show anagrams';
 export const HIDE_MATCHED_PAIRS_OPTION_TEXT = 'Hide matched pairs';
 export const NUMBER_THE_PAIRS_OPTION_TEXT = 'Number the pairs';
 export const DISPLAY_ALL_ITEMS_FROM_THE_START_OPTION_TEXT = 'Display all items from the start';
+export const DISPLAY_ANSWERS_TEXT = 'Display answers';
 export const RANDOMIZE_ITEMS_OPTION_TEXT = 'Randomize items';
 export const RANDOMIZE_ANSWERS_OPTION_TEXT = 'Randomize answers';
 export const HIDE_MATCHED_CARDS_OPTION_TEXT = 'Hide matched cards';
@@ -102,7 +104,7 @@ export const INITIAL_ANSWERS = [
 
 export const INITIAL_GROUP = {
   groupNumber: 1,
-  groupName: 'Group name',
+  groupName: '', //'customActivities.group_name',
   imageURL: '',
   items: [
     {
@@ -125,7 +127,7 @@ export const INITIAL_QUESTION = {
   TTSText: '',
   option: 'separateEachWord',
   groupNumber: 1,
-  groupName: 'Group name',
+  groupName: '',
   document: '',
   answers: JSON.parse(JSON.stringify(INITIAL_ANSWERS)),
   items: []

@@ -1,3 +1,10 @@
+// Scoped styles for Event Details Dialog only
+::ng-deep .event-details-dialog {
+  .p-dialog-content {
+    padding: 1.25rem 1.5rem;
+  }
+}
+
 .calendar-page {
   .toolbar {
     display: flex;
@@ -33,6 +40,7 @@
   }
 
   .details-grid {
+    padding: 0.5rem 1rem;
     .details-row { display: flex; gap: .75rem; margin-bottom: .75rem; }
     .details-icon { font-size: 1.25rem; color: #6b7280; margin-top: .25rem; }
     .label { font-weight: 600; color: #374151; }
@@ -41,4 +49,65 @@
   }
 
   .dialog-actions { display: flex; gap: .5rem; justify-content: flex-end; margin-top: 1rem; }
+
+  .export-format-selection {
+    .export-description {
+      color: #6b7280;
+      margin-bottom: 1rem;
+    }
+
+    .format-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .format-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 1rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: #9ca3af;
+        background: #f9fafb;
+      }
+
+      &.selected {
+        border-color: var(--primary-color, #7c3aed);
+        background: rgba(124, 58, 237, 0.05);
+      }
+
+      .format-label {
+        cursor: pointer;
+        flex: 1;
+      }
+
+      .format-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+
+        i {
+          font-size: 1.1rem;
+          color: #374151;
+        }
+
+        .format-name {
+          font-weight: 600;
+          color: #111827;
+        }
+      }
+
+      .format-desc {
+        font-size: 0.875rem;
+        color: #6b7280;
+      }
+    }
+  }
 }

@@ -28,7 +28,10 @@ router.post('/remove-user', authorize([Role.ADMIN, Role.MANAGER]), taxiControlle
 // Base CRUD routes for taxis
 router
   .route('/')
-  .get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), taxiController.getAllTaxis)
+  .get(
+    authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT, Role.PARENT_GUARDIAN]),
+    taxiController.getAllTaxis
+  )
   .post(authorize([Role.ADMIN, Role.MANAGER]), taxiController.createTaxi);
 
 // Get taxi attendance (must be before /:id to avoid matching as ID)
@@ -40,8 +43,27 @@ router.get('/:id/with-users', authorize(allRoles), taxiController.getTaxiByIdWit
 // ✅ Parameterized /:id routes come LAST
 router
   .route('/:id')
-  .get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), taxiController.getTaxiById)
-  .put(authorize([Role.ADMIN, Role.MANAGER]), taxiController.updateTaxi)
+  .get(
+    authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT, Role.PARENT_GUARDIAN]),
+    taxiController.getTaxiById
+  )
+  .put(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), taxiController.updateTaxi)
   .delete(authorize([Role.ADMIN]), taxiController.deleteTaxi);
+
+router
+  .route('/:id/attendance')
+  .get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), taxiController.getTaxiAttendance);
+
+router.route('/:id/sessions').get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), taxiController.getTaxiSessions);
+
+router.route('/user/:userId').get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), taxiController.getTaxisByUserId);
+
+router.post('/add-user', authorize([Role.ADMIN, Role.MANAGER]), taxiController.addUser);
+
+router.post('/remove-user', authorize([Role.ADMIN, Role.MANAGER]), taxiController.removeUser);
+
+// Scoped endpoints for role-based access
+router.get('/me', authorize([Role.TEACHER, Role.STUDENT]), taxiController.getMyTaxis);
+router.get('/children', authorize([Role.PARENT_GUARDIAN]), taxiController.getChildrenTaxis);
 
 export default router;

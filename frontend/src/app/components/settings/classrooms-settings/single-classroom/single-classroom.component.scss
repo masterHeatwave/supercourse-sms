@@ -1,0 +1,231 @@
+.single-classroom-container {
+  padding: 2rem;
+  margin: 0 auto;
+}
+
+.classroom-details {
+  // No special styling
+}
+
+// Header Section
+.classroom-header {
+  padding: 0 0 2rem 0;
+
+  .classroom-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.25rem 0;
+  }
+
+  .classroom-location {
+    font-size: 1rem;
+    color: #6b7280;
+    margin: 0;
+    font-weight: 400;
+  }
+}
+
+// Main Content
+.classroom-content {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+// Photos Section
+.photos-section {
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+
+    @media (max-width: 1400px) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    @media (max-width: 1024px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    @media (max-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .photo-item {
+      width: 100%;
+      aspect-ratio: 16 / 11;
+      border-radius: 8px;
+      overflow: hidden;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+    }
+  }
+}
+
+// Information Section
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+
+  .info-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .info-item {
+      display: flex;
+      gap: 0.5rem;
+      align-items: baseline;
+
+      .info-label {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #111827;
+      }
+
+      .info-value {
+        font-size: 1rem;
+        font-weight: 400;
+        color: #111827;
+
+        &.availability {
+          text-transform: capitalize;
+        }
+      }
+    }
+  }
+}
+
+// Amenities Section
+.amenities-wrapper {
+  .amenities-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 1rem 0;
+  }
+
+  .amenities-columns {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    flex-wrap: wrap;
+
+    .amenities-column {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      min-width: 200px;
+      flex: 1 1 auto;
+
+      .amenity-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+
+        i {
+          font-size: 1.125rem;
+          color: #111827;
+          flex-shrink: 0;
+        }
+
+        span {
+          font-size: 0.95rem;
+          font-weight: 400;
+          color: #111827;
+        }
+      }
+    }
+
+    // Responsive: On smaller screens, reduce columns
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 1rem;
+
+      .amenities-column {
+        min-width: 100%;
+      }
+    }
+  }
+
+  .no-amenities {
+    p {
+      margin: 0;
+      color: #6b7280;
+      font-size: 0.95rem;
+    }
+  }
+}
+
+// Notes Section
+.notes-wrapper {
+  // Styling handled by primary-textarea component
+}
+
+// Actions Section
+.actions-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 1rem;
+}
+
+// Error State
+.error-state {
+  padding: 4rem 2rem;
+  text-align: center;
+
+  i {
+    font-size: 3rem;
+    color: #9ca3af;
+    margin-bottom: 1rem;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.5rem 0;
+  }
+
+  p {
+    color: #6b7280;
+    margin: 0 0 2rem 0;
+    font-size: 1rem;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .single-classroom-container {
+    padding: 1rem;
+  }
+
+  .classroom-header {
+    .classroom-title {
+      font-size: 1.5rem;
+    }
+  }
+
+  .actions-wrapper {
+    ::ng-deep .done-btn {
+      width: 100%;
+    }
+  }
+}
+
+// Loading Spinner
+::ng-deep app-spinner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+}

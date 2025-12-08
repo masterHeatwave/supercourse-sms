@@ -1,5 +1,9 @@
 import { Schema, Document, Types } from 'mongoose';
-import { IAdvancedResultsOptions, IAdvancedResultsResponse, IPopulateOption } from '@plugins/advancedResults.interface';
+import {
+  IAdvancedResultsOptions,
+  IAdvancedResultsResponse,
+  IAdvancedPopulateOption,
+} from '@plugins/advancedResults.interface';
 
 export function advancedResultsPlugin<T extends Document>(schema: Schema<T>) {
   schema.statics.advancedResults = async function (
@@ -106,7 +110,7 @@ export function advancedResultsPlugin<T extends Document>(schema: Schema<T>) {
         });
       } else if (Array.isArray(opts.populate)) {
         // Handle object-based populate with model references
-        opts.populate.forEach((populateOption: IPopulateOption) => {
+        opts.populate.forEach((populateOption: IAdvancedPopulateOption) => {
           const populateConfig: any = {
             path: populateOption.path,
           };
@@ -117,6 +121,10 @@ export function advancedResultsPlugin<T extends Document>(schema: Schema<T>) {
 
           if (populateOption.populate) {
             populateConfig.populate = populateOption.populate;
+          }
+
+          if (populateOption.select) {
+            populateConfig.select = populateOption.select;
           }
 
           queryStage = queryStage.populate(populateConfig);

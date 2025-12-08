@@ -8,7 +8,7 @@
     <div style="display: flex; width: 100%">
       <p-floatLabel>
         <input pInputText id="title" [(ngModel)]="activityTitle" (input)="onTitleChange($event)" />
-        <label for="title">Title</label>
+        <label for="title">{{ 'customActivities.title' | translate }}</label>
       </p-floatLabel>
       <activity-type-card></activity-type-card>
     </div>
@@ -21,13 +21,19 @@
         (input)="onDescriptionChange($event)"
         style="min-height: 150px; text-align: left; vertical-align: top; width: 100%"
       ></textarea>
-      <label for="description">Description</label>
+      <label for="description">{{ 'customActivities.description' | translate }}</label>
     </p-floatLabel>
   </div>
 
   <div class="class-div">
-    <label>CEFR: </label>
-    <p-dropdown [options]="cefr" [(ngModel)]="selectedCEFR" optionLabel="value" placeholder="Select CEFR" (onChange)="onCEFRChange($event)" />
+    <label>{{ 'customActivities.cefr' | translate }}: </label>
+    <p-dropdown
+      [options]="cefr"
+      [(ngModel)]="selectedCEFR"
+      optionLabel="value"
+      placeholder="{{ 'customActivities.select_cefr' | translate }}"
+      (onChange)="onCEFRChange($event)"
+    />
     <div class="multiselect">
       <p-multiSelect
         [style]="{ 'margin-left': '10px' }"
@@ -35,7 +41,7 @@
         [(ngModel)]="selectedTags"
         [maxSelectedLabels]="7"
         optionLabel="value"
-        placeholder="Select hashtags"
+        placeholder="{{ 'customActivities.select_tags' | translate }}"
         (onChange)="onTagsChange($event)"
       >
       </p-multiSelect>
@@ -96,7 +102,7 @@
     </div>
   </div>
   <div class="container-settings">
-    <label>Settings</label>
+    <label>{{ 'customActivities.settings.label' | translate }}</label>
     <app-settings [hasData]="activityId !== ''" [selectedactivityType]="activityType" [options]="activitySettings"></app-settings>
   </div>
 </div>

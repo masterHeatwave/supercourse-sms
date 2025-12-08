@@ -7,23 +7,16 @@ import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { CommonModule } from '@angular/common';
 import { MenuItem } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
-import { WarningDialogComponent } from '../dialogs/warning-dialog/warning-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
 import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [
-    DialogModule,
-    ButtonModule,
-    DividerModule,
-    BreadcrumbModule,
-    CommonModule,
-    MenuModule,
-    WarningDialogComponent,
-  ],
+  imports: [DialogModule, ButtonModule, DividerModule, BreadcrumbModule, CommonModule, MenuModule, WarningDialogComponent],
   templateUrl: './header.component.html',
-  styleUrl: './header.component.scss',
+  styleUrl: './header.component.scss'
 })
 export class HeaderComponent implements OnChanges {
   selectedButtonId: number = 1;
@@ -34,15 +27,16 @@ export class HeaderComponent implements OnChanges {
   @Input() activityData = {
     _id: '',
     title: '',
-    description: '',
+    description: ''
   };
 
   @Input() hasData: boolean = false;
 
-  constructor(
-    public navigationService: NavigationService,
-    private router: Router
-  ) {}
+  constructor(public navigationService: NavigationService, private router: Router, private translate: TranslateService) {
+    this.translate.onLangChange.subscribe(() => {
+      this.updateItems();
+    });
+  }
 
   ngOnInit() {
     this.navigationService.selectedButtonId$.subscribe((id) => {
@@ -61,13 +55,12 @@ export class HeaderComponent implements OnChanges {
   }
 
   onClick(id: number) {
-    
     let status = this.navigationService.setSelectedButtonId(id, this.hasData);
     if (status !== 'ok' && status !== '') {
       this.warningMessage = status;
       this.isWarningDialogVisible = true;
     }
-    if(this.navigationService.getSelectedButtonId() >= 1){
+    if (this.navigationService.getSelectedButtonId() >= 1) {
       this.navigationService.resetWarning();
     }
     /*else {
@@ -85,58 +78,36 @@ export class HeaderComponent implements OnChanges {
 
     if (!this.hasData) {
       this.items.push({
-        label: this.hasData ? 'Edit activity type' : 'Choose activity type',
+        label: this.hasData
+          ? this.translate.instant('customActivities.edit_activity_type_button')
+          : this.translate.instant('customActivities.choose_activity_type_button'),
         command: () => this.onClick(1),
-        styleClass: this.selectedButtonId === 1 ? 'selected' : '',
+        styleClass: this.selectedButtonId === 1 ? 'selected' : ''
       });
     }
 
     this.items.push(
       {
-        label: this.hasData ? 'Edit player mode' : 'Choose player mode',
+        label: this.hasData
+          ? this.translate.instant('customActivities.edit_player_mode_button')
+          : this.translate.instant('customActivities.choose_player_mode_button'),
         command: () => this.onClick(2),
-        styleClass: this.selectedButtonId === 2 ? 'selected' : '',
+        styleClass: this.selectedButtonId === 2 ? 'selected' : ''
       },
       {
-        label: this.hasData ? 'Edit content' : 'Add content',
+        label: this.hasData
+          ? this.translate.instant('customActivities.edit_content_button')
+          : this.translate.instant('customActivities.add_content_button'),
         command: () => this.onClick(3),
-        styleClass: this.selectedButtonId === 3 ? 'selected' : '',
+        styleClass: this.selectedButtonId === 3 ? 'selected' : ''
       },
       {
-        label: this.hasData ? 'Edit template' : 'Choose template',
+        label: this.hasData
+          ? this.translate.instant('customActivities.edit_template_button')
+          : this.translate.instant('customActivities.choose_template_button'),
         command: () => this.onClick(4),
-        styleClass: this.selectedButtonId === 4 ? 'selected' : '',
+        styleClass: this.selectedButtonId === 4 ? 'selected' : ''
       }
     );
-    /*this.items = [
-      {
-        label:
-          this.activityData?.title !== ''
-            ? 'Edit activity type'
-            : 'Choose activity type',
-        command: () => this.onClick(1),
-        styleClass: this.selectedButtonId === 1 ? 'selected' : '',
-        disabled: this.activityData?.title !== '' ? true : false,
-        visible: this.activityData?.title !== '' ? false : true,
-      },
-      {
-        label: 'Choose player mode',
-        command: () => this.onClick(2),
-        styleClass: this.selectedButtonId === 2 ? 'selected' : '',
-        disabled: false,
-      },
-      {
-        label: 'Add content',
-        command: () => this.onClick(3),
-        styleClass: this.selectedButtonId === 3 ? 'selected' : '',
-        disabled: false,
-      },
-      {
-        label: 'Choose template',
-        command: () => this.onClick(4),
-        styleClass: this.selectedButtonId === 4 ? 'selected' : '',
-        disabled: false,
-      },
-    ];*/
   }
 }

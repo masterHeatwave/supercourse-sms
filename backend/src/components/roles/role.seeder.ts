@@ -32,8 +32,15 @@ const createRoles = async (permissions: any[]) => {
       permissions: permissions.filter((p) => p.name.includes('session') || p.name.includes('course')).map((p) => p._id),
     },
     {
-      title: 'PARENT',
+      title: 'PARENT_GUARDIAN',
       description: 'Parent/Guardian with access to child-related features',
+      permissions: permissions
+        .filter((p) => p.name.includes('student') || p.name.includes('session'))
+        .map((p) => p._id),
+    },
+    {
+      title: 'PARENT',
+      description: 'Legacy Parent role (alias for PARENT_GUARDIAN)',
       permissions: permissions
         .filter((p) => p.name.includes('student') || p.name.includes('session'))
         .map((p) => p._id),
@@ -81,7 +88,6 @@ const seedRoles = async () => {
 
   // Then create tenant-specific roles
   await seedTenantRoles('supercourse');
-  await seedTenantRoles('piedpiper');
 };
 
 export default seedRoles;

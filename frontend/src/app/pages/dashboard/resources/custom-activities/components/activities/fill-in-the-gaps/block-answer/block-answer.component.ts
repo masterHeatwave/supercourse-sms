@@ -2,13 +2,14 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, O
 import { CommonModule } from '@angular/common';
 import { ImageSelectorComponent } from '../../../image-selector/image-selector.component';
 import { ButtonModule } from 'primeng/button';
-import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
 import { Answer } from '../../../../types';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'fill-in-block-answer',
   standalone: true,
-  imports: [CommonModule, ImageSelectorComponent, ButtonModule, WarningDialogComponent],
+  imports: [CommonModule, ImageSelectorComponent, ButtonModule, WarningDialogComponent, TranslateModule],
   templateUrl: './block-answer.component.html',
   styleUrl: './block-answer.component.scss'
 })
@@ -31,10 +32,15 @@ export class BlockAnswerComponent implements AfterViewInit, OnDestroy {
   @Output() imageURLChanged: EventEmitter<string> = new EventEmitter<string>();
   @Output() deleteClicked: EventEmitter<void> = new EventEmitter<void>();
 
-  constructor() {}
+  constructor(public translate: TranslateService) {
+    this.warningMessage = this.translate.instant('customActivities.please_select_other_text');
+    this.translate.onLangChange.subscribe(() => {
+      this.warningMessage = this.translate.instant('customActivities.please_select_other_text');
+    });
+  }
 
   ngAfterViewInit(): void {
-    if (this.editableDiv) {
+    /*if (this.editableDiv) {
       const editableDiv = this.editableDiv.nativeElement;
       editableDiv.addEventListener('keydown', (event: KeyboardEvent) => this.handleKeyDown(event));
       editableDiv.addEventListener('keyup', (event: KeyboardEvent) => this.handleKeyUp(event));
@@ -63,6 +69,80 @@ export class BlockAnswerComponent implements AfterViewInit, OnDestroy {
       }
 
       if (this.imageURL !== '') {
+        this.imageURLChanged.emit(this.imageURL);
+      }
+    }*/
+    if (!this.editableDiv) return;
+
+    const editableDiv = this.editableDiv.nativeElement;
+    editableDiv.addEventListener('keydown', (event: KeyboardEvent) => this.handleKeyDown(event));
+    editableDiv.addEventListener('keyup', (event: KeyboardEvent) => this.handleKeyUp(event));
+
+    if (this.document && this.strings.length > 0) {
+      editableDiv.innerHTML = '';
+
+      const underscoreRegex = /_+/g;
+      let lastIndex = 0;
+      let stringIndex = 0;
+
+      let match: RegExpExecArray | null;
+      while ((match = underscoreRegex.exec(this.document)) !== null) {
+        // Append text before underscores
+        if (match.index > lastIndex) {
+          const textBefore = this.document.slice(lastIndex, match.index);
+          editableDiv.appendChild(document.createTextNode(textBefore));
+        }
+
+        // Replace underscores with the next word from strings array
+        if (stringIndex < this.strings.length) {
+          const word = this.strings[stringIndex++];
+          const span = document.createElement('span');
+          span.innerText = word; // set text
+          span.style.border = '2px solid green';
+          span.style.borderRadius = '5px';
+          span.style.color = 'green';
+          span.style.display = 'inline';
+          span.style.position = 'relative';
+
+          // Close button
+          const closeButton = document.createElement('button');
+          closeButton.innerText = 'X';
+          closeButton.setAttribute('contenteditable', 'false');
+          closeButton.style.position = 'absolute';
+          closeButton.style.top = '-15px';
+          closeButton.style.right = '-15px';
+          closeButton.style.backgroundColor = 'red';
+          closeButton.style.color = 'white';
+          closeButton.style.border = 'none';
+          closeButton.style.borderRadius = '50%';
+          closeButton.style.width = '20px';
+          closeButton.style.height = '20px';
+          closeButton.style.cursor = 'pointer';
+          closeButton.style.userSelect = 'none';
+          closeButton.addEventListener('click', () => {
+            closeButton.remove();
+            const textNode = document.createTextNode(span.innerText);
+            span.parentNode?.replaceChild(textNode, span);
+            this.updateStrings(editableDiv);
+          });
+
+          span.appendChild(closeButton);
+          editableDiv.appendChild(span);
+        } else {
+          // Fallback if no string left
+          editableDiv.appendChild(document.createTextNode(match[0]));
+        }
+
+        lastIndex = match.index + match[0].length;
+      }
+
+      // Append remaining text after last underscore
+      if (lastIndex < this.document.length) {
+        editableDiv.appendChild(document.createTextNode(this.document.slice(lastIndex)));
+      }
+
+      // Emit initial strings
+      if (this.imageURL) {
         this.imageURLChanged.emit(this.imageURL);
       }
     }
@@ -175,7 +255,8 @@ export class BlockAnswerComponent implements AfterViewInit, OnDestroy {
       if (selection && selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
         if (this.isRangeInsideSpan(range) || this.hasSpanInRange(range)) {
-          alert('Please select other text.');
+          //alert('Please select other text.');
+          this.isWarningDialogVisible = true;
           return;
         }
         if (this.editableDiv.nativeElement.contains(range.commonAncestorContainer)) {

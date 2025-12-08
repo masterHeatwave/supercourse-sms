@@ -1,16 +1,8 @@
-<div
-  cdkDropList
-  [cdkDropListData]="questions"
-  (cdkDropListDropped)="drop($event)"
-  class="container"
->
+<div cdkDropList [cdkDropListData]="questions" (cdkDropListDropped)="drop($event)" class="container">
   <div class="container-header">
-    <label>Words</label>
+    <label>{{ 'customActivities.words' | translate }}</label>
   </div>
-  <div
-    *ngFor="let question of questions; let i = index; trackBy: trackByIndex"
-    cdkDrag
-  >
+  <div *ngFor="let question of questions; let i = index; trackBy: trackByIndex" cdkDrag>
     <letter-hunt-question-card
       [questionNumber]="i + 1"
       [answers]="question.answers"
@@ -19,12 +11,8 @@
     ></letter-hunt-question-card>
   </div>
   <div class="container-footer">
-    <label (click)="addQuestion()">+Add a word</label>
+    <label (click)="addQuestion()">+{{ 'customActivities.add_a_word' | translate }}</label>
   </div>
 
-  <app-warning-dialog
-    [warningMessage]="warningMessage"
-    [isDialogVisible]="isWarningDialogVisible"
-    (onClose)="isWarningDialogVisible = false"
-  />
+  <app-warning-dialog [warningMessage]="warningMessage" [isDialogVisible]="isWarningDialogVisible" (onClose)="isWarningDialogVisible = false" />
 </div>

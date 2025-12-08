@@ -1,9 +1,12 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { AvatarModule } from 'primeng/avatar';
 import { OutlineButtonComponent } from '../../buttons/outline-button/outline-button.component';
+import { QRCodeModule } from 'angularx-qrcode';
+import { TranslateModule } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 
 interface StudentProfile {
   id: string;
@@ -17,7 +20,13 @@ interface StudentProfile {
     name: string;
     code: string;
     language: string;
+    logoUrl?: string;
+    logo?: string;
+    avatarUrl?: string;
   }[];
+  customerAvatarUrl?: string;
+  customerName?: string;
+  customerEmail?: string;
   taxiSubjects: {
     name: string;
     subject: string;
@@ -63,16 +72,29 @@ interface StudentProfile {
     DialogModule,
     ButtonModule,
     AvatarModule,
-    OutlineButtonComponent
+    OutlineButtonComponent,
+    QRCodeModule,
+    TranslateModule
   ],
   templateUrl: './student-id-modal.component.html',
   styleUrl: './student-id-modal.component.scss'
 })
-export class StudentIdModalComponent {
+export class StudentIdModalComponent implements OnChanges {
   @Input() visible: boolean = false;
   @Input() studentProfile: StudentProfile | null = null;
   @Output() visibleChange = new EventEmitter<boolean>();
   @ViewChild('printArea', { static: false }) printArea!: ElementRef;
+
+  constructor(private translate: TranslateService) {
+    this.translate.setDefaultLang('en');
+    this.translate.use('en');
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['studentProfile'] && this.studentProfile) {
+      console.log('Student ID modal profile data:', this.studentProfile);
+    }
+  }
 
   onHide() {
     this.visible = false;
@@ -130,6 +152,27 @@ export class StudentIdModalComponent {
               font-size: 0.9rem;
               font-weight: 500;
             }
+            .student-address {
+              color: #333;
+              font-size: 0.9rem;
+              font-weight: 500;
+            }
+            .parent-info {
+              margin-top: 8px;
+              color: #fff;
+            }
+            .parent-info .parent-label {
+              font-size: 0.75rem;
+              text-transform: uppercase;
+              opacity: 0.9;
+            }
+            .parent-info .parent-value {
+              font-weight: 600;
+            }
+            .parent-info .parent-email {
+              font-size: 0.75rem;
+              opacity: 0.9;
+            }
             .id-card-middle {
               background: white;
               padding: 20px;
@@ -150,6 +193,17 @@ export class StudentIdModalComponent {
               justify-content: center;
               align-items: center;
             }
+            .customer-avatar {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 8px;
+            }
+            .customer-name {
+              font-weight: 600;
+              color: #333;
+              text-align: center;
+            }
             .grade {
               font-weight: bold;
               font-size: 1.1rem;
@@ -165,52 +219,11 @@ export class StudentIdModalComponent {
               color: #333;
               font-weight: 600;
             }
-            .qr-placeholder {
-              width: 60px;
-              height: 60px;
-              border: 2px solid #333;
+            .qr-code {
+              margin-top: 8px;
               display: flex;
-              align-items: center;
               justify-content: center;
-            }
-            .qr-grid {
-              display: grid;
-              grid-template-columns: repeat(5, 1fr);
-              gap: 1px;
-              width: 50px;
-              height: 50px;
-            }
-            .qr-cell {
-              background: white;
-              border: 1px solid #ddd;
-            }
-            .qr-cell.qr-filled {
-              background: #333;
-            }
-            .logo-shield {
-              width: 80px;
-              height: 80px;
-              background: #2196F3;
-              border: 3px solid white;
-              border-radius: 8px;
-              display: flex;
               align-items: center;
-              justify-content: center;
-            }
-            .logo-symbols {
-              display: grid;
-              grid-template-columns: repeat(2, 1fr);
-              gap: 2px;
-              margin-bottom: 4px;
-            }
-            .symbol {
-              font-size: 0.8rem;
-              line-height: 1;
-            }
-            .logo-year {
-              color: white;
-              font-weight: bold;
-              font-size: 0.8rem;
             }
             .year-label {
               font-weight: bold;
@@ -347,6 +360,17 @@ export class StudentIdModalComponent {
               justify-content: center;
               align-items: center;
             }
+            .customer-avatar {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 8px;
+            }
+            .customer-name {
+              font-weight: 600;
+              color: #333;
+              text-align: center;
+            }
             .grade {
               font-weight: bold;
               font-size: 1.1rem;
@@ -362,52 +386,11 @@ export class StudentIdModalComponent {
               color: #333;
               font-weight: 600;
             }
-            .qr-placeholder {
-              width: 60px;
-              height: 60px;
-              border: 2px solid #333;
+            .qr-code {
+              margin-top: 8px;
               display: flex;
-              align-items: center;
               justify-content: center;
-            }
-            .qr-grid {
-              display: grid;
-              grid-template-columns: repeat(5, 1fr);
-              gap: 1px;
-              width: 50px;
-              height: 50px;
-            }
-            .qr-cell {
-              background: white;
-              border: 1px solid #ddd;
-            }
-            .qr-cell.qr-filled {
-              background: #333;
-            }
-            .logo-shield {
-              width: 80px;
-              height: 80px;
-              background: #2196F3;
-              border: 3px solid white;
-              border-radius: 8px;
-              display: flex;
               align-items: center;
-              justify-content: center;
-            }
-            .logo-symbols {
-              display: grid;
-              grid-template-columns: repeat(2, 1fr);
-              gap: 2px;
-              margin-bottom: 4px;
-            }
-            .symbol {
-              font-size: 0.8rem;
-              line-height: 1;
-            }
-            .logo-year {
-              color: white;
-              font-weight: bold;
-              font-size: 0.8rem;
             }
             .year-label {
               font-weight: bold;
@@ -495,27 +478,73 @@ export class StudentIdModalComponent {
     return 'Address not available';
   }
 
-  getSchoolName(): string {
-    if (!this.studentProfile?.branchDescription || this.studentProfile.branchDescription.length === 0) {
-      return 'Lexis English School';
+  getBranchName(): string {
+    if (this.studentProfile?.branchDescription && this.studentProfile.branchDescription.length > 0) {
+      return this.studentProfile.branchDescription[0].name || 'Lexis English School';
     }
-    return this.studentProfile.branchDescription[0].name || 'Lexis English School';
+    return this.studentProfile?.customerName || 'Lexis English School';
   }
 
-  getGrade(): string {
-    // You can customize this based on your grade system
-    // For now, we'll use a simple mapping based on age
-    if (!this.studentProfile) return 'Grade 10';
+  getCustomerName(): string {
+    if (this.studentProfile?.customerName) {
+      return this.studentProfile.customerName;
+    }
+    return this.getBranchName();
+  }
+
+  getClasses(): string {
+    if (!this.studentProfile || !this.studentProfile.taxiSubjects || this.studentProfile.taxiSubjects.length === 0) {
+      return 'No Classes';
+    }
     
-    const age = this.studentProfile.age.years;
-    if (age >= 18) return 'Grade 12';
-    if (age >= 17) return 'Grade 11';
-    if (age >= 16) return 'Grade 10';
-    if (age >= 15) return 'Grade 9';
-    if (age >= 14) return 'Grade 8';
-    if (age >= 13) return 'Grade 7';
-    if (age >= 12) return 'Grade 6';
-    return 'Grade 5';
+    // Get unique class names from taxiSubjects
+    const classNames = this.studentProfile.taxiSubjects
+      .map(taxi => taxi.name)
+      .filter((name, index, self) => name && self.indexOf(name) === index); // Remove duplicates
+    
+    if (classNames.length === 0) {
+      return 'No Classes';
+    }
+    
+    return classNames.join(', ');
+  }
+
+  getCustomerAvatarUrl(): string | undefined {
+    if (this.studentProfile?.customerAvatarUrl) {
+      return this.studentProfile.customerAvatarUrl;
+    }
+    if (!this.studentProfile?.branchDescription || this.studentProfile.branchDescription.length === 0) {
+      return undefined;
+    }
+    const branch = this.studentProfile.branchDescription[0];
+    return branch.logoUrl || branch.logo || branch.avatarUrl || undefined;
+  }
+
+  getCustomerAvatarInitials(): string {
+    const name = this.studentProfile?.customerName || this.getBranchName();
+    const words = name.split(' ').filter(Boolean);
+    if (words.length >= 2) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  }
+
+  getCustomerAvatarColor(): string {
+    const colors = ['#6A4C93', '#2196F3', '#4CAF50', '#FF9800', '#9C27B0', '#F44336'];
+    const name = this.getCustomerName();
+    const index =
+      name
+        .split('')
+        .reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+    return colors[index];
+  }
+
+  getQrValue(): string {
+    if (!this.studentProfile) {
+      return '';
+    }
+    const origin = typeof window !== 'undefined' && window?.location ? window.location.origin : 'http://localhost:4200';
+    return `${origin}/dashboard/students/${this.studentProfile.id}`;
   }
 
   getAcademicYear(): string {

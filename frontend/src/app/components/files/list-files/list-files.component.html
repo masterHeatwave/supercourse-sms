@@ -1,1 +1,98 @@
-<p>list-files works!</p>
+<p-card>
+    <div class="flex justify-content-between">
+        <div class="flex justify-content-start">
+            <app-path-breadcrumbs></app-path-breadcrumbs>
+        </div>
+        <div class="flex justify-content-end gap-2">
+
+            <app-create-folder></app-create-folder>
+            <button style="height:42px; margin-top: 3px;" pButton type="button" icon="pi pi-upload" size="small"
+                (click)="triggerFileInput()"></button>
+
+        </div>
+    </div>
+
+    <div class="file-list-container" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)"
+        (drop)="onFileDrop($event)">
+
+        <div class="regular-uploader" [class.hidden]="true">
+            <p-fileUpload #fileUpload mode="advanced" auto="true" customUpload="true" (uploadHandler)="onUpload($event)"
+                multiple="true" accept="image/*,video/mp4" maxFileSize="1000000000" showUploadButton="false"
+                showCancelButton="false" />
+        </div>
+
+        <div class="mt-3">
+
+            <p-table [value]="mergedTables" styleClass="p-datatable-sm" sortMode="multiple" [loading]="isLoading"
+                [scrollable]="true" scrollHeight="flex">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th pSortableColumn="filename" style="width:20%">
+                            Name <p-sortIcon field="filename" />
+                        </th>
+                        <th pSortableColumn="ownerId" style="width:20%">
+                            Owner <p-sortIcon field="ownerId" />
+                        </th>
+                        <th pSortableColumn="updatedAt" style="width:20%">
+                            Last modified <p-sortIcon field="updatedAt" />
+                        </th>
+                        <th pSortableColumn="size" style="width:20%">
+                            Size <p-sortIcon field="size" />
+                        </th>
+                        <th style="width:20%"></th>
+                    </tr>
+                </ng-template>
+
+                <ng-template pTemplate="body" let-item>
+
+                    @if(item.type === 'pending'){
+                    <tr style="height: 30px">
+                        <td>
+                            <i class="pi pi-{{ item.type === 'folder' ? 'folder' : 'file' }}"
+                                style="margin-right: 13px; color:gainsboro"></i>
+                            <span class="table-item-name" style="color:gainsboro">{{ item.name }}</span>
+                        </td>
+                        <td colspan="4"><p-progressBar mode="indeterminate" [showValue]="false" color='gainsboro'
+                                [style]="{'height': '4px'}" />
+                        </td>
+                    </tr>
+                    }@else{
+                    <tr (dblclick)="onRowClick(item)" style="height: 30px; cursor: default">
+                        <td>
+                            <span class="table-item">
+                                @if(item.type==='opening'){<p-progressSpinner
+                                    [style]="{'height': '10px', 'width':'10px', 'margin-right':'10px'}"
+                                    ariaLabel="loading" />}
+                                <i class="pi pi-{{ item.type === 'folder' ? 'folder' : 'file' }}"
+                                    style="margin-right: 8px;"></i>
+                                {{ item.filename }}
+                            </span>
+                        </td>
+                        <td><span class="table-item">{{ item.ownerId === userId() ? 'me' : item.ownerId.fullName
+                                }}</span></td>
+                        <!-- <td>{{ item.ownerId.fullName }}</td> -->
+                        <td> <span class="table-item">{{ item.updatedAt | date: 'medium' }}</span></td>
+                        <td><span class="table-item">{{ item.size | sizeTransform }}</span></td>
+                        <td>
+                            <app-file-actions [item]="item"></app-file-actions>
+                        </td>
+                    </tr>
+                    }
+                </ng-template>
+
+            </p-table>
+
+        </div>
+
+        @if(!isLoading){
+        <div class="drag-overlay" *ngIf="isDragging">
+            <div class="drop-message">
+                <i class="pi pi-upload" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                <span>Drop files here to upload</span>
+            </div>
+        </div>
+        }
+
+    </div>
+
+</p-card>

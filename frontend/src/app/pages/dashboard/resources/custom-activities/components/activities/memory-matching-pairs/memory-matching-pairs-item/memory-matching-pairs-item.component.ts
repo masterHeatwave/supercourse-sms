@@ -10,7 +10,8 @@ import {
 import { ImageSelectorComponent } from '../../../image-selector/image-selector.component';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'memory-matching-pairs-item',
@@ -20,6 +21,7 @@ import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-
     FormsModule,
     CommonModule,
     WarningDialogComponent,
+    TranslateModule
   ],
   templateUrl: './memory-matching-pairs-item.component.html',
   styleUrl: './memory-matching-pairs-item.component.scss',

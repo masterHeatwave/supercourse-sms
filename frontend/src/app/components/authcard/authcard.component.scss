@@ -1,0 +1,36 @@
+// Input styling
+:host ::ng-deep {
+    // Password input
+    .p-password {
+        width: 100%;
+        
+        input {
+            width: 100%;
+            border: 1px solid var(--surface-border) !important;
+            
+            &:focus {
+                border-color: var(--primary-color) !important;
+            }
+        }
+    }
+    
+    // Email input
+    .p-inputtext {
+        border: 1px solid var(--surface-border) !important;
+        
+        &:focus {
+            border-color: var(--primary-color) !important;
+        }
+    }
+    
+    // Dropdown styling
+    app-primary-dropdown {
+        select {
+            border: 1px solid var(--surface-border) !important;
+            
+            &:focus {
+                border-color: var(--primary-color) !important;
+            }
+        }
+    }
+}

@@ -31,16 +31,18 @@ const authenticateAsSchema = z.object({
   distributorId: z.string(),
 });
 
-const passwordSchema = z.string().refine(
-  (value) => {
-    const errors = validatePassword(value);
-    return errors.length === 0;
-  },
-  {
-    message: 'Password does not meet complexity requirements',
-    path: ['password'], // This specifies which field the error is for
+const passwordSchema = z.string().superRefine((value, ctx) => {
+  const errors = validatePassword(value);
+  if (errors.length > 0) {
+    errors.forEach((error) => {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: error,
+        path: [],
+      });
+    });
   }
-);
+});
 
 const registerSchema = z
   .object({

@@ -1,10 +1,6 @@
 <div class="question">
   <app-loading [isLoading]="isLoading"></app-loading>
-  <app-warning-dialog
-    [warningMessage]="warningMessage"
-    [isDialogVisible]="isWarningDialogVisible"
-    (onClose)="isWarningDialogVisible = false"
-  />
+  <app-warning-dialog [warningMessage]="warningMessage" [isDialogVisible]="isWarningDialogVisible" (onClose)="isWarningDialogVisible = false" />
   <app-image-selector
     (onBusy)="handleImageSelectorBusy($event)"
     (onErrorMessage)="handleErrorMessage($event)"
@@ -12,22 +8,13 @@
     [imageURL]="imageURL"
   ></app-image-selector>
   <label class="separator">|</label>
-  <i
-    #lastSoundElementRef
-    class="pi pi-volume-up"
-    style="font-size: 1.5rem"
-    (click)="soundClick($event)"
-  ></i>
+  <i #lastSoundElementRef class="pi pi-volume-up" style="font-size: 1.5rem" (click)="soundClick($event)"></i>
   <label class="separator">|</label>
   <input
     type="text"
-    placeholder="Insert a question"
+    placeholder="{{ 'customActivities.multiple_choice_quiz.question_placeholder' | translate }}"
     [(ngModel)]="questionText"
     (ngModelChange)="onInputChange($event)"
   />
-  <i
-    class="pi pi-trash"
-    style="font-size: 1.5rem"
-    (click)="onDeleteClick()"
-  ></i>
+  <i class="pi pi-trash" style="font-size: 1.5rem" (click)="onDeleteClick()"></i>
 </div>

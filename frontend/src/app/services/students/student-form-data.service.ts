@@ -8,9 +8,11 @@ export interface IStudentFormData {
   firstname: string;
   lastname: string;
   email: string;
+  phone: string;
   optionalPhone?: string;
   mobile?: string;
   dateOfBirth?: string;
+  date?: string | Date; // Registration date
   
   // Address info
   address?: string;
@@ -28,6 +30,11 @@ export interface IStudentFormData {
 
   // Contact info
   contacts?: any[];
+
+  // Health info
+  hasAllergies?: boolean;
+  healthDetails?: string;
+  generalNotes?: string;
 }
 
 @Injectable({
@@ -77,15 +84,37 @@ export class StudentFormDataService {
       });
     }
 
-    return {
+    // Handle registration date - map date field to registration_date
+    let registration_date: string | undefined;
+    if (data.date) {
+      try {
+        const dateValue = new Date(data.date.toString());
+        if (!isNaN(dateValue.getTime())) {
+          // Format date as YYYY-MM-DDTHH:mm:ss.sssZ to avoid timezone issues
+          // Get the date components in local timezone to preserve the selected date
+          const year = dateValue.getFullYear();
+          const month = String(dateValue.getMonth() + 1).padStart(2, '0');
+          const day = String(dateValue.getDate()).padStart(2, '0');
+          // Create ISO datetime string with UTC midnight to preserve the date
+          registration_date = `${year}-${month}-${day}T00:00:00.000Z`;
+        }
+      } catch (e) {
+        this.loggingService.warn(`Could not parse date ('${data.date}') as a valid date.`, e);
+        if (typeof data.date === 'string') {
+          registration_date = data.date;
+        }
+      }
+    }
+
+    const mappedData: any = {
       id: crypto.randomUUID(),
       username: data.email, // Using email as username
       code: crypto.randomUUID().slice(0, 8), // Generate a random code
       firstname: data.firstname,
       lastname: data.lastname,
       email: data.email,
-      phone: data.optionalPhone || '',
-      mobile: data.mobile || '',
+      phone: data.phone || '',
+      mobile: data.optionalPhone || '',
       city: data.city,
       country: data.country,
       address: data.address,
@@ -99,8 +128,19 @@ export class StudentFormDataService {
       documents: data.documents || [],
       contacts: contacts,
       default_branch: data.default_branch || '',
-      branches: data.branches || []
+      branches: data.branches || [],
+      // Include health information fields
+      hasAllergies: data.hasAllergies !== undefined ? data.hasAllergies : false,
+      healthDetails: data.healthDetails || '',
+      generalNotes: data.generalNotes || ''
     };
+
+    // Add registration_date if available
+    if (registration_date) {
+      mappedData.registration_date = registration_date;
+    }
+
+    return mappedData;
   }
 
 

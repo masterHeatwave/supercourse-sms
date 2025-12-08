@@ -1,5 +1,12 @@
 <div class="p-4">
-    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <!-- Loading State -->
+    <div *ngIf="isLoadingFormData" class="flex flex-column align-items-center justify-content-center" style="min-height: 300px;">
+      <i class="pi pi-spin pi-spinner" style="font-size: 3rem; color: var(--primary-color);"></i>
+      <p class="mt-3 text-lg">Loading form data...</p>
+    </div>
+
+    <!-- Form Content -->
+    <form *ngIf="!isLoadingFormData" [formGroup]="form" (ngSubmit)="onSubmit()">
       <!-- Class Information Card -->
       <p-card styleClass="custom-card shadow-none mb-4">
         <ng-template pTemplate="content">
@@ -7,9 +14,10 @@
           
           <!-- Sessions Component -->
           <app-session-form
-            [initialData]="model.sessions"
             [taxiId]="classId || undefined"
             [academicPeriodId]="model.academicPeriod"
+            [students]="model.students || []"
+            [teachers]="model.teachers || []"
             [disabled]="isLoading"
             (sessionsChange)="onSessionsChange($event)"
             (validationChange)="onSessionValidationChange($event)">

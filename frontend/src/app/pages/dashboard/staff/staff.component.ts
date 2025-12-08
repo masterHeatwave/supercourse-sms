@@ -17,6 +17,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@store/app.state';
 import { selectAuthState } from '@store/auth/auth.selectors';
+import { RoleAccessService } from '@services/role-access.service';
 
 @Component({
   selector: 'app-staff',
@@ -37,6 +38,7 @@ export class StaffComponent implements OnInit {
   private customersService = inject(CustomersService);
   private confirmationService = inject(ConfirmationService);
   private store = inject(Store<AppState>);
+  private roleAccessService = inject(RoleAccessService);
   private parentCustomerId: string | null | undefined;
 
   tableColumns = [
@@ -60,16 +62,14 @@ export class StaffComponent implements OnInit {
         return rowData.is_active ? this.translateService.instant('table.active') : this.translateService.instant('table.inactive');
       }
     },
-    { 
-      field: '', 
-      header: 'staff.table.name', 
-      filterType: 'text', 
+    {
+      field: 'username',
+      header: 'staff.table.name',
+      filterType: 'text',
       sortable: true,
       getValue: (rowData: any) => {
-        const firstName = rowData.firstname || '';
-        const lastName = rowData.lastname || '';
-        const fullName = `${firstName} ${lastName}`.trim();
-        return fullName || '';
+        const name = `${rowData.firstname || ''} ${rowData.lastname || ''}`.trim();
+        return name || rowData.username || '';
       }
     },
     {
@@ -160,18 +160,33 @@ export class StaffComponent implements OnInit {
         params[field.value] = query;
       }
 
-      // Fetch staff and customers in parallel
-      return combineLatest([
-        this.staffService.getUsersStaff(params).pipe(
-          catchError((error) => {
-            this.isLoading = false;
-            this.staff = [];
-            this.showErrorMessage(error);
-            return of({ data: { results: [], totalResults: 0 } });
-          })
-        ),
-        this.customersService.getCustomers().pipe(catchError(() => of({ data: [] })))
-      ]);
+      // For admins, include inactive users by default
+      return this.roleAccessService.isAdministrator().pipe(
+        switchMap((isAdmin) => {
+          if (isAdmin) {
+            // Admin can see all users (active and inactive) unless explicitly filtered
+            // Only add is_active filter if it's explicitly set in the query
+            if (!params['is_active']) {
+              // Don't add is_active filter, let backend return all users
+            }
+          } else {
+            // Non-admin users only see active users (backend will filter by default)
+            params['is_active'] = 'true';
+          }
+          
+          return combineLatest([
+            this.staffService.getUsersStaff(params).pipe(
+              catchError((error) => {
+                this.isLoading = false;
+                this.staff = [];
+                this.showErrorMessage(error);
+                return of({ data: { results: [], totalResults: 0 } });
+              })
+            ),
+            this.customersService.getCustomers().pipe(catchError(() => of({ data: [] })))
+          ]);
+        })
+      );
     }),
     map(([staffResponse, customersResponse]) => {
       this.isLoading = false;

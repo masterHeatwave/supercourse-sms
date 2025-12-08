@@ -8,22 +8,22 @@ import { PrimaryTableComponent } from '@components/table/primary-table/primary-t
 import { SpinnerComponent } from '@components/spinner/spinner.component';
 import { ButtonModule } from 'primeng/button';
 import { Router } from '@angular/router';
-import { MessageService, ConfirmationService } from 'primeng/api';
+import { MessageService } from 'primeng/api';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import * as XLSX from 'xlsx';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@store/app.state';
 import { selectAuthState } from '@store/auth/auth.selectors';
+import { mapSubjectToCode, mapLevelToLabel } from '../../../utils/subject-mapping.util';
+import { CustomerService } from '@services/customer.service';
 
 @Component({
   selector: 'app-classes',
   standalone: true,
-  imports: [CommonModule, PrimaryTableComponent, SpinnerComponent, ButtonModule, ConfirmDialogModule, TranslateModule],
+  imports: [CommonModule, PrimaryTableComponent, SpinnerComponent, ButtonModule, TranslateModule],
   templateUrl: './classes.component.html',
-  styleUrl: './classes.component.scss',
-  providers: [ConfirmationService]
+  styleUrl: './classes.component.scss'
 })
 export class ClassesComponent implements OnInit {
   classes: Taxi[] = [];
@@ -32,8 +32,11 @@ export class ClassesComponent implements OnInit {
   private router = inject(Router);
   private messageService = inject(MessageService);
   private translateService = inject(TranslateService);
-  private confirmationService = inject(ConfirmationService);
   private store = inject(Store<AppState>);
+  private customerService = inject(CustomerService);
+  
+  // Track if the current academic year is both manually active and current
+  canAddClasses: boolean = false;
 
   // Table columns configuration for taxis (classes)
   tableColumns = [
@@ -43,8 +46,10 @@ export class ClassesComponent implements OnInit {
       filterType: 'text',
       sortable: true,
       iconConfig: {
-        icon: 'pi pi-user',
-        getColor: (rowData: any) => (rowData.is_active ? '#00897b' : '#ef4444')
+        icon: 'pi pi-users',
+        getColor: (rowData: any) => {
+          return rowData.archived ? '#ef4444' : '#10b981';
+        }
       }
     },
     {
@@ -54,8 +59,8 @@ export class ClassesComponent implements OnInit {
       filterType: 'text',
       sortable: true,
       getValue: (rowData: any) => {
-        return rowData.status ? this.translateService.instant('classes.table.current') : this.translateService.instant('classes.table.archived');
-      }
+        return rowData.archived ? this.translateService.instant('classes.table.archived') : this.translateService.instant('classes.table.current');
+      },
     },
     { field: 'model', header: 'classes.table.name', filterType: 'text', sortable: true },
     { field: 'level', header: 'classes.table.level', filterType: 'text', sortable: true },
@@ -115,23 +120,35 @@ export class ClassesComponent implements OnInit {
 
   // Transform API data for display - now using data from enhanced API
   transformTaxiToClass(taxi: any): any {
+    // Extract branch name
+    let branchName = 'N/A';
+    if (taxi.branch) {
+      if (typeof taxi.branch === 'object' && taxi.branch.name) {
+        branchName = taxi.branch.name;
+      } else if (typeof taxi.branch === 'string') {
+        branchName = taxi.branch;
+      }
+    }
+
     return {
       ...taxi,
       // Use actual API data
-      code: taxi.name || 'N/A',
+      code: taxi.code || 'N/A',
       model: taxi.name || 'N/A',
-      level: taxi.level || 'N/A',
-      subject: taxi.subject || 'N/A',
+      level: taxi.level ? mapLevelToLabel(taxi.level) : 'N/A',
+      subject: taxi.subject ? mapSubjectToCode(taxi.subject) : 'N/A',
       driver: this.getTeacherNames(taxi.teachers) || 'N/A', // Use separated teachers array
       students: this.getStudentCount(taxi.students) || 'N/A', // Use separated students array
       sessionsPerWeek: taxi.sessionStats?.sessionsPerWeek?.toString() || '0',
       totalDuration: taxi.sessionStats?.totalDurationFormatted || '0h 0m',
       days: taxi.sessionStats?.daysFormatted || 'No sessions',
-      status: taxi.status !== false,
-      isActive: taxi.status !== false,
+      branchName: branchName, // Add branch name for display
+      archived: taxi.archived || false, // Use archived field from API
+      status: !taxi.archived, // Status is opposite of archived
+      isActive: !taxi.archived,
       // Transform status for display
-      statusSeverity: this.getStatusSeverity(taxi.status ? 'available' : 'maintenance'),
-      statusLabel: this.getStatusLabel(taxi.status ? 'available' : 'maintenance')
+      statusSeverity: this.getStatusSeverity(!taxi.archived ? 'available' : 'maintenance'),
+      statusLabel: this.getStatusLabel(!taxi.archived ? 'available' : 'maintenance')
     };
   }
 
@@ -197,7 +214,7 @@ export class ClassesComponent implements OnInit {
 
           // Update total records from pagination meta if available
           this.totalRecords = response?.data?.totalResults ?? response?.pagination?.total ?? transformedData.length;
-
+          console.log('transformedData', transformedData);
           return transformedData;
         }),
         catchError((error) => {
@@ -221,6 +238,23 @@ export class ClassesComponent implements OnInit {
     this.store.select(selectAuthState).subscribe((authState) => {
       this.currentCustomerId = authState.currentCustomerId;
       this.pageSubject.next(1);
+      
+      // Load customer data to check academic year status
+      if (this.currentCustomerId) {
+        this.customerService.getCustomerDetails(this.currentCustomerId).subscribe({
+          next: (response: any) => {
+            const activeAcademicYear = response?.data?.active_academic_year;
+            // Enable "Add New Class" button only if both conditions are true:
+            // 1. is_manual_active = true (user manually selected this year)
+            // 2. is_current = true (the year's dates match today)
+            this.canAddClasses = activeAcademicYear?.is_manual_active === true && activeAcademicYear?.is_current === true;
+          },
+          error: (error) => {
+            console.error('Error loading customer details:', error);
+            this.canAddClasses = false;
+          }
+        });
+      }
     });
     this.classes$.subscribe();
     this.pageSubject.next(1);
@@ -287,28 +321,31 @@ export class ClassesComponent implements OnInit {
       return;
     }
 
-    const className = classItem.name || classItem.code || 'this class';
-
-    this.confirmationService.confirm({
-      message: `This will permanently remove ${className} from the system. All associated data including sessions will be lost and this action cannot be undone.`,
-      header: 'Delete Class',
-      icon: 'pi pi-exclamation-triangle',
-      accept: () => {
-        this.deleteClass(classItem.id!);
-      },
-      reject: () => {
-        // User cancelled - no action needed
-      }
-    });
+    // Archive class directly without confirmation dialog
+    this.archiveClass(classItem.id!);
   }
 
-  private deleteClass(classId: string) {
+  onRestoreClass(classItem: any) {
+    if (!classItem.id) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No class ID provided'
+      });
+      return;
+    }
+
+    // Restore class by setting archived to false
+    this.restoreClass(classItem.id!);
+  }
+
+  private archiveClass(classId: string) {
     this.taxisService.deleteTaxisId(classId).subscribe({
       next: () => {
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
-          detail: 'Class has been deleted successfully'
+          detail: 'Class has been archived successfully'
         });
 
         // Refresh the classes list by triggering the observable
@@ -318,7 +355,29 @@ export class ClassesComponent implements OnInit {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: error?.error?.message || 'Failed to delete class'
+          detail: error?.error?.message || 'Failed to archive class'
+        });
+      }
+    });
+  }
+
+  private restoreClass(classId: string) {
+    this.taxisService.putTaxisId(classId, { id: classId, archived: false }).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Class has been restored successfully'
+        });
+
+        // Refresh the classes list by triggering the observable
+        this.pageSubject.next(this.pageSubject.value);
+      },
+      error: (error) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error?.error?.message || 'Failed to restore class'
         });
       }
     });

@@ -21,6 +21,7 @@ export interface IStaffFormData {
   branches?: string[];
   status?: boolean;
   startDate?: string | Date;
+  registration_date?: string | Date;
   role?: string;
   roleTitle?: string;
 
@@ -60,6 +61,7 @@ export interface IStaffApiData {
   customer: string;
   status?: boolean;
   startDate?: string;
+  registration_date?: string;
   role?: string;
   position?: string;
 

@@ -1,15 +1,16 @@
 <app-warning-dialog [warningMessage]="warningMessage" [isDialogVisible]="isWarningDialogVisible" (onClose)="isWarningDialogVisible = false" />
 <app-info-dialog [infoMessage]="infoMessage" [isDialogVisible]="isInfoDialogVisible" (onClose)="isInfoDialogVisible = false" />
 <div class="outer-div">
-  <label>My mood</label>
+  <label>{{ 'wellnessCenter.title' | translate }}</label>
   <img src="assets/images/wellness-center/mood.png" width="auto" height="60" />
   <div class="inner-div">
     <div style="display: flex; align-items: center; flex-wrap: wrap; min-height: 40px">
-      <label>How do you feel right now? I feel </label>
+      <label>{{ 'wellnessCenter.question' | translate }}</label>
       <image-text
         textPosition="left"
         imageUrl="{{ imageUrl }}"
-        text="{{ text }}"
+        [text]="text"
+        [label]="label"
         [textStyle]="{ color: 'var(--primary-color)', 'font-size': '26px' }"
       />
       <p-button icon="pi pi-check" [rounded]="true" [hidden]="imageUrl === ''" (onClick)="applyClick($event)" />
@@ -17,23 +18,93 @@
     </div>
     <div class="rows-div">
       <div style="margin-right: 250px">
-        <image-text imageUrl="assets/images/wellness-center/happy.png" text="Happy" (click)="onClick($event)" />
-        <image-text imageUrl="assets/images/wellness-center/angry.png" text="Angry" (click)="onClick($event)" />
-        <image-text imageUrl="assets/images/wellness-center/disappointed.png" text="Disappointed" (click)="onClick($event)" />
-        <image-text imageUrl="assets/images/wellness-center/proud.png" text="Proud" (click)="onClick($event)" />
-        <image-text imageUrl="assets/images/wellness-center/surprised.png" text="Surprised" (click)="onClick($event)" />
-        <image-text imageUrl="assets/images/wellness-center/grateful.png" text="Grateful" (click)="onClick($event)" />
-        <image-text imageUrl="assets/images/wellness-center/tired.png" text="Tired" (click)="onClick($event)" />
+        <image-text
+          imageUrl="assets/images/wellness-center/happy.png"
+          text="Happy"
+          [label]="'wellnessCenter.happy' | translate"
+          (clicked)="onClick($event)"
+        />
+        <image-text
+          imageUrl="assets/images/wellness-center/angry.png"
+          text="Angry"
+          [label]="'wellnessCenter.angry' | translate"
+          (clicked)="onClick($event)"
+        />
+        <image-text
+          imageUrl="assets/images/wellness-center/disapointed.png"
+          text="Disapointed"
+          [label]="'wellnessCenter.disapointed' | translate"
+          (clicked)="onClick($event)"
+        />
+        <image-text
+          imageUrl="assets/images/wellness-center/proud.png"
+          text="Proud"
+          [label]="'wellnessCenter.proud' | translate"
+          (clicked)="onClick($event)"
+        />
+        <image-text
+          imageUrl="assets/images/wellness-center/surprised.png"
+          text="Surprised"
+          [label]="'wellnessCenter.surprised' | translate"
+          (clicked)="onClick($event)"
+        />
+        <image-text
+          imageUrl="assets/images/wellness-center/grateful.png"
+          text="Grateful"
+          [label]="'wellnessCenter.grateful' | translate"
+          (clicked)="onClick($event)"
+        />
+        <image-text
+          imageUrl="assets/images/wellness-center/tired.png"
+          text="Tired"
+          [label]="'wellnessCenter.tired' | translate"
+          (clicked)="onClick($event)"
+        />
       </div>
 
       <div>
-        <image-text imageUrl="assets/images/wellness-center/excited.png" text="Excited" (click)="onClick($event)" />
-        <image-text imageUrl="assets/images/wellness-center/sad.png" text="Sad" (click)="onClick($event)" />
-        <image-text imageUrl="assets/images/wellness-center/stressed.png" text="Stressed" (click)="onClick($event)" />
-        <image-text imageUrl="assets/images/wellness-center/satisfied.png" text="Satisfied" (click)="onClick($event)" />
-        <image-text imageUrl="assets/images/wellness-center/nervous.png" text="Nervous" (click)="onClick($event)" />
-        <image-text imageUrl="assets/images/wellness-center/bored.png" text="Bored" (click)="onClick($event)" />
-        <image-text imageUrl="assets/images/wellness-center/scared.png" text="Scared" (click)="onClick($event)" />
+        <image-text
+          imageUrl="assets/images/wellness-center/excited.png"
+          text="Excited"
+          [label]="'wellnessCenter.excited' | translate"
+          (clicked)="onClick($event)"
+        />
+        <image-text
+          imageUrl="assets/images/wellness-center/sad.png"
+          text="Sad"
+          [label]="'wellnessCenter.sad' | translate"
+          (clicked)="onClick($event)"
+        />
+        <image-text
+          imageUrl="assets/images/wellness-center/stressed.png"
+          text="Stressed"
+          [label]="'wellnessCenter.stressed' | translate"
+          (clicked)="onClick($event)"
+        />
+        <image-text
+          imageUrl="assets/images/wellness-center/satisfied.png"
+          text="Satisfied"
+          [label]="'wellnessCenter.satisfied' | translate"
+          (clicked)="onClick($event)"
+        />
+        <image-text
+          imageUrl="assets/images/wellness-center/nervous.png"
+          text="Nervous"
+          [label]="'wellnessCenter.nervous' | translate"
+          (clicked)="onClick($event)"
+        />
+        <image-text
+          imageUrl="assets/images/wellness-center/bored.png"
+          text="Bored"
+          [label]="'wellnessCenter.bored' | translate"
+          (clicked)="onClick($event)"
+        />
+        <image-text
+          imageUrl="assets/images/wellness-center/scared.png"
+          text="Scared"
+          [label]="'wellnessCenter.scared' | translate"
+          (clicked)="onClick($event)"
+        />
       </div>
     </div>
   </div>

@@ -48,6 +48,7 @@ export interface ENV {
   MAX_FILE_UPLOAD: number;
 
   API_KEY: string;
+  SCAP_API_KEY: string;
 
   REQUEST_BODY_ENCRYPT_KEY: string;
   REQUEST_BODY_IV_KEY: string;

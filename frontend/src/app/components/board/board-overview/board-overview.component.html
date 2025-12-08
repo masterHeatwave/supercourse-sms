@@ -1,0 +1,381 @@
+<p-toast></p-toast>
+
+<div class="board-container p-4">
+  <!-- Header with Filters and Actions - Only show if there are posts -->
+  <div *ngIf="hasPosts" class="flex justify-content-between align-items-end mb-4 flex-wrap gap-3">
+    <!-- Filters Section -->
+    <div class="flex flex-wrap gap-3 align-items-center">
+      <!-- View Filter -->
+      <app-primary-dropdown 
+        [options]="translatedCreatorOptions" 
+        [(ngModel)]="filters.creator"
+        (valueChange)="onFilterChange()"
+        styleClass="w-20rem"
+      ></app-primary-dropdown>
+
+      <!-- Priority Filter -->
+      <app-primary-dropdown 
+        [options]="translatedPriorityOptions" 
+        [(ngModel)]="filters.priority"
+        (valueChange)="onFilterChange()"
+        styleClass="w-20rem"
+      ></app-primary-dropdown>
+
+      <!-- Date Range -->
+      <div class="flex gap-2">
+        <p-calendar 
+          [(ngModel)]="filters.dateFrom" 
+          [placeholder]="'board.filters.from' | translate"
+          dateFormat="dd/mm/yy"
+          (onSelect)="onFilterChange()"
+          styleClass="w-8rem"
+        ></p-calendar>
+        <p-calendar 
+          [(ngModel)]="filters.dateTo" 
+          [placeholder]="'board.filters.to' | translate"
+          dateFormat="dd/mm/yy"
+          (onSelect)="onFilterChange()"
+          styleClass="w-8rem"
+        ></p-calendar>
+      </div>
+
+      <!-- Academic Period -->
+      <app-primary-dropdown 
+        [options]="translatedAcademicPeriodOptions" 
+        [(ngModel)]="filters.academicPeriod"
+        (valueChange)="onFilterChange()"
+        styleClass="w-20rem"
+      ></app-primary-dropdown>
+
+      <!-- Sort By -->
+      <app-primary-dropdown 
+        [options]="translatedSortOptions" 
+        [(ngModel)]="selectedSort"
+        [placeholder]="'board.sort.placeholder' | translate"
+        (valueChange)="onSortChange()"
+        styleClass="w-20rem"
+      ></app-primary-dropdown>
+
+      <!-- Clear Filters Button -->
+      <p-button 
+        [label]="'common.clear' | translate" 
+        icon="pi pi-times" 
+        severity="secondary" 
+        (onClick)="clearFilters()"
+        [outlined]="true"
+        size="small"
+      ></p-button>
+    </div>
+
+    <!-- Action Buttons Section -->
+    <div class="flex gap-3 align-items-center">
+      <!-- Create Post Button -->
+      <button 
+        class="icon-only-button"
+        routerLink="/dashboard/board/create"
+      >
+        <i class="pi pi-plus"></i>
+      </button>
+      
+      <!-- View Mode Toggle -->
+      <div class="flex gap-2">
+        <button 
+          *ngFor="let mode of viewModes"
+          class="icon-only-button"
+          [class.active]="currentViewMode === mode.value"
+          (click)="setViewMode(mode.value)"
+        >
+          <i [class]="mode.icon"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State - Show when no posts -->
+  <div *ngIf="!loadingPosts && !hasPosts" class="flex flex-column align-items-center justify-content-center" style="min-height: 400px;">
+    <div class="text-center">
+      <i class="pi pi-inbox text-6xl text-400 mb-4"></i>
+      <h2 class="text-2xl font-bold text-primary mb-3">{{ 'board.no_posts_title' | translate }}</h2>
+      <p class="text-lg text-500 mb-4">{{ 'board.no_posts_message' | translate }}</p>
+      <p-button 
+        [label]="'board.add_new_post' | translate" 
+        icon="pi pi-plus"
+        routerLink="/dashboard/board/create"
+        styleClass="p-button-primary"
+      ></p-button>
+    </div>
+  </div>
+
+  <!-- Pinned Posts Section -->
+  <div class="mb-4" *ngIf="hasPosts && pinned.length > 0">
+    <h2 class="text-2xl font-bold text-primary mb-3">{{ 'board.sections.pinned' | translate }}</h2>
+    
+    <!-- Loading indicator for pinned posts -->
+    <div *ngIf="loadingPosts" class="flex justify-content-center p-4">
+      <i class="pi pi-spin pi-spinner text-primary text-4xl"></i>
+    </div>
+
+    <!-- Pinned posts grid view -->
+    <div *ngIf="!loadingPosts && currentViewMode === 'grid'" class="grid">
+      <div class="col-12 md:col-6 lg:col-4" *ngFor="let post of pinned">
+        <div class="relative">
+          <!-- Action buttons overlay -->
+          <div class="absolute top-0 left-0 right-0 m-2 flex justify-content-between z-2">
+            <!-- Pin button -->
+            <div>
+              <button
+                pButton
+                type="button"
+                class="p-button-rounded p-button-text"
+                [ngClass]="{'pinned-button': post.pinned}"
+                (click)="$event.stopPropagation(); togglePin(post.id, post.pinned)"
+                [pTooltip]="post.pinned ? ('board.tooltips.unpin_post' | translate) : ('board.tooltips.pin_post' | translate)"
+              >
+                <i class="pi pi-thumbtack"></i>
+              </button>
+            </div>
+            <!-- Edit button -->
+            <div>
+              <button
+                pButton
+                type="button"
+                class="p-button-rounded p-button-text"
+                (click)="$event.stopPropagation(); editPost(post.id)"
+                [pTooltip]="'board.tooltips.edit_post' | translate"
+              >
+                <i class="pi pi-pencil"></i>
+              </button>
+            </div>
+          </div>
+          <!-- Author initials circle -->
+          <div class="author-initials-circle">
+            {{ getInitials(post) }}
+          </div>
+          <!-- Clickable card -->
+          <div (click)="goToPost(post.id)" class="cursor-pointer">
+            <app-post-card
+              [title]="post.title"
+              [content]="getExcerpt(post.content)"
+              [date]="formatDate(post.published_at || post.createdAt)"
+              [postImage]="getImageUrl(post.featured_image)"
+              [avatarImage]="'assets/images/avatar.jpg'"
+              [author]="formatAuthor(post)"
+              [isPinned]="true"
+              [hasPoll]="!!post.poll"
+              [showLikeButton]="post.allow_reactions !== false"
+              [liked]="post.like"
+              [priority]="post.priority"
+              (likeClicked)="toggleLike(post.id, post.like)"
+            ></app-post-card>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pinned posts list view -->
+    <div *ngIf="!loadingPosts && currentViewMode === 'list'" class="flex flex-column">
+      <div *ngFor="let post of pinned; let last = last" class="border-round p-3 relative post-list-item" [class.post-list-item-border]="!last">
+        <!-- Action buttons and author circle overlay -->
+        <div class="absolute top-0 right-0 m-2 list-view-actions z-2">
+          <!-- Edit button -->
+          <button
+            pButton
+            type="button"
+            class="p-button-rounded p-button-text"
+            icon="pi pi-pencil"
+            (click)="$event.stopPropagation(); editPost(post.id)"
+            [pTooltip]="'board.tooltips.edit_post' | translate"
+          ></button>
+          <!-- Pin button -->
+          <button
+            pButton
+            type="button"
+            class="p-button-rounded p-button-text"
+            [ngClass]="{'pinned-button': post.pinned}"
+            (click)="$event.stopPropagation(); togglePin(post.id, post.pinned)"
+            [pTooltip]="post.pinned ? ('board.tooltips.unpin_post' | translate) : ('board.tooltips.pin_post' | translate)"
+          >
+            <i class="pi pi-thumbtack"></i>
+          </button>
+          <!-- Like button -->
+          <button
+            *ngIf="post.allow_reactions !== false"
+            pButton
+            type="button"
+            class="p-button-rounded p-button-text like-button"
+            [ngClass]="{'liked-button': post.like}"
+            [icon]="post.like ? 'pi pi-heart-fill' : 'pi pi-heart'"
+            (click)="$event.stopPropagation(); toggleLike(post.id, post.like)"
+            [pTooltip]="post.like ? ('board.tooltips.unlike_post' | translate) : ('board.tooltips.like_post' | translate)"
+          ></button>
+          <!-- Author initials circle for list view - in the same row -->
+          <div class="author-initials-circle author-initials-circle-list">
+            {{ getInitials(post) }}
+          </div>
+        </div>
+        <div class="flex gap-3 cursor-pointer" (click)="goToPost(post.id)">
+          <img 
+            [src]="getImageUrl(post.featured_image)" 
+            alt="Post image" 
+            class="w-6rem h-4rem object-fit-cover border-round"
+          />
+          <div class="flex-1">
+            <h3 class="text-xl font-bold text-primary m-0 mb-2">{{ post.title }}</h3>
+            <p class="text-sm text-700 mb-2 line-height-3">{{ getExcerpt(post.content) }}</p>
+            <div class="flex align-items-center gap-2">
+              <span class="text-xs text-500">{{ formatAuthor(post) }}</span>
+              <span class="text-xs text-500">•</span>
+              <span class="text-xs text-500">{{ formatDate(post.published_at || post.createdAt) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Divider -->
+  <div *ngIf="hasPosts && pinned.length > 0 && others.length > 0" class="w-full bg-primary mb-4" style="height: 2px;"></div>
+
+  <!-- Other Posts Section - Only show if there are unpinned posts -->
+  <div class="mb-4" *ngIf="hasPosts && others.length > 0">
+    <h2 class="text-2xl font-bold text-primary mb-3">{{ 'board.sections.other' | translate }}</h2>
+
+    <!-- Loading indicator -->
+    <div *ngIf="loadingPosts" class="flex justify-content-center p-4">
+      <i class="pi pi-spin pi-spinner text-primary text-4xl"></i>
+    </div>
+
+    <!-- Posts grid view -->
+    <div *ngIf="!loadingPosts && posts.length > 0 && currentViewMode === 'grid'" class="grid">
+      <div class="col-12 md:col-6 lg:col-4" *ngFor="let post of posts">
+        <div class="relative">
+          <!-- Action buttons overlay -->
+          <div class="absolute top-0 left-0 right-0 m-2 flex justify-content-between z-2">
+            <!-- Pin button -->
+            <div>
+              <button
+                pButton
+                type="button"
+                class="p-button-rounded p-button-text"
+                [ngClass]="{'pinned-button': post.pinned}"
+                (click)="$event.stopPropagation(); togglePin(post.id, post.pinned)"
+                [pTooltip]="post.pinned ? ('board.tooltips.unpin_post' | translate) : ('board.tooltips.pin_post' | translate)"
+              >
+                <i class="pi pi-thumbtack"></i>
+              </button>
+            </div>
+            <!-- Edit button -->
+            <div>
+              <button
+                pButton
+                type="button"
+                class="p-button-rounded p-button-text"
+                (click)="$event.stopPropagation(); editPost(post.id)"
+                [pTooltip]="'board.tooltips.edit_post' | translate"
+              >
+                <i class="pi pi-pencil"></i>
+              </button>
+            </div>
+          </div>
+          <!-- Author initials circle -->
+          <div class="author-initials-circle">
+            {{ getInitials(post) }}
+          </div>
+          <!-- Clickable card -->
+          <div (click)="goToPost(post.id)" class="cursor-pointer">
+            <app-post-card
+              [title]="post.title"
+              [content]="getExcerpt(post.content)"
+              [date]="formatDate(post.published_at || post.createdAt)"
+              [postImage]="getImageUrl(post.featured_image)"
+              [avatarImage]="'assets/images/avatar.jpg'"
+              [author]="formatAuthor(post)"
+              [isPinned]="false"
+              [hasPoll]="!!post.poll"
+              [showLikeButton]="post.allow_reactions !== false"
+              [liked]="post.like"
+              [priority]="post.priority"
+              (likeClicked)="toggleLike(post.id, post.like)"
+            ></app-post-card>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Posts list view -->
+    <div *ngIf="!loadingPosts && posts.length > 0 && currentViewMode === 'list'" class="flex flex-column">
+      <div *ngFor="let post of posts; let last = last" class="border-round p-3 relative post-list-item" [class.post-list-item-border]="!last">
+        <!-- Action buttons and author circle overlay -->
+        <div class="absolute top-0 right-0 m-2 list-view-actions z-2">
+          <!-- Edit button -->
+          <button
+            pButton
+            type="button"
+            class="p-button-rounded p-button-text"
+            icon="pi pi-pencil"
+            (click)="$event.stopPropagation(); editPost(post.id)"
+            [pTooltip]="'board.tooltips.edit_post' | translate"
+          ></button>
+          <!-- Pin button -->
+          <button
+            pButton
+            type="button"
+            class="p-button-rounded p-button-text"
+            [ngClass]="{'pinned-button': post.pinned}"
+            (click)="$event.stopPropagation(); togglePin(post.id, post.pinned)"
+            [pTooltip]="post.pinned ? ('board.tooltips.unpin_post' | translate) : ('board.tooltips.pin_post' | translate)"
+          >
+            <i class="pi pi-thumbtack"></i>
+          </button>
+          <!-- Like button -->
+          <button
+            *ngIf="post.allow_reactions !== false"
+            pButton
+            type="button"
+            class="p-button-rounded p-button-text like-button"
+            [ngClass]="{'liked-button': post.like}"
+            [icon]="post.like ? 'pi pi-heart-fill' : 'pi pi-heart'"
+            (click)="$event.stopPropagation(); toggleLike(post.id, post.like)"
+            [pTooltip]="post.like ? ('board.tooltips.unlike_post' | translate) : ('board.tooltips.like_post' | translate)"
+          ></button>
+          <!-- Author initials circle for list view - in the same row -->
+          <div class="author-initials-circle author-initials-circle-list">
+            {{ getInitials(post) }}
+          </div>
+        </div>
+        <div class="flex gap-3 cursor-pointer" (click)="goToPost(post.id)">
+          <img 
+            [src]="getImageUrl(post.featured_image)" 
+            alt="Post image" 
+            class="w-6rem h-4rem object-fit-cover border-round"
+          />
+          <div class="flex-1">
+            <h3 class="text-xl font-bold text-primary m-0 mb-2">{{ post.title }}</h3>
+            <p class="text-sm text-700 mb-2 line-height-3">{{ getExcerpt(post.content) }}</p>
+            <div class="flex align-items-center gap-2">
+              <span class="text-xs text-500">{{ formatAuthor(post) }}</span>
+              <span class="text-xs text-500">•</span>
+              <span class="text-xs text-500">{{ formatDate(post.published_at || post.createdAt) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination - Show when there are posts -->
+  <div *ngIf="!loadingPosts && hasPosts" class="mt-4">
+    <p-paginator
+      [rows]="pageSize"
+      [totalRecords]="totalRecords"
+      [first]="first"
+      [rowsPerPageOptions]="[5, 10, 20, 50, 100]"
+      [showPageLinks]="true"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first} - {last} of {totalRecords}"
+      (onPageChange)="onPageChange($event)"
+      styleClass="custom-paginator"
+    ></p-paginator>
+  </div>
+</div>
+

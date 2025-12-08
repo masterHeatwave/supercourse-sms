@@ -12,7 +12,7 @@ import { LABELS } from '../../../../Constants';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
-import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
 import { Answer } from '../../../../types';
 
 @Component({

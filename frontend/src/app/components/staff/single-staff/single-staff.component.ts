@@ -24,6 +24,7 @@ import { environment } from '@environments/environment';
 import { CustomersService } from '@gen-api/customers/customers.service';
 import { AcademicOverviewService } from '@gen-api/academic-overview/academic-overview.service';
 import { AcademicOverviewYear, AcademicOverviewPeriod, GetAcademicOverviewResponse } from '@interfaces/academic-overview';
+import { RoleAccessService } from '@services/role-access.service';
 interface Permission {
   name: string;
   actions: string[];
@@ -73,6 +74,7 @@ export class SingleStaffComponent implements OnInit {
   private documentService = inject(DocumentService);
   private sanitizer = inject(DomSanitizer);
   private academicOverviewService = inject(AcademicOverviewService);
+  private roleAccessService = inject(RoleAccessService);
 
   staffData$: Observable<any> = of(null);
   academicOverview$: Observable<AcademicOverviewYear[]> = of([]);

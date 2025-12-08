@@ -9,28 +9,15 @@
   ></app-image-selector>
 
   <label class="separator">|</label>
-  <i
-    #lastSoundElementRef
-    class="pi pi-volume-up"
-    style="font-size: 1.5rem"
-    (click)="soundClick($event)"
-  ></i>
+  <i #lastSoundElementRef class="pi pi-volume-up" style="font-size: 1.5rem" (click)="soundClick($event)"></i>
   <label class="separator">|</label>
   <input
     type="text"
-    placeholder="Insert a word"
+    placeholder="{{ 'customActivities.group_sort.placeholder' | translate }}"
     [(ngModel)]="answerText"
     (ngModelChange)="onInputChange($event)"
   />
-  <i
-    class="pi pi-times-circle"
-    style="font-size: 1.5rem; margin-left: 10px"
-    (click)="onDeleteClick()"
-  ></i>
+  <i class="pi pi-times-circle" style="font-size: 1.5rem; margin-left: 10px" (click)="onDeleteClick()"></i>
 
-  <app-warning-dialog
-    [warningMessage]="warningMessage"
-    [isDialogVisible]="isWarningDialogVisible"
-    (onClose)="isWarningDialogVisible = false"
-  />
+  <app-warning-dialog [warningMessage]="warningMessage" [isDialogVisible]="isWarningDialogVisible" (onClose)="isWarningDialogVisible = false" />
 </div>

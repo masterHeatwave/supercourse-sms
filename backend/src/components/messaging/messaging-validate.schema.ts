@@ -1,7 +1,10 @@
 // src/components/messaging/messaging-validate.schema.ts
 import 'zod-openapi/extend';
 import { z } from 'zod';
-import { ChatType, MessageType, AttachmentStatus, VirusScanStatus, FileCategory, NotificationType } from './messaging.interface';
+import {
+  ChatType,
+  MessageType
+} from './messaging.interface';
 
 // ==================== SCHEMA MODELS ====================
 
@@ -9,19 +12,23 @@ export const ChatSchema = z
   .object({
     id: z.string(),
     participants: z.array(z.string()),
-    participantsDetails: z.array(z.object({
-      _id: z.string(),
-      userId: z.string(),
-      username: z.string(),
-      email: z.string(),
-      firstname: z.string(),
-      lastname: z.string(),
-      userType: z.string(),
-      isOnline: z.boolean().optional(),
-      lastSeen: z.string().optional(),
-      avatar: z.string().optional(),
-      displayName: z.string(),
-    })).optional(),
+    participantsDetails: z
+      .array(
+        z.object({
+          _id: z.string(),
+          userId: z.string(),
+          username: z.string(),
+          email: z.string(),
+          firstname: z.string(),
+          lastname: z.string(),
+          userType: z.string(),
+          isOnline: z.boolean().optional(),
+          lastSeen: z.string().optional(),
+          avatar: z.string().optional(),
+          displayName: z.string(),
+        })
+      )
+      .optional(),
     type: z.enum([ChatType.DIRECT, ChatType.GROUP]),
     name: z.string().optional(),
     lastMessageId: z.string().optional(),
@@ -87,34 +94,16 @@ export const MessageSchema = z
 
 export const AttachmentSchema = z
   .object({
-    id: z.string(),
-    filename: z.string(),
-    originalName: z.string(),
-    mimeType: z.string(),
-    fileExtension: z.string().optional(),
-    fileSize: z.number(),
-    fileSizeFormatted: z.string().optional(),
-    fileCategory: z.enum(['image', 'document', 'audio', 'video', 'other']).optional(),
-    url: z.string().optional(),
-    uploadedBy: z.string(),
-    uploadedAt: z.string(),
-    chatId: z.string(),
-    messageId: z.string().optional(),
-    status: z.enum([AttachmentStatus.UPLOADING, AttachmentStatus.READY, AttachmentStatus.ERROR]),
-    virusScanStatus: z.enum([VirusScanStatus.PENDING, VirusScanStatus.CLEAN, VirusScanStatus.INFECTED]),
-    metadata: z.object({
-      width: z.number().optional(),
-      height: z.number().optional(),
-      exif: z.object({
-        camera: z.string().optional(),
-        location: z.string().optional(),
-        dateTaken: z.string().optional(),
-      }).optional(),
-    }).optional(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
+    fileId: z.string().min(1, { message: 'File ID is required' }),
+    filename: z.string().min(1, { message: 'Filename is required' }),
+    key: z.string().min(1, { message: 'Storage key is required' }),
+    size: z.number().min(0, { message: 'Size must be non-negative' }),
+    contentType: z.string().optional(),
   })
-  .openapi({ title: 'Attachment', description: 'Message attachment model' });
+  .openapi({ 
+    title: 'MessageAttachment', 
+    description: 'Attachment reference in a message (references StorageFile)' 
+  });
 
 export const ReactionSchema = z
   .object({
@@ -158,23 +147,33 @@ export const createChatSchema = z
   })
   .openapi({ title: 'CreateChat', description: 'Create a new chat' });
 
-export const sendMessageSchema = z
+  export const sendMessageSchema = z
   .object({
     senderId: z.string().min(1, { message: 'Sender ID is required' }),
     chatId: z.string().optional(),
     recipientIds: z.array(z.string()).optional(),
     content: z.string().optional(),
-    type: z
-      .enum([MessageType.TEXT, MessageType.IMAGE, MessageType.FILE, MessageType.VOICE, MessageType.SYSTEM])
-      .optional()
-      .default(MessageType.TEXT),
+    type: z.nativeEnum(MessageType).optional().default(MessageType.TEXT),
     replyToMessageId: z.string().optional(),
+    timestamp: z.string().or(z.date()).optional(), 
+    attachments: z.array(AttachmentSchema).optional(),
   })
   .refine((d) => !!d.chatId || (d.recipientIds && d.recipientIds.length > 0), {
     path: ['chatId'],
     message: 'Either chatId or recipientIds must be provided',
   })
-  .openapi({ title: 'SendMessage', description: 'Send a message' });
+  // ✅ NEW: Validation to ensure content OR attachments
+  .refine(
+    (d) => {
+      const hasContent = d.content && d.content.trim().length > 0;
+      const hasAttachments = d.attachments && d.attachments.length > 0;
+      return hasContent || hasAttachments;
+    },
+    {
+      message: 'Message must have either content or attachments',
+      path: ['content'],
+    }
+  )
 
 export const queryMessagesSchema = z
   .object({

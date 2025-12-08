@@ -1,9 +1,11 @@
 <div class="sessions-container">
-  <app-primary-table 
-    [data]="dataSessions" 
+  <app-primary-table
+    [data]="dataSessions"
     [columns]="columns"
-    [showActions]="false">
-    
+    [showActions]="false"
+    [autoCalculateHeight]="false"
+    [scrollHeight]="'calc(100vh - 700px)'">
+
     <ng-template #dateTimeTemplate let-item="item">
       <div class="font-bold">{{ item.dateTime?.start }}</div>
       <div class="text-500">to {{ item.dateTime?.end }}</div>

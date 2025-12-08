@@ -17,6 +17,8 @@
         (editRow)="onEditStudent($event)"
         (viewRow)="onStudentSelect($event)"
         [dataKey]="'_id'"
+        [autoCalculateHeight]="false"
+        [scrollHeight]="'calc(100vh - 700px)'"
       >
       </app-primary-table>
     </div>

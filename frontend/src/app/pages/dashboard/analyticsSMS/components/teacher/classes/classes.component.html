@@ -1,0 +1,78 @@
+<div class="title-div">
+  <i class="pi pi-users" style="font-size: 2.5rem"></i>
+  <label>{{ 'analytics.classes_overview' | translate }}</label>
+</div>
+
+<div class="main-div">
+  <div class="div-with-border">
+    <label>{{ classesOverview.activeClasses }}</label>
+    <label>{{ 'analytics.active_classes' | translate }}</label>
+  </div>
+  <div class="div-with-border">
+    <label>{{ classesOverview.activeStudents }}</label>
+    <label>{{ 'analytics.active_students' | translate }}</label>
+  </div>
+  <div class="div-no-border">
+    <label>{{ classesOverview.activeParents }}</label>
+    <label>{{ 'analytics.active_parents' | translate }}</label>
+  </div>
+</div>
+
+<div class="title-div">
+  <span class="material-symbols-outlined" style="font-size: 2.5rem">co_present</span>
+  <div style="display: flex; flex-direction: column">
+    <label>{{ 'analytics.teaching_stats' | translate }}</label>
+  </div>
+</div>
+
+<div class="main-div">
+  <div class="div-with-border">
+    <label>{{ teachingStats.studentsPerClass }}</label>
+    <div style="display: flex; flex-direction: column">
+      <label>{{ 'analytics.students_per_class' | translate }}</label>
+      <i>{{ 'analytics.avg_numbers' | translate }}</i>
+    </div>
+  </div>
+  <div class="div-with-border">
+    <label>{{ teachingStats.teachingHoursPerClass }}</label>
+    <div style="display: flex; flex-direction: column">
+      <label>{{ 'analytics.teaching_hours_per_class' | translate }}</label>
+      <i>{{ 'analytics.avg_numbers' | translate }}</i>
+    </div>
+  </div>
+  <div class="div-with-border">
+    <label>{{ teachingStats.teachingHours }}</label>
+    <label>{{ 'analytics.teaching_hours' | translate }}</label>
+  </div>
+  <div class="div-no-border">
+    <label>{{ teachingStats.weeklySessions }}</label>
+    <label>{{ 'analytics.weekly_sessions' | translate }}</label>
+  </div>
+</div>
+
+<div style="display: flex; justify-content: space-between">
+  <div class="title-div">
+    <i class="pi pi-heart" style="font-size: 2.5rem"></i>
+    <label>{{ 'analytics.school_performance' | translate }}</label>
+  </div>
+  <calendar />
+</div>
+
+<div class="percentages-div">
+  <div class="div-whole-border" style="flex-direction: column">
+    <label>{{ 'analytics.assignment_completion' | translate }}</label>
+    <label>{{ classPerformance.assignmentCompletion }}%</label>
+  </div>
+  <div class="div-whole-border" style="flex-direction: column">
+    <label>{{ 'analytics.overall_achievement' | translate }}</label>
+    <label>{{ classPerformance.overallAchievement * 100 }}%</label>
+  </div>
+  <div class="div-whole-border" style="flex-direction: column">
+    <div style="display: flex; flex-direction: column; align-items: center">
+      <label>{{ 'analytics.rewards_per_class' | translate }}</label>
+      <i>{{ 'analytics.avg_number' | translate }}</i>
+    </div>
+    <label> {{ classPerformance.rewardsPerClass }} <span class="material-symbols-outlined">rocket_launch</span> </label>
+  </div>
+</div>
+<app-loading [isLoading]="isLoading" />

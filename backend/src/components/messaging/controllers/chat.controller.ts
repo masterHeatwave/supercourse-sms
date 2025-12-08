@@ -240,8 +240,6 @@ export class ChatController {
     try {
       const { taxiId } = req.params;
   
-      console.log('📨 [ChatController] getChatByTaxiId called with:', taxiId);
-  
       if (!taxiId) {
         throw new ErrorResponse('Taxi ID is required', StatusCodes.BAD_REQUEST);
       }

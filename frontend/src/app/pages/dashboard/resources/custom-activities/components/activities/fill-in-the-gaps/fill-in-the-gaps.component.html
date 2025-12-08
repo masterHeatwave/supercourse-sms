@@ -1,7 +1,7 @@
-<label>Sentences</label>
+<label>{{ 'customActivities.sentences' | translate }}</label>
 <div class="container" cdkDropList [cdkDropListData]="questions" (cdkDropListDropped)="drop($event)">
   <div class="sentence-container" *ngFor="let question of questions; let i = index" cdkDrag>
-    <div cdkDragHandle class="grabber-number"><i class="pi pi-ellipsis-v" style="color: black"></i>Sentence {{ i + 1 }}.</div>
+    <div cdkDragHandle class="grabber-number"><i class="pi pi-ellipsis-v" style="color: black"></i>{{'customActivities.sentence' | translate}} {{ i + 1 }}.</div>
     <fill-in-block-answer
       [id]="i"
       [document]="question.document || ''"
@@ -16,4 +16,4 @@
 
 <app-warning-dialog [warningMessage]="warningMessage" [isDialogVisible]="isWarningDialogVisible" (onClose)="isWarningDialogVisible = false" />
 
-<div class="text-button" (click)="addSentence()">+Add a sentence</div>
+<div class="text-button" (click)="addSentence()">+{{ 'customActivities.add_a_sentence' | translate }}</div>

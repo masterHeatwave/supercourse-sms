@@ -186,6 +186,7 @@ export class TimetableComponent implements OnInit {
       type: 'session',
       data: {
         ...session,
+        className: session.taxi.name || '',
         teacher: this.formatTeachers(session.teachers || []),
         classroom: session.classroom?.name || 'No classroom',
         studentsCount: session.students?.length || 0,

@@ -27,12 +27,12 @@
                                         Level:
                                     </div>
                                     <div class="font-regular">
-                                        {{ overviewInfo?.level }}
+                                        {{ formattedLevel }}
                                     </div>
                                 </div>
                                 <div class="flex align-items-center gap-2">
                                     <div class="text-primary font-bold">
-                                        Cefr:
+                                        CEFR:
                                     </div>
                                     <div class="font-regular">
                                         {{ overviewInfo?.cefr }}
@@ -43,7 +43,7 @@
                                         Subject:
                                     </div>
                                     <div class="font-regular">
-                                        {{ overviewInfo?.subject }}
+                                        {{ formattedSubject }}
                                     </div>
                                 </div>
                                 <div class="flex align-items-center gap-2">
@@ -193,8 +193,9 @@
             </div>
         </div>
     </div>
+    <p-toast></p-toast>
     <div class="flex flex-column gap-4 custom-card mt-4 p-4">
-        <div class="text-2xl text-primary font-bold">
+        <div class="text-2xl text-primary font-bold mb-3">
             Board
         </div>
         
@@ -204,20 +205,34 @@
         </div>
         
         <!-- Empty state -->
-        <div *ngIf="!loadingPosts && posts.length === 0" class="p-3 text-center">
-            No posts available
+        <div *ngIf="!loadingPosts && !hasPosts" class="flex flex-column align-items-center justify-content-center p-5">
+            <i class="pi pi-inbox text-6xl text-400 mb-4"></i>
+            <h3 class="text-xl font-bold text-700 mb-2">{{ 'board.no_posts_title' | translate }}</h3>
+            <p class="text-600">{{ 'board.no_posts_message' | translate }}</p>
         </div>
         
-        <!-- Posts grid -->
-        <div *ngIf="!loadingPosts && posts.length > 0" class="grid h-full">
-            <div class="col-12 md:col-6 lg:col-4 p-2" *ngFor="let post of posts.slice(0, 3)">
-                <app-post-card 
-                    [title]="post.title"
-                    [content]="post.content"
-                    [date]="formatDate(post.published_at || post.createdAt)"
-                    [postImage]="defaultPostImage"
-                    [avatarImage]="'assets/images/avatar.jpg'">
-                </app-post-card>
+        <!-- Posts grid view -->
+        <div *ngIf="!loadingPosts && posts.length > 0" class="grid">
+            <div class="col-12 md:col-6 lg:col-4" *ngFor="let post of posts">
+                <div class="relative">
+                    <!-- Author initials circle -->
+                    <div class="author-initials-circle">
+                        {{ getInitials(post) }}
+                    </div>
+                    <!-- Clickable card -->
+                    <div (click)="goToPost(post.id)" class="cursor-pointer">
+                        <app-post-card
+                            [title]="post.title"
+                            [content]="getExcerpt(post.content)"
+                            [date]="formatDate(post.published_at || post.createdAt)"
+                            [postImage]="getImageUrl(post.featured_image)"
+                            [avatarImage]="'assets/images/avatar.jpg'"
+                            [author]="formatAuthor(post)"
+                            [priority]="post.priority"
+                            [readOnly]="true"
+                        ></app-post-card>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
+import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { FieldType, FieldTypeConfig } from '@ngx-formly/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FormlyModule } from '@ngx-formly/core';
-import { ColorPickerModule } from 'primeng/colorpicker';
+import { ColorPicker, ColorPickerModule } from 'primeng/colorpicker';
 
 @Component({
   selector: 'app-primay-color-select',
@@ -13,10 +13,12 @@ import { ColorPickerModule } from 'primeng/colorpicker';
   templateUrl: './primay-color-select.component.html',
   styleUrl: './primay-color-select.component.scss'
 })
-export class PrimayColorSelectComponent extends FieldType<FieldTypeConfig> {
-  isOpen = false;
+export class PrimayColorSelectComponent extends FieldType<FieldTypeConfig> implements AfterViewInit {
+  @ViewChild('picker') picker?: ColorPicker;
 
-  @ViewChild('dropdownRef') dropdownRef?: ElementRef<HTMLElement>;
+  ngAfterViewInit() {
+    // Ensure picker is initialized
+  }
 
   get label() {
     return this.props['label'] || '';
@@ -24,10 +26,6 @@ export class PrimayColorSelectComponent extends FieldType<FieldTypeConfig> {
 
   get styleClass() {
     return this.props['styleClass'] || '';
-  }
-
-  get placeholder() {
-    return this.props['placeholder'] || '';
   }
 
   get required() {
@@ -38,31 +36,14 @@ export class PrimayColorSelectComponent extends FieldType<FieldTypeConfig> {
     return this.props['disabled'] || false;
   }
 
-  // Whether to render the picker inline instead of overlay mode
-  get inline() {
-    return this.props['inline'] || false;
-  }
-
-  // Optional behavior: close the dropdown immediately after picking
-  get closeOnPick() {
-    return this.props['closeOnPick'] || false;
-  }
-
-  // Scale factor for making the picker larger visually (via CSS transform)
-  get pickerScale(): number {
-    const scale = this.props['pickerScale'];
-    const num = Number(scale);
-    return !isNaN(num) && num > 0 ? num : 1;
-  }
-
-  get scaleStyle() {
-    return { transform: `scale(${this.pickerScale})`, transformOrigin: 'top left' } as const;
+  get defaultColor() {
+    return this.props['defaultColor'] || 'ffffff';
   }
 
   // PrimeNG color picker expects hex without '#'
   get pickerValue(): string {
     const value: string = this.formControl?.value || '';
-    if (!value) return '';
+    if (!value) return this.defaultColor;
     return value.startsWith('#') ? value.slice(1) : value;
   }
 
@@ -72,31 +53,49 @@ export class PrimayColorSelectComponent extends FieldType<FieldTypeConfig> {
     this.formControl.setValue(withHash);
     this.formControl.markAsDirty();
     this.formControl.markAsTouched();
-    // Close overlay after selection only when explicitly requested
-    if (this.closeOnPick) {
-      this.isOpen = false;
-    }
-  }
-
-  toggleDropdown(): void {
-    if (this.disabled) return;
-    this.isOpen = !this.isOpen;
-  }
-
-  get hasColor(): boolean {
-    return !!this.formControl?.value;
   }
 
   get selectedColor(): string {
-    return this.formControl?.value || '#ffffff';
+    return this.formControl?.value || `#${this.defaultColor}`;
   }
 
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent) {
-    if (!this.isOpen) return;
-    const target = event.target as Node;
-    if (this.dropdownRef && !this.dropdownRef.nativeElement.contains(target)) {
-      this.isOpen = false;
+  get invalid(): boolean {
+    return (this.formControl?.invalid && this.formControl?.touched) || false;
+  }
+
+  onNativeColorChange(event: Event) {
+    if (this.disabled || this.formControl.disabled) return;
+    
+    const input = event.target as HTMLInputElement;
+    const color = input.value; // This is already in #RRGGBB format
+    
+    this.formControl.setValue(color);
+    this.formControl.markAsDirty();
+    this.formControl.markAsTouched();
+  }
+
+  openPicker(event: Event) {
+    if (this.disabled || this.formControl.disabled) return;
+    
+    event.stopPropagation();
+    
+    if (this.picker) {
+      
+      // Try to access the show method directly
+      if (typeof (this.picker as any).show === 'function') {
+        (this.picker as any).show();
+      } else {
+        // Fallback: try to click the hidden button
+        setTimeout(() => {
+          const pickerEl = (this.picker as any).el?.nativeElement;
+          if (pickerEl) {
+            const button = pickerEl.querySelector('.p-colorpicker-preview') || pickerEl.querySelector('button');
+            if (button) {
+              button.click();
+            }
+          }
+        }, 0);
+      }
     }
   }
 } 

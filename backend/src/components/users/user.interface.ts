@@ -48,6 +48,7 @@ export interface IUser extends Document {
   role_title?: string;
   status?: boolean;
   hire_date?: Date;
+  registration_date?: Date;
   facebook_link?: string;
   twitter_link?: string;
   linkedin_link?: string;
@@ -92,6 +93,7 @@ export interface IUserCreateDTO {
   customer?: string;
   region?: string;
   startDate?: string | Date;
+  registration_date?: string | Date;
   archived?: boolean;
   position?: string;
   notes?: string;
@@ -168,21 +170,8 @@ export interface IInternalUserCreateDTO {
 }
 
 export interface IInternalSchoolCreateDTO {
-  main_customer: {
-    name: string;
-    slug: string;
-    customer_type: CustomerType;
-    nickname?: string;
-    afm?: string;
-  };
-  branch_customer: {
-    name: string;
-    slug: string;
-    customer_type: CustomerType;
-    nickname?: string;
-    afm?: string;
-    email?: string;
-  };
+  main_customer: IInternalCustomerPayload;
+  branch_customer?: IInternalCustomerPayload;
   user: {
     username: string;
     firstname: string;
@@ -207,6 +196,7 @@ export interface IStaffCreateDTO {
   address?: string;
   region?: string;
   startDate?: string;
+  registration_date?: string | Date;
   archived?: boolean;
   customer?: string;
   roles?: string[];
@@ -229,6 +219,7 @@ export interface IStaffUpdateDTO extends Omit<IUserUpdateDTO, 'customers' | 'rol
   role_title?: string;
   status?: boolean;
   hire_date?: Date;
+  registration_date?: Date;
   facebook_link?: string;
   twitter_link?: string;
   linkedin_link?: string;
@@ -238,14 +229,37 @@ export interface IStaffUpdateDTO extends Omit<IUserUpdateDTO, 'customers' | 'rol
 }
 
 export interface IBranchCreateDTO {
-  branch_customer: {
-    name: string;
-    slug: string;
-    customer_type: CustomerType;
-    nickname?: string;
-    afm?: string;
-    email?: string;
-  };
+  branch_customer: IInternalCustomerPayload;
   supercourse_sub_customer_id: string;
   parent_supercourse_customer_id: string;
+}
+
+export interface ISetPrimaryBranchDTO {
+  supercourse_sub_customer_id: string;
+  parent_supercourse_customer_id: string;
+}
+
+export interface IInternalCustomerPayload {
+  name: string;
+  slug: string;
+  customer_type: CustomerType;
+  nickname?: string;
+  afm?: string;
+  scap_id?: string;
+  email?: string;
+  customer_email?: string;
+  manager_name?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  zipcode?: string;
+  country?: string;
+  facebook?: string;
+  instagram?: string;
+  twitter?: string;
+  youtube?: string;
+  website?: string;
+  description?: string;
+  note?: string;
+  vat?: string;
 }

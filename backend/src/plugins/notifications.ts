@@ -1,4 +1,4 @@
-import { Schema, Query, Model } from 'mongoose';
+import { Schema, Query, Model, Document } from 'mongoose';
 import NotificationModel from '@components/notifications/notifications.model';
 import { io } from '@config/socket';
 // Distributor service no longer exists

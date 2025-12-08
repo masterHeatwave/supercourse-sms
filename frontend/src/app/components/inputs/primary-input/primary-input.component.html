@@ -4,7 +4,7 @@
       <span class="text-red-500 text-xs" *ngIf="showError">
         (
         <span *ngFor="let error of formControl.errors | keyvalue">
-          {{ error.value.message || ('validation.' + error.key | translate) }}
+          {{ error.value.message || getErrorMessage(error.key) }}
         </span>
         )
       </span>

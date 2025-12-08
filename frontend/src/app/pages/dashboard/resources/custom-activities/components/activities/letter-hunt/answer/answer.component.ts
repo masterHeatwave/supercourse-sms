@@ -1,12 +1,4 @@
-import {
-  Component,
-  ElementRef,
-  EventEmitter,
-  Input,
-  Output,
-  SimpleChanges,
-  ViewChild,
-} from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { PrimeIcons } from 'primeng/api';
@@ -19,7 +11,8 @@ import { DividerModule } from 'primeng/divider';
 import { ImageModule } from 'primeng/image';
 import { CommonModule } from '@angular/common';
 import { ImageSelectorComponent } from '../../../image-selector/image-selector.component';
-import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'letter-hunt-answer',
@@ -36,9 +29,10 @@ import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-
     CommonModule,
     ImageSelectorComponent,
     WarningDialogComponent,
+    TranslateModule
   ],
   templateUrl: './answer.component.html',
-  styleUrl: './answer.component.scss',
+  styleUrl: './answer.component.scss'
 })
 export class AnswerComponent {
   @Input() answerNumber: number = 1;
@@ -62,9 +56,7 @@ export class AnswerComponent {
   constructor(private loadingService: LoadingService) {}
 
   ngOnInit(): void {
-    this.loadingService.isLoading$.subscribe(
-      (isLoading) => (this.isLoading = isLoading)
-    );
+    this.loadingService.isLoading$.subscribe((isLoading) => (this.isLoading = isLoading));
   }
 
   ngAfterViewInit(): void {
@@ -99,9 +91,7 @@ export class AnswerComponent {
   onInputChange(newValue: string) {
     if (this.answerText === '') {
       if (this.lastSoundElement) {
-        if (
-          this.lastSoundElement.classList.contains('image-sound-selected-style')
-        ) {
+        if (this.lastSoundElement.classList.contains('image-sound-selected-style')) {
           this.lastSoundElement.classList.remove('image-sound-selected-style');
           this.TTSText = '';
           this.TTSTextChanged.emit('');
@@ -123,10 +113,7 @@ export class AnswerComponent {
 
   soundClick(event: Event) {
     const target = event.target as HTMLElement;
-    if (
-      !target.classList.contains('image-sound-selected-style') &&
-      this.answerText !== ''
-    ) {
+    if (!target.classList.contains('image-sound-selected-style') && this.answerText !== '') {
       target.classList.add('image-sound-selected-style');
       this.lastSoundElement = target;
       this.TTSText = this.answerText;

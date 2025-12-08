@@ -1,0 +1,29 @@
+<div class="classroom-form p-4">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <formly-form [form]="form" [fields]="fields" [model]="model"></formly-form>
+
+    <div class="flex justify-content-end gap-2 mt-4">
+      <app-outline-button
+        [borderColor]="'#6c757d'"
+        [textColor]="'#6c757d'"
+        [hoverBackgroundColor]="'#6c757d'"
+        [hoverTextColor]="'white'"
+        [disabled]="isSubmitting"
+        (click)="onCancel()">
+        Cancel
+      </app-outline-button>
+      
+      <app-outline-button
+        [borderColor]="'var(--primary-color)'"
+        [textColor]="'var(--primary-color)'"
+        [hoverBackgroundColor]="'var(--primary-color)'"
+        [hoverTextColor]="'white'"
+        [loading]="isSubmitting"
+        [disabled]="!form.valid || isSubmitting"
+        (click)="onSubmit()">
+        {{ isEditMode ? 'Update Classroom' : 'Create Classroom' }}
+      </app-outline-button>
+    </div>
+  </form>
+</div>
+

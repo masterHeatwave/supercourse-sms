@@ -41,7 +41,7 @@ export const SessionSchema = z
     start_date: z.string(),
     end_date: z.string(),
     taxi: TaxiObjectSchema,
-    classroom: ClassroomObjectSchema,
+    classroom: ClassroomObjectSchema.optional(), // Classroom is optional for all modes
     students: z.array(z.string()).optional(),
     teachers: z.array(z.string()).optional(),
     academic_period: AcademicPeriodObjectSchema,
@@ -57,7 +57,8 @@ export const SessionSchema = z
   })
   .openapi({
     title: 'Session',
-    description: 'Session response model with populated fields for taxi, classroom, academic period, and subperiod.',
+    description:
+      'Session response model with populated fields for taxi, classroom (optional), academic period, and subperiod.',
   });
 
 export const createSessionSchema = z
@@ -65,7 +66,7 @@ export const createSessionSchema = z
     start_date: z.coerce.date(),
     end_date: z.coerce.date(),
     taxi: z.string().min(1, { message: 'Taxi is required' }),
-    classroom: z.string().min(1, { message: 'Classroom is required' }),
+    classroom: z.string().optional(),
     students: z.array(z.string()).optional(),
     teachers: z.array(z.string()).optional(),
     academic_period: z.string().min(1, { message: 'Academic period is required' }),
@@ -113,7 +114,7 @@ export const updateSessionSchema = z
     start_date: z.coerce.date().optional(),
     end_date: z.coerce.date().optional(),
     taxi: z.string().min(1, { message: 'Taxi is required' }).optional(),
-    classroom: z.string().min(1, { message: 'Classroom is required' }).optional(),
+    classroom: z.string().optional(),
     students: z.array(z.string()).optional(),
     teachers: z.array(z.string()).optional(),
     academic_period: z.string().min(1, { message: 'Academic period is required' }).optional(),
@@ -166,11 +167,14 @@ export const querySessionSchema = z
     academic_subperiod: z.string().optional(),
     teacher: z.string().optional(),
     student: z.string().optional(),
+    teacherId: z.string().optional(), // New parameter for teacher scoping
+    studentId: z.string().optional(), // New parameter for student scoping
     from_date: z.string().optional(),
     to_date: z.string().optional(),
     is_recurring: z.string().optional(),
     mode: z.enum(['in_person', 'online', 'hybrid']).optional(),
     branch: z.string().optional(),
+    include_instances: z.string().optional(), // 'true' to include recurring instances, 'only' for only instances
     // Pagination and selection controls (align with users listing)
     page: z.string().optional(),
     limit: z.string().optional(),

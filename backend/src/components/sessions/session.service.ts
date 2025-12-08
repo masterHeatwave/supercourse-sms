@@ -1,6 +1,7 @@
 import { ErrorResponse } from '@utils/errorResponse';
 import { StatusCodes } from 'http-status-codes';
 import SessionSchema from './session.model';
+import SessionRecurring from './session-recurring.model';
 import {
   ISessionCreateDTO,
   ISessionUpdateDTO,
@@ -10,6 +11,7 @@ import {
   IOverlapConflict,
   DayOfWeek,
 } from './session.interface';
+import { ISessionRecurringCreateDTO } from './session-recurring.interface';
 import { RecurringSessionUtil } from './session-recurring.util';
 import TaxiSchema from '@components/taxi/taxi.model';
 import ClassroomSchema from '@components/classrooms/classroom.model';
@@ -21,6 +23,7 @@ import Classroom from '@components/classrooms/classroom.model';
 import AcademicPeriod from '@components/academic/academic-periods.model';
 import AcademicSubperiod from '@components/academic/academic-subperiods.model';
 import User from '@components/users/user.model';
+import Absence from '@components/absences/absence.model';
 import { IAdvancedResultsOptions } from '@plugins/advancedResults.interface';
 import jwt from 'jsonwebtoken';
 import { config } from '@config/config';
@@ -37,77 +40,19 @@ export class SessionService {
     );
   }
 
-  // Generate individual sessions for recurring sessions
-  private generateSessionsFromRecurring(sessionData: ISessionCreateDTO): ISessionCreateDTO[] {
-    if (!this.determineIsRecurring(sessionData)) {
-      // Non-recurring session
-      let endDate = sessionData.end_date;
-
-      // If start_time and duration provided, compute end_date
-      if (sessionData.start_time && sessionData.duration) {
-        const [hours, minutes] = sessionData.start_time.split(':').map(Number);
-        const startDate = new Date(sessionData.start_date);
-        startDate.setHours(hours, minutes, 0, 0);
-
-        endDate = new Date(startDate);
-        endDate.setTime(endDate.getTime() + sessionData.duration * 60 * 60 * 1000);
-
-        sessionData.start_date = startDate;
-        sessionData.end_date = endDate;
-      }
-
-      return [
-        {
-          ...sessionData,
-          is_recurring: false,
-        },
-      ];
-    }
-
-    if (!sessionData.day || !sessionData.frequency || !sessionData.start_time || !sessionData.duration) {
-      throw new ErrorResponse(
-        'Day, frequency, start_time, and duration are required for recurring sessions',
-        StatusCodes.BAD_REQUEST
-      );
-    }
-
-    // Validate recurring session first
-    const validation = RecurringSessionUtil.validateRecurringSession(
-      sessionData.day,
-      sessionData.start_date,
-      sessionData.end_date,
-      sessionData.frequency,
-      sessionData.start_time,
-      sessionData.duration
-    );
-
-    if (!validation.isValid) {
-      throw new ErrorResponse(validation.error!, StatusCodes.BAD_REQUEST);
-    }
-
-    const instances = RecurringSessionUtil.generateSessionInstances(
-      sessionData.day,
-      sessionData.start_date,
-      sessionData.end_date,
-      sessionData.frequency,
-      sessionData.start_time,
-      sessionData.duration
-    );
-
-    return instances.map((instance) => ({
-      ...sessionData,
-      start_date: instance.start_date,
-      end_date: instance.end_date,
-      is_recurring: false, // Individual sessions are not recurring
-      parent_id: sessionData.parent_id || undefined,
-    }));
-  }
-
-  // Validate overlaps for sessions
+  // Validate overlaps for sessions (including recurring instances)
   private async validateOverlaps(
-    sessionsToCheck: ISessionCreateDTO[],
+    sessionsToCheck: Array<{
+      start_date: Date;
+      end_date: Date;
+      taxi: string;
+      classroom?: string; // Optional - can be used with any mode
+      students?: string[];
+      teachers?: string[];
+    }>,
     allowOverlap = false,
-    excludeSessionIds: string[] = []
+    excludeSessionIds: string[] = [],
+    excludeRecurringIds: string[] = []
   ): Promise<IOverlapValidationResult> {
     const conflicts: IOverlapConflict[] = [];
     const warnings: string[] = [];
@@ -129,10 +74,10 @@ export class SessionService {
       }
     }
 
-    // Check overlaps with existing sessions in database
+    // Check overlaps with existing sessions in database (both main sessions and recurring instances)
     for (let i = 0; i < sessionsToCheck.length; i++) {
       const session = sessionsToCheck[i];
-      const existingConflicts = await this.checkDatabaseOverlaps(session, excludeSessionIds);
+      const existingConflicts = await this.checkDatabaseOverlaps(session, excludeSessionIds, excludeRecurringIds);
 
       if (allowOverlap) {
         warnings.push(...existingConflicts.map((c) => c.message));
@@ -149,7 +94,24 @@ export class SessionService {
   }
 
   // Check if two sessions overlap
-  private sessionsOverlap(session1: ISessionCreateDTO, session2: ISessionCreateDTO): boolean {
+  private sessionsOverlap(
+    session1: {
+      start_date: Date;
+      end_date: Date;
+      taxi: string;
+      classroom?: string;
+      students?: string[];
+      teachers?: string[];
+    },
+    session2: {
+      start_date: Date;
+      end_date: Date;
+      taxi: string;
+      classroom?: string;
+      students?: string[];
+      teachers?: string[];
+    }
+  ): boolean {
     const start1 = session1.start_date.getTime();
     const end1 = session1.end_date.getTime();
     const start2 = session2.start_date.getTime();
@@ -162,7 +124,8 @@ export class SessionService {
 
     // Check for shared resources
     const sharedTaxi = session1.taxi === session2.taxi;
-    const sharedClassroom = session1.classroom === session2.classroom;
+    // Only consider classroom overlap if BOTH sessions have a classroom assigned
+    const sharedClassroom = session1.classroom && session2.classroom && session1.classroom === session2.classroom;
     const sharedStudents = this.hasSharedArray(session1.students, session2.students);
     const sharedTeachers = this.hasSharedArray(session1.teachers, session2.teachers);
 
@@ -177,8 +140,22 @@ export class SessionService {
 
   // Create overlap conflict object
   private createOverlapConflict(
-    session1: ISessionCreateDTO,
-    session2: ISessionCreateDTO,
+    session1: {
+      start_date: Date;
+      end_date: Date;
+      taxi: string;
+      classroom?: string;
+      students?: string[];
+      teachers?: string[];
+    },
+    session2: {
+      start_date: Date;
+      end_date: Date;
+      taxi: string;
+      classroom?: string;
+      students?: string[];
+      teachers?: string[];
+    },
     index1: number,
     index2: number
   ): IOverlapConflict {
@@ -191,7 +168,7 @@ export class SessionService {
     if (session1.taxi === session2.taxi && session1.classroom === session2.classroom) {
       conflictType = 'taxi';
       overlappingResource = session1.taxi;
-    } else if (session1.classroom === session2.classroom) {
+    } else if (session1.classroom && session1.classroom === session2.classroom) {
       conflictType = 'classroom';
       overlappingResource = session1.classroom;
     } else if (this.hasSharedArray(session1.students, session2.students)) {
@@ -211,24 +188,38 @@ export class SessionService {
     };
   }
 
-  // Check database for overlapping sessions
+  // Check database for overlapping sessions (both main sessions and recurring instances)
   private async checkDatabaseOverlaps(
-    session: ISessionCreateDTO,
-    excludeSessionIds: string[] = []
+    session: {
+      start_date: Date;
+      end_date: Date;
+      taxi: string;
+      classroom?: string;
+      students?: string[];
+      teachers?: string[];
+    },
+    excludeSessionIds: string[] = [],
+    excludeRecurringIds: string[] = []
   ): Promise<IOverlapConflict[]> {
     const conflicts: IOverlapConflict[] = [];
 
-    const query: any = {
+    // Build OR conditions for overlap detection
+    // Only check classroom overlap if the session actually has a classroom assigned
+    const orConditions: any[] = [
+      { taxi: session.taxi, students: { $in: session.students || [] } },
+      { students: { $in: session.students || [] } },
+      { teachers: { $in: session.teachers || [] } },
+    ];
+
+    // Only check classroom overlap if this session has a classroom assigned
+    if (session.classroom) {
+      orConditions.push({ taxi: session.taxi, classroom: session.classroom });
+      orConditions.push({ classroom: session.classroom, teachers: { $in: session.teachers || [] } });
+    }
+
+    const baseQuery: any = {
       $and: [
-        {
-          $or: [
-            { taxi: session.taxi, classroom: session.classroom },
-            { taxi: session.taxi, students: { $in: session.students || [] } },
-            { classroom: session.classroom, teachers: { $in: session.teachers || [] } },
-            { students: { $in: session.students || [] } },
-            { teachers: { $in: session.teachers || [] } },
-          ],
-        },
+        { $or: orConditions },
         {
           start_date: { $lt: session.end_date },
           end_date: { $gt: session.start_date },
@@ -236,11 +227,13 @@ export class SessionService {
       ],
     };
 
+    // Check main sessions (non-recurring)
+    const mainSessionQuery = { ...baseQuery, is_recurring: false };
     if (excludeSessionIds.length > 0) {
-      query._id = { $nin: excludeSessionIds };
+      mainSessionQuery._id = { $nin: excludeSessionIds };
     }
 
-    const existingSessions = await SessionSchema.find(query);
+    const existingSessions = await SessionSchema.find(mainSessionQuery);
 
     for (const existing of existingSessions) {
       const overlapStart = new Date(Math.max(session.start_date.getTime(), existing.start_date.getTime()));
@@ -249,12 +242,18 @@ export class SessionService {
       let conflictType: 'taxi' | 'classroom' | 'students' | 'teachers' = 'taxi';
       let resourceId = session.taxi;
 
-      if (existing.taxi.toString() === session.taxi && existing.classroom.toString() === session.classroom) {
-        conflictType = 'taxi';
-        resourceId = session.taxi;
-      } else if (existing.classroom.toString() === session.classroom) {
+      // Determine the type of conflict
+      const existingTaxi = existing.taxi.toString();
+      const existingClassroom = existing.classroom?.toString();
+
+      // Check if both have the same classroom assigned (both must have a classroom)
+      if (session.classroom && existingClassroom && existingClassroom === session.classroom) {
         conflictType = 'classroom';
         resourceId = session.classroom;
+      } else if (existingTaxi === session.taxi) {
+        // Only check taxi conflict if they don't share classroom
+        conflictType = 'taxi';
+        resourceId = session.taxi;
       }
 
       conflicts.push({
@@ -263,6 +262,66 @@ export class SessionService {
         overlappingResource: resourceId,
         conflictTime: { start: overlapStart, end: overlapEnd },
         message: `Session overlaps with existing session in ${conflictType}: ${resourceId}`,
+      });
+    }
+
+    // Check recurring session instances
+    // Build OR conditions for overlap detection (same logic as above)
+    const recurringOrConditions: any[] = [
+      { taxi: session.taxi, students: { $in: session.students || [] } },
+      { students: { $in: session.students || [] } },
+      { teachers: { $in: session.teachers || [] } },
+    ];
+
+    // Only check classroom overlap if this session has a classroom assigned
+    if (session.classroom) {
+      recurringOrConditions.push({ taxi: session.taxi, classroom: session.classroom });
+      recurringOrConditions.push({ classroom: session.classroom, teachers: { $in: session.teachers || [] } });
+    }
+
+    const recurringQuery: any = {
+      $and: [
+        { $or: recurringOrConditions },
+        {
+          start_date: { $lt: session.end_date },
+          end_date: { $gt: session.start_date },
+        },
+      ],
+    };
+
+    if (excludeRecurringIds.length > 0) {
+      recurringQuery._id = { $nin: excludeRecurringIds };
+    }
+
+    const existingRecurringSessions = await SessionRecurring.find(recurringQuery);
+
+    for (const existing of existingRecurringSessions) {
+      const overlapStart = new Date(Math.max(session.start_date.getTime(), existing.start_date.getTime()));
+      const overlapEnd = new Date(Math.min(session.end_date.getTime(), existing.end_date.getTime()));
+
+      let conflictType: 'taxi' | 'classroom' | 'students' | 'teachers' = 'taxi';
+      let resourceId = session.taxi;
+
+      // Determine the type of conflict
+      const existingTaxi = existing.taxi.toString();
+      const existingClassroom = existing.classroom?.toString();
+
+      // Check if both have the same classroom assigned (both must have a classroom)
+      if (session.classroom && existingClassroom && existingClassroom === session.classroom) {
+        conflictType = 'classroom';
+        resourceId = session.classroom;
+      } else if (existingTaxi === session.taxi) {
+        // Only check taxi conflict if they don't share classroom
+        conflictType = 'taxi';
+        resourceId = session.taxi;
+      }
+
+      conflicts.push({
+        existingSessionId: existing._id.toString(),
+        conflictType,
+        overlappingResource: resourceId,
+        conflictTime: { start: overlapStart, end: overlapEnd },
+        message: `Session overlaps with existing recurring session instance in ${conflictType}: ${resourceId}`,
       });
     }
 
@@ -277,11 +336,14 @@ export class SessionService {
       academic_subperiod?: string;
       teacher?: string;
       student?: string;
+      teacherId?: string; // New parameter for teacher scoping
+      studentId?: string; // New parameter for student scoping
       from_date?: string;
       to_date?: string;
       is_recurring?: string;
       mode?: 'in_person' | 'online' | 'hybrid';
       branch?: string;
+      include_instances?: string; // 'true' to include recurring instances, 'only' for only instances
     } = {}
   ) {
     const overrides: Record<string, unknown> = {};
@@ -303,6 +365,12 @@ export class SessionService {
     }
     if (filters.student) {
       overrides.students = filters.student;
+    }
+    if (filters.teacherId) {
+      overrides.teachers = filters.teacherId;
+    }
+    if (filters.studentId) {
+      overrides.students = filters.studentId;
     }
 
     if (filters.from_date) {
@@ -349,6 +417,89 @@ export class SessionService {
       }
     }
 
+    const includeInstances = filters.include_instances ?? 'only'; // Default to only recurring instances
+
+    // Case 1: Only recurring instances (default behavior)
+    if (includeInstances === 'only') {
+      return await SessionRecurring.advancedResults({
+        page: filters.page,
+        limit: filters.limit,
+        sort: filters.sort ?? 'start_date',
+        select: filters.select,
+        populate: [
+          { path: 'parent_session', model: SessionSchema },
+          { path: 'taxi', model: Taxi },
+          { path: 'classroom', model: Classroom },
+          { path: 'academic_period', model: AcademicPeriod },
+          { path: 'academic_subperiod', model: AcademicSubperiod },
+          { path: 'students', model: User },
+          { path: 'teachers', model: User },
+          {
+            path: 'absences',
+            model: Absence,
+            populate: { path: 'student', model: User },
+          },
+        ],
+        overrides,
+      });
+    }
+
+    // Case 2: Both main sessions and recurring instances (merged)
+    if (includeInstances === 'true') {
+      // Get main sessions
+      const mainSessions = await SessionSchema.advancedResults({
+        page: filters.page,
+        limit: filters.limit,
+        sort: filters.sort ?? 'start_date',
+        select: filters.select,
+        populate: [
+          { path: 'taxi', model: Taxi },
+          { path: 'classroom', model: Classroom },
+          { path: 'academic_period', model: AcademicPeriod },
+          { path: 'academic_subperiod', model: AcademicSubperiod },
+          { path: 'students', model: User },
+          { path: 'teachers', model: User },
+          {
+            path: 'absences',
+            model: Absence,
+            populate: { path: 'student', model: User },
+          },
+        ],
+        overrides,
+      });
+
+      // Get recurring instances
+      const recurringInstances = await SessionRecurring.advancedResults({
+        page: filters.page,
+        limit: filters.limit,
+        sort: filters.sort ?? 'start_date',
+        select: filters.select,
+        populate: [
+          { path: 'parent_session', model: SessionSchema },
+          { path: 'taxi', model: Taxi },
+          { path: 'classroom', model: Classroom },
+          { path: 'academic_period', model: AcademicPeriod },
+          { path: 'academic_subperiod', model: AcademicSubperiod },
+          { path: 'students', model: User },
+          { path: 'teachers', model: User },
+          {
+            path: 'absences',
+            model: Absence,
+            populate: { path: 'student', model: User },
+          },
+        ],
+        overrides,
+      });
+
+      // Merge results
+      return {
+        ...mainSessions,
+        results: [...(mainSessions.results || []), ...(recurringInstances.results || [])],
+        totalResults: (mainSessions.totalResults || 0) + (recurringInstances.totalResults || 0),
+      };
+    }
+
+    // Case 3: Default - only main sessions
     return await SessionSchema.advancedResults({
       page: filters.page,
       limit: filters.limit,
@@ -363,6 +514,7 @@ export class SessionService {
         { path: 'teachers', model: User },
         {
           path: 'absences',
+          model: Absence,
           populate: { path: 'student', model: User },
         },
       ],
@@ -370,8 +522,9 @@ export class SessionService {
     });
   }
 
-  async getSessionById(id: string) {
-    const session = await SessionSchema.findById(id)
+  async getSessionById(id: string, includeInstances: boolean = false) {
+    // Try to find in main Session collection first
+    let session = await SessionSchema.findById(id)
       .populate({
         path: 'taxi',
         select: 'name color branch subject level',
@@ -404,6 +557,7 @@ export class SessionService {
       })
       .populate({
         path: 'absences',
+        model: Absence,
         select: 'student date status reason justification_document note notified_parent',
         populate: {
           path: 'student',
@@ -411,8 +565,112 @@ export class SessionService {
           model: User,
         },
       });
+
+    // If not found in main collection, try SessionRecurring collection
     if (!session) {
-      throw new ErrorResponse('Session not found', StatusCodes.NOT_FOUND);
+      const recurringSession = await SessionRecurring.findById(id)
+        .populate({
+          path: 'parent_session',
+          model: SessionSchema,
+        })
+        .populate({
+          path: 'taxi',
+          select: 'name color branch subject level',
+          model: Taxi,
+        })
+        .populate({
+          path: 'classroom',
+          select: 'name location capacity',
+          model: Classroom,
+        })
+        .populate({
+          path: 'academic_period',
+          select: 'name start_date end_date',
+          model: AcademicPeriod,
+        })
+        .populate({
+          path: 'academic_subperiod',
+          select: 'name start_date end_date',
+          model: AcademicSubperiod,
+        })
+        .populate({
+          path: 'students',
+          select: 'name email phone firstname lastname',
+          model: User,
+        })
+        .populate({
+          path: 'teachers',
+          select: 'name email phone firstname lastname position',
+          model: User,
+        })
+        .populate({
+          path: 'absences',
+          model: Absence,
+          select: 'student date status reason justification_document note notified_parent',
+          populate: {
+            path: 'student',
+            select: 'name firstname lastname email phone',
+            model: User,
+          },
+        });
+
+      if (!recurringSession) {
+        throw new ErrorResponse('Session not found', StatusCodes.NOT_FOUND);
+      }
+
+      return recurringSession;
+    }
+
+    // If it's a recurring session and includeInstances is true, fetch all instances
+    if (session.is_recurring && includeInstances) {
+      const instances = await SessionRecurring.find({ parent_session: id })
+        .populate({
+          path: 'taxi',
+          select: 'name color branch subject level',
+          model: Taxi,
+        })
+        .populate({
+          path: 'classroom',
+          select: 'name location capacity',
+          model: Classroom,
+        })
+        .populate({
+          path: 'academic_period',
+          select: 'name start_date end_date',
+          model: AcademicPeriod,
+        })
+        .populate({
+          path: 'academic_subperiod',
+          select: 'name start_date end_date',
+          model: AcademicSubperiod,
+        })
+        .populate({
+          path: 'students',
+          select: 'name email phone firstname lastname',
+          model: User,
+        })
+        .populate({
+          path: 'teachers',
+          select: 'name email phone firstname lastname position',
+          model: User,
+        })
+        .populate({
+          path: 'absences',
+          model: Absence,
+          select: 'student date status reason justification_document note notified_parent',
+          populate: {
+            path: 'student',
+            select: 'name firstname lastname email phone',
+            model: User,
+          },
+        })
+        .sort('start_date');
+
+      return {
+        ...session.toJSON(),
+        instances,
+        totalInstances: instances.length,
+      };
     }
 
     return session;
@@ -421,120 +679,154 @@ export class SessionService {
   async createSession(sessionData: ISessionCreateDTO, allowOverlap = false) {
     await this.validateSessionReferences(sessionData);
 
-    // Filter out empty academic_subperiod
+    // Filter out empty optional fields
     const cleanSessionData = { ...sessionData };
     if (cleanSessionData.academic_subperiod && cleanSessionData.academic_subperiod.trim() === '') {
       delete cleanSessionData.academic_subperiod;
     }
+    // Remove empty classroom field
+    if (cleanSessionData.classroom && cleanSessionData.classroom.trim() === '') {
+      delete cleanSessionData.classroom;
+    }
 
-    // Generate all session instances (handles both recurring and non-recurring)
-    const sessionInstances = this.generateSessionsFromRecurring(cleanSessionData);
+    // Determine if recurring
+    const isRecurring = this.determineIsRecurring(cleanSessionData);
 
-    // Validate all sessions for overlaps
-    const overlapValidation = await this.validateOverlaps(sessionInstances, allowOverlap);
+    // Set is_recurring explicitly
+    cleanSessionData.is_recurring = isRecurring;
+
+    // For non-recurring sessions, validate and create single session
+    if (!isRecurring) {
+      // If start_time and duration provided, compute end_date
+      if (cleanSessionData.start_time && cleanSessionData.duration) {
+        const [hours, minutes] = cleanSessionData.start_time.split(':').map(Number);
+        const startDate = new Date(cleanSessionData.start_date);
+        startDate.setHours(hours, minutes, 0, 0);
+
+        const endDate = new Date(startDate);
+        endDate.setTime(endDate.getTime() + cleanSessionData.duration * 60 * 60 * 1000);
+
+        cleanSessionData.start_date = startDate;
+        cleanSessionData.end_date = endDate;
+      }
+
+      // Validate duration
+      const durationMs = cleanSessionData.end_date.getTime() - cleanSessionData.start_date.getTime();
+      const durationHours = durationMs / (1000 * 60 * 60);
+      if (durationHours < 0.5) {
+        throw new ErrorResponse('Duration must be at least 0.5 hours', StatusCodes.BAD_REQUEST);
+      }
+
+      // Validate overlaps for the single session
+      const overlapValidation = await this.validateOverlaps([cleanSessionData], allowOverlap);
+
+      if (overlapValidation.hasOverlap && !allowOverlap) {
+        const errorMessage = overlapValidation.conflicts.map((c) => c.message).join('; ');
+        throw new ErrorResponse(`Session overlaps detected: ${errorMessage}`, StatusCodes.BAD_REQUEST);
+      }
+
+      // Create the session
+      const session = await SessionSchema.create(cleanSessionData);
+      const populatedSession = await this.getSessionById(session._id);
+
+      return {
+        session: populatedSession,
+        isRecurring: false,
+        warnings: overlapValidation.warnings,
+      };
+    }
+
+    // For recurring sessions
+    if (
+      !cleanSessionData.day ||
+      !cleanSessionData.frequency ||
+      !cleanSessionData.start_time ||
+      !cleanSessionData.duration
+    ) {
+      throw new ErrorResponse(
+        'Day, frequency, start_time, and duration are required for recurring sessions',
+        StatusCodes.BAD_REQUEST
+      );
+    }
+
+    // Validate recurring session
+    const validation = RecurringSessionUtil.validateRecurringSession(
+      cleanSessionData.day,
+      cleanSessionData.start_date,
+      cleanSessionData.end_date,
+      cleanSessionData.frequency,
+      cleanSessionData.start_time,
+      cleanSessionData.duration
+    );
+
+    if (!validation.isValid) {
+      throw new ErrorResponse(validation.error!, StatusCodes.BAD_REQUEST);
+    }
+
+    // Generate recurring session instances
+    const instances = RecurringSessionUtil.generateSessionInstances(
+      cleanSessionData.day,
+      cleanSessionData.start_date,
+      cleanSessionData.end_date,
+      cleanSessionData.frequency,
+      cleanSessionData.start_time,
+      cleanSessionData.duration
+    );
+
+    // Prepare instances for overlap validation
+    const instancesToValidate = instances.map((instance) => ({
+      start_date: instance.start_date,
+      end_date: instance.end_date,
+      taxi: cleanSessionData.taxi,
+      classroom: cleanSessionData.classroom,
+      students: cleanSessionData.students,
+      teachers: cleanSessionData.teachers,
+    }));
+
+    // Validate overlaps for all instances
+    const overlapValidation = await this.validateOverlaps(instancesToValidate, allowOverlap);
 
     if (overlapValidation.hasOverlap && !allowOverlap) {
       const errorMessage = overlapValidation.conflicts.map((c) => c.message).join('; ');
       throw new ErrorResponse(`Session overlaps detected: ${errorMessage}`, StatusCodes.BAD_REQUEST);
     }
 
-    // Create all session records
-    const createdSessions = [];
-    for (const sessionInstance of sessionInstances) {
-      // Additional validation for each session
-      const durationMs = sessionInstance.end_date.getTime() - sessionInstance.start_date.getTime();
-      const durationHours = durationMs / (1000 * 60 * 60);
-      if (durationHours < 0.5) {
-        throw new ErrorResponse('Duration must be at least 0.5 hours', StatusCodes.BAD_REQUEST);
-      }
+    // Create the main recurring session (with the original date range)
+    const mainSession = await SessionSchema.create(cleanSessionData);
 
-      const session = await SessionSchema.create(sessionInstance);
-      createdSessions.push(session);
-    }
+    // Create recurring session instances in SessionRecurring collection
+    const recurringInstances: ISessionRecurringCreateDTO[] = instances.map((instance) => ({
+      parent_session: mainSession._id.toString(),
+      start_date: instance.start_date,
+      end_date: instance.end_date,
+      instance_number: instance.instance_number,
+      taxi: cleanSessionData.taxi,
+      classroom: cleanSessionData.classroom,
+      students: cleanSessionData.students || [],
+      teachers: cleanSessionData.teachers || [],
+      academic_period: cleanSessionData.academic_period,
+      academic_subperiod: cleanSessionData.academic_subperiod,
+      room: cleanSessionData.room,
+      color: cleanSessionData.color,
+      notes: cleanSessionData.notes,
+      invite_participants: cleanSessionData.invite_participants,
+      mode: cleanSessionData.mode,
+      day: cleanSessionData.day,
+      start_time: cleanSessionData.start_time,
+      duration: cleanSessionData.duration,
+      frequency: cleanSessionData.frequency,
+    }));
 
-    const isRecurring = this.determineIsRecurring(cleanSessionData);
+    await SessionRecurring.insertMany(recurringInstances);
 
-    if (isRecurring) {
-      return {
-        sessions: createdSessions,
-        totalSessions: createdSessions.length,
-        isRecurring: true,
-        warnings: overlapValidation.warnings,
-      };
-    } else {
-      const session = await this.getSessionById(createdSessions[0]._id);
-      return {
-        session,
-        isRecurring: false,
-        warnings: overlapValidation.warnings,
-      };
-    }
-  }
+    const populatedSession = await this.getSessionById(mainSession._id, true);
 
-  async linkSessionToClassChat(sessionId: string): Promise<any> {
-    try {
-      console.log('🔗 Attempting to link session to class chat:', sessionId);
-  
-      // Get the session with taxi populated
-      const session = await SessionSchema.findById(sessionId)
-        .populate('taxi', '_id name subject level branch');
-  
-      if (!session) {
-        console.warn('⚠️ Session not found:', sessionId);
-        throw new ErrorResponse('Session not found', StatusCodes.NOT_FOUND);
-      }
-  
-      // Get taxi ID
-      const taxiId = session.taxi._id;
-  
-      // Import Chat model dynamically
-      const Chat = require('../messaging/models/chat.model').default;
-  
-      // Find the class group chat
-      const classChat = await Chat.findOne({
-        taxiId: new Types.ObjectId(taxiId),
-        type: 'group',
-      });
-  
-      if (!classChat) {
-        console.warn(
-          `⚠️ No class group chat found for taxi ${taxiId}. ` +
-          `Session will not be linked.`
-        );
-        return null;
-      }
-  
-      console.log('✅ Found class chat:', classChat._id);
-  
-      // Check if session already linked
-      if (classChat.sessions && classChat.sessions.includes(sessionId)) {
-        console.log('ℹ️ Session already linked to chat');
-        return classChat;
-      }
-  
-      // Add session to chat
-      if (!classChat.sessions) {
-        classChat.sessions = [];
-      }
-  
-      classChat.sessions.push(new Types.ObjectId(sessionId));
-      await classChat.save();
-  
-      console.log('✅ Session linked to class chat:', {
-        chatId: classChat._id,
-        sessionId: sessionId,
-        totalSessionsInChat: classChat.sessions.length,
-      });
-  
-      return classChat;
-    } catch (error: any) {
-      console.error('❌ Error linking session to class chat:', {
-        error: error.message,
-        sessionId,
-      });
-      // Don't throw - session creation should succeed even if linking fails
-      return null;
-    }
+    return {
+      session: populatedSession,
+      isRecurring: true,
+      totalInstances: instances.length,
+      warnings: overlapValidation.warnings,
+    };
   }
 
   async createBulkSessions(bulkData: IBulkSessionCreateDTO) {
@@ -545,54 +837,35 @@ export class SessionService {
       await this.validateSessionReferences(sessionData);
     }
 
-    // Generate all session instances from all input sessions
-    const allSessionInstances: ISessionCreateDTO[] = [];
-    const sessionGroupIndexes: { startIndex: number; count: number; originalIndex: number }[] = [];
+    const results = [];
+    let totalCreated = 0;
+    let totalInstances = 0;
 
-    for (let i = 0; i < sessions.length; i++) {
-      const cleanSessionData = { ...sessions[i] };
-      if (cleanSessionData.academic_subperiod && cleanSessionData.academic_subperiod.trim() === '') {
-        delete cleanSessionData.academic_subperiod;
+    for (const sessionData of sessions) {
+      try {
+        const result = await this.createSession(sessionData, allowOverlap);
+        results.push({
+          success: true,
+          session: result.session,
+          isRecurring: result.isRecurring,
+          totalInstances: result.totalInstances,
+        });
+        totalCreated++;
+        if (result.isRecurring && result.totalInstances) {
+          totalInstances += result.totalInstances;
+        }
+      } catch (error: any) {
+        results.push({
+          success: false,
+          error: error.message,
+        });
       }
-
-      const instances = this.generateSessionsFromRecurring(cleanSessionData);
-      sessionGroupIndexes.push({
-        startIndex: allSessionInstances.length,
-        count: instances.length,
-        originalIndex: i,
-      });
-      allSessionInstances.push(...instances);
     }
-
-    // Validate overlaps across all sessions
-    const overlapValidation = await this.validateOverlaps(allSessionInstances, allowOverlap);
-
-    if (overlapValidation.hasOverlap && !allowOverlap) {
-      const errorMessage = overlapValidation.conflicts.map((c) => c.message).join('; ');
-      throw new ErrorResponse(`Session overlaps detected: ${errorMessage}`, StatusCodes.BAD_REQUEST);
-    }
-
-    // Create all sessions using bulk insert for better performance
-    const createdSessions = await SessionSchema.insertMany(allSessionInstances);
-
-    // Group results by original session input
-    const results = sessionGroupIndexes.map((group) => {
-      const sessionInstances = createdSessions.slice(group.startIndex, group.startIndex + group.count);
-      const originalSession = sessions[group.originalIndex];
-      const isRecurring = this.determineIsRecurring(originalSession);
-
-      return {
-        originalIndex: group.originalIndex,
-        sessions: sessionInstances,
-        totalSessions: sessionInstances.length,
-        isRecurring,
-      };
-    });
 
     return {
       results,
-      totalCreated: createdSessions.length,
-      warnings: overlapValidation.warnings,
+      totalCreated,
+      totalInstances,
     };
   }
 
@@ -629,14 +902,31 @@ export class SessionService {
   async updateSession(id: string, sessionData: ISessionUpdateDTO, allowOverlap = false) {
     let session = await SessionSchema.findById(id);
 
+    // If not found in main collection, check if it's a recurring instance
     if (!session) {
-      throw new ErrorResponse('Session not found', StatusCodes.NOT_FOUND);
+      const recurringInstance = await SessionRecurring.findById(id);
+
+      if (!recurringInstance) {
+        throw new ErrorResponse('Session not found', StatusCodes.NOT_FOUND);
+      }
+
+      // Update only this recurring instance
+      const updatedInstance = await SessionRecurring.findByIdAndUpdate(id, sessionData, {
+        new: true,
+        runValidators: true,
+      });
+
+      return await this.getSessionById(id);
     }
 
-    // Filter out empty academic_subperiod
+    // Filter out empty optional fields
     const cleanSessionData = { ...sessionData };
     if (cleanSessionData.academic_subperiod && cleanSessionData.academic_subperiod.trim() === '') {
       delete cleanSessionData.academic_subperiod;
+    }
+    // Remove empty classroom field
+    if (cleanSessionData.classroom && cleanSessionData.classroom.trim() === '') {
+      delete cleanSessionData.classroom;
     }
 
     // Validate references if they're being updated
@@ -646,71 +936,30 @@ export class SessionService {
       cleanSessionData.academic_period ||
       cleanSessionData.academic_subperiod
     ) {
+      // Classroom is always optional - validate only if provided
       await this.validateSessionReferences({
-        ...session.toObject(),
-        ...cleanSessionData,
+        taxi: cleanSessionData.taxi || session.taxi.toString(),
+        classroom: cleanSessionData.classroom || session.classroom?.toString(),
+        academic_period: cleanSessionData.academic_period || session.academic_period.toString(),
+        academic_subperiod: cleanSessionData.academic_subperiod || session.academic_subperiod?.toString(),
         students: cleanSessionData.students || [],
         teachers: cleanSessionData.teachers || [],
+        mode: cleanSessionData.mode || session.mode,
       });
     }
 
-    // Handle recurring session updates or transitions
     const wasRecurring = session.is_recurring;
+
+    // Determine if the updated session should be recurring
+    const mergedData = { ...session.toObject(), ...cleanSessionData };
     const willBeRecurring =
       cleanSessionData.is_recurring === true ||
       (cleanSessionData.is_recurring !== false &&
-        cleanSessionData.day &&
-        cleanSessionData.frequency &&
-        cleanSessionData.start_time &&
-        cleanSessionData.duration);
+        !!(mergedData.day && mergedData.frequency && mergedData.start_time && mergedData.duration));
 
-    // Check if this will actually generate multiple instances (true recurring session)
-    // by testing the generateSessionsFromRecurring method
-    const testSessionData = { ...session.toObject(), ...cleanSessionData };
-    const testInstances = this.generateSessionsFromRecurring(testSessionData);
-    const willGenerateMultipleInstances = testInstances.length > 1;
-
-    if ((wasRecurring && willGenerateMultipleInstances) || willGenerateMultipleInstances) {
-      // For recurring sessions or transitions, delete old instances and create new ones
-      const sessionsToDelete = await SessionSchema.find({
-        $or: [{ parent_id: id }, { _id: id }],
-      });
-
-      const sessionIds = sessionsToDelete.map((s) => s._id.toString());
-
-      // Create new session data for regeneration
-      const newSessionData: ISessionCreateDTO = {
-        ...session.toObject(),
-        ...cleanSessionData,
-      };
-
-      // Generate new instances
-      const newInstances = this.generateSessionsFromRecurring(newSessionData);
-
-      // Validate overlaps (excluding the sessions we're about to delete)
-      const overlapValidation = await this.validateOverlaps(newInstances, allowOverlap, sessionIds);
-
-      if (overlapValidation.hasOverlap && !allowOverlap) {
-        const errorMessage = overlapValidation.conflicts.map((c) => c.message).join('; ');
-        throw new ErrorResponse(`Session overlaps detected: ${errorMessage}`, StatusCodes.BAD_REQUEST);
-      }
-
-      // Delete old sessions
-      await SessionSchema.deleteMany({ _id: { $in: sessionIds } });
-
-      // Create new sessions
-      const createdSessions = await SessionSchema.insertMany(newInstances);
-
-      return {
-        sessions: createdSessions,
-        totalSessions: createdSessions.length,
-        isRecurring: willBeRecurring,
-        warnings: overlapValidation.warnings,
-      };
-    } else {
-      // Simple non-recurring update
-      const updatedSessionData = { ...session.toObject(), ...cleanSessionData };
-      const overlapValidation = await this.validateOverlaps([updatedSessionData], allowOverlap, [id]);
+    // Case 1: Non-recurring to non-recurring (simple update)
+    if (!wasRecurring && !willBeRecurring) {
+      const overlapValidation = await this.validateOverlaps([{ ...mergedData }], allowOverlap, [id]);
 
       if (overlapValidation.hasOverlap && !allowOverlap) {
         const errorMessage = overlapValidation.conflicts.map((c) => c.message).join('; ');
@@ -724,34 +973,270 @@ export class SessionService {
 
       return await this.getSessionById(id);
     }
+
+    // Case 2: Non-recurring to recurring
+    if (!wasRecurring && willBeRecurring) {
+      if (!mergedData.day || !mergedData.frequency || !mergedData.start_time || !mergedData.duration) {
+        throw new ErrorResponse(
+          'Day, frequency, start_time, and duration are required for recurring sessions',
+          StatusCodes.BAD_REQUEST
+        );
+      }
+
+      // Validate recurring session
+      const validation = RecurringSessionUtil.validateRecurringSession(
+        mergedData.day,
+        mergedData.start_date,
+        mergedData.end_date,
+        mergedData.frequency,
+        mergedData.start_time,
+        mergedData.duration
+      );
+
+      if (!validation.isValid) {
+        throw new ErrorResponse(validation.error!, StatusCodes.BAD_REQUEST);
+      }
+
+      // Generate instances
+      const instances = RecurringSessionUtil.generateSessionInstances(
+        mergedData.day,
+        mergedData.start_date,
+        mergedData.end_date,
+        mergedData.frequency,
+        mergedData.start_time,
+        mergedData.duration
+      );
+
+      const instancesToValidate = instances.map((instance) => ({
+        start_date: instance.start_date,
+        end_date: instance.end_date,
+        taxi: mergedData.taxi,
+        classroom: mergedData.classroom,
+        students: mergedData.students,
+        teachers: mergedData.teachers,
+      }));
+
+      const overlapValidation = await this.validateOverlaps(instancesToValidate, allowOverlap, [id]);
+
+      if (overlapValidation.hasOverlap && !allowOverlap) {
+        const errorMessage = overlapValidation.conflicts.map((c) => c.message).join('; ');
+        throw new ErrorResponse(`Session overlaps detected: ${errorMessage}`, StatusCodes.BAD_REQUEST);
+      }
+
+      // Update main session to recurring
+      cleanSessionData.is_recurring = true;
+      session = await SessionSchema.findByIdAndUpdate(id, cleanSessionData, {
+        new: true,
+        runValidators: true,
+      });
+
+      // Create recurring instances
+      const recurringInstances: ISessionRecurringCreateDTO[] = instances.map((instance) => ({
+        parent_session: id,
+        start_date: instance.start_date,
+        end_date: instance.end_date,
+        instance_number: instance.instance_number,
+        taxi: mergedData.taxi,
+        classroom: mergedData.classroom,
+        students: mergedData.students || [],
+        teachers: mergedData.teachers || [],
+        academic_period: mergedData.academic_period,
+        academic_subperiod: mergedData.academic_subperiod,
+        room: mergedData.room,
+        color: mergedData.color,
+        notes: mergedData.notes,
+        invite_participants: mergedData.invite_participants,
+        mode: mergedData.mode,
+        day: mergedData.day,
+        start_time: mergedData.start_time,
+        duration: mergedData.duration,
+        frequency: mergedData.frequency,
+      }));
+
+      await SessionRecurring.insertMany(recurringInstances);
+
+      return await this.getSessionById(id, true);
+    }
+
+    // Case 3: Recurring to non-recurring
+    if (wasRecurring && !willBeRecurring) {
+      // Delete all recurring instances
+      await SessionRecurring.deleteMany({ parent_session: id });
+
+      // Update main session
+      cleanSessionData.is_recurring = false;
+      // Clear recurring fields
+      cleanSessionData.day = undefined;
+      cleanSessionData.frequency = undefined;
+      cleanSessionData.start_time = undefined;
+      cleanSessionData.duration = undefined;
+
+      const overlapValidation = await this.validateOverlaps([{ ...mergedData, ...cleanSessionData }], allowOverlap, [
+        id,
+      ]);
+
+      if (overlapValidation.hasOverlap && !allowOverlap) {
+        const errorMessage = overlapValidation.conflicts.map((c) => c.message).join('; ');
+        throw new ErrorResponse(`Session overlaps detected: ${errorMessage}`, StatusCodes.BAD_REQUEST);
+      }
+
+      session = await SessionSchema.findByIdAndUpdate(id, cleanSessionData, {
+        new: true,
+        runValidators: true,
+      });
+
+      return await this.getSessionById(id);
+    }
+
+    // Case 4: Recurring to recurring (update and regenerate instances)
+    if (wasRecurring && willBeRecurring) {
+      if (!mergedData.day || !mergedData.frequency || !mergedData.start_time || !mergedData.duration) {
+        throw new ErrorResponse(
+          'Day, frequency, start_time, and duration are required for recurring sessions',
+          StatusCodes.BAD_REQUEST
+        );
+      }
+
+      // Validate recurring session
+      const validation = RecurringSessionUtil.validateRecurringSession(
+        mergedData.day,
+        mergedData.start_date,
+        mergedData.end_date,
+        mergedData.frequency,
+        mergedData.start_time,
+        mergedData.duration
+      );
+
+      if (!validation.isValid) {
+        throw new ErrorResponse(validation.error!, StatusCodes.BAD_REQUEST);
+      }
+
+      // Generate new instances
+      const instances = RecurringSessionUtil.generateSessionInstances(
+        mergedData.day,
+        mergedData.start_date,
+        mergedData.end_date,
+        mergedData.frequency,
+        mergedData.start_time,
+        mergedData.duration
+      );
+
+      const instancesToValidate = instances.map((instance) => ({
+        start_date: instance.start_date,
+        end_date: instance.end_date,
+        taxi: mergedData.taxi,
+        classroom: mergedData.classroom,
+        students: mergedData.students,
+        teachers: mergedData.teachers,
+      }));
+
+      // Get existing recurring instance IDs to exclude from validation
+      const existingInstances = await SessionRecurring.find({ parent_session: id }).select('_id');
+      const existingInstanceIds = existingInstances.map((inst) => inst._id.toString());
+
+      const overlapValidation = await this.validateOverlaps(
+        instancesToValidate,
+        allowOverlap,
+        [id],
+        existingInstanceIds
+      );
+
+      if (overlapValidation.hasOverlap && !allowOverlap) {
+        const errorMessage = overlapValidation.conflicts.map((c) => c.message).join('; ');
+        throw new ErrorResponse(`Session overlaps detected: ${errorMessage}`, StatusCodes.BAD_REQUEST);
+      }
+
+      // Delete old recurring instances
+      await SessionRecurring.deleteMany({ parent_session: id });
+
+      // Update main session
+      session = await SessionSchema.findByIdAndUpdate(id, cleanSessionData, {
+        new: true,
+        runValidators: true,
+      });
+
+      // Create new recurring instances
+      const recurringInstances: ISessionRecurringCreateDTO[] = instances.map((instance) => ({
+        parent_session: id,
+        start_date: instance.start_date,
+        end_date: instance.end_date,
+        instance_number: instance.instance_number,
+        taxi: mergedData.taxi,
+        classroom: mergedData.classroom,
+        students: mergedData.students || [],
+        teachers: mergedData.teachers || [],
+        academic_period: mergedData.academic_period,
+        academic_subperiod: mergedData.academic_subperiod,
+        room: mergedData.room,
+        color: mergedData.color,
+        notes: mergedData.notes,
+        invite_participants: mergedData.invite_participants,
+        mode: mergedData.mode,
+        day: mergedData.day,
+        start_time: mergedData.start_time,
+        duration: mergedData.duration,
+        frequency: mergedData.frequency,
+      }));
+
+      await SessionRecurring.insertMany(recurringInstances);
+
+      return await this.getSessionById(id, true);
+    }
+
+    return await this.getSessionById(id);
   }
 
   async deleteSession(id: string) {
     const session = await SessionSchema.findById(id);
 
+    // If not found in main collection, check if it's a recurring instance
     if (!session) {
-      throw new ErrorResponse('Session not found', StatusCodes.NOT_FOUND);
+      const recurringInstance = await SessionRecurring.findById(id);
+
+      if (!recurringInstance) {
+        throw new ErrorResponse('Session not found', StatusCodes.NOT_FOUND);
+      }
+
+      // Delete only this recurring instance
+      await SessionRecurring.deleteOne({ _id: id });
+      return null;
     }
 
-    // Only delete the specific session and its direct children (if it's a parent)
-    // Don't delete siblings (other sessions with the same parent_id)
-    const sessionsToDelete = await SessionSchema.find({
-      $or: [
-        { _id: id }, // The session itself
-        { parent_id: id }, // Direct children of this session
-      ],
-    });
+    // If it's a recurring session, delete all its instances first
+    if (session.is_recurring) {
+      await SessionRecurring.deleteMany({ parent_session: id });
+    }
 
-    const sessionIds = sessionsToDelete.map((s) => s._id);
-    await SessionSchema.deleteMany({ _id: { $in: sessionIds } });
+    // Delete the main session
+    await SessionSchema.deleteOne({ _id: id });
 
     return null;
   }
 
   async addStudent(sessionId: string, studentId: string) {
-    const session = await SessionSchema.findById(sessionId);
+    let session = await SessionSchema.findById(sessionId);
+
+    // If not in main collection, check recurring instances
     if (!session) {
-      throw new ErrorResponse('Session not found', StatusCodes.NOT_FOUND);
+      const recurringInstance = await SessionRecurring.findById(sessionId);
+      if (!recurringInstance) {
+        throw new ErrorResponse('Session not found', StatusCodes.NOT_FOUND);
+      }
+
+      const student = await UserSchema.findById(studentId);
+      if (!student) {
+        throw new ErrorResponse('Student not found', StatusCodes.NOT_FOUND);
+      }
+
+      if (recurringInstance.students.includes(studentId)) {
+        throw new ErrorResponse('Student is already in this session', StatusCodes.BAD_REQUEST);
+      }
+
+      await SessionRecurring.findByIdAndUpdate(sessionId, {
+        $addToSet: { students: studentId },
+      });
+
+      return await this.getSessionById(sessionId);
     }
 
     const student = await UserSchema.findById(studentId);
@@ -766,13 +1251,33 @@ export class SessionService {
     session.students.push(studentId);
     await session.save();
 
+    // If it's a recurring session, update all instances
+    if (session.is_recurring) {
+      await SessionRecurring.updateMany({ parent_session: sessionId }, { $addToSet: { students: studentId } });
+    }
+
     return await this.getSessionById(sessionId);
   }
 
   async removeStudent(sessionId: string, studentId: string) {
-    const session = await SessionSchema.findById(sessionId);
+    let session = await SessionSchema.findById(sessionId);
+
+    // If not in main collection, check recurring instances
     if (!session) {
-      throw new ErrorResponse('Session not found', StatusCodes.NOT_FOUND);
+      const recurringInstance = await SessionRecurring.findById(sessionId);
+      if (!recurringInstance) {
+        throw new ErrorResponse('Session not found', StatusCodes.NOT_FOUND);
+      }
+
+      if (!recurringInstance.students.includes(studentId)) {
+        throw new ErrorResponse('Student is not in this session', StatusCodes.BAD_REQUEST);
+      }
+
+      await SessionRecurring.findByIdAndUpdate(sessionId, {
+        $pull: { students: studentId },
+      });
+
+      return await this.getSessionById(sessionId);
     }
 
     if (!session.students.includes(studentId)) {
@@ -782,13 +1287,38 @@ export class SessionService {
     session.students = session.students.filter((student: any) => student.toString() !== studentId);
     await session.save();
 
+    // If it's a recurring session, update all instances
+    if (session.is_recurring) {
+      await SessionRecurring.updateMany({ parent_session: sessionId }, { $pull: { students: studentId } });
+    }
+
     return await this.getSessionById(sessionId);
   }
 
   async addTeacher(sessionId: string, teacherId: string) {
-    const session = await SessionSchema.findById(sessionId);
+    let session = await SessionSchema.findById(sessionId);
+
+    // If not in main collection, check recurring instances
     if (!session) {
-      throw new ErrorResponse('Session not found', StatusCodes.NOT_FOUND);
+      const recurringInstance = await SessionRecurring.findById(sessionId);
+      if (!recurringInstance) {
+        throw new ErrorResponse('Session not found', StatusCodes.NOT_FOUND);
+      }
+
+      const teacher = await UserSchema.findById(teacherId);
+      if (!teacher) {
+        throw new ErrorResponse('Teacher not found', StatusCodes.NOT_FOUND);
+      }
+
+      if (recurringInstance.teachers.includes(teacherId)) {
+        throw new ErrorResponse('Teacher is already in this session', StatusCodes.BAD_REQUEST);
+      }
+
+      await SessionRecurring.findByIdAndUpdate(sessionId, {
+        $addToSet: { teachers: teacherId },
+      });
+
+      return await this.getSessionById(sessionId);
     }
 
     const teacher = await UserSchema.findById(teacherId);
@@ -803,13 +1333,33 @@ export class SessionService {
     session.teachers.push(teacherId);
     await session.save();
 
+    // If it's a recurring session, update all instances
+    if (session.is_recurring) {
+      await SessionRecurring.updateMany({ parent_session: sessionId }, { $addToSet: { teachers: teacherId } });
+    }
+
     return await this.getSessionById(sessionId);
   }
 
   async removeTeacher(sessionId: string, teacherId: string) {
-    const session = await SessionSchema.findById(sessionId);
+    let session = await SessionSchema.findById(sessionId);
+
+    // If not in main collection, check recurring instances
     if (!session) {
-      throw new ErrorResponse('Session not found', StatusCodes.NOT_FOUND);
+      const recurringInstance = await SessionRecurring.findById(sessionId);
+      if (!recurringInstance) {
+        throw new ErrorResponse('Session not found', StatusCodes.NOT_FOUND);
+      }
+
+      if (!recurringInstance.teachers.includes(teacherId)) {
+        throw new ErrorResponse('Teacher is not in this session', StatusCodes.BAD_REQUEST);
+      }
+
+      await SessionRecurring.findByIdAndUpdate(sessionId, {
+        $pull: { teachers: teacherId },
+      });
+
+      return await this.getSessionById(sessionId);
     }
 
     if (!session.teachers.includes(teacherId)) {
@@ -819,25 +1369,39 @@ export class SessionService {
     session.teachers = session.teachers.filter((teacher: any) => teacher.toString() !== teacherId);
     await session.save();
 
+    // If it's a recurring session, update all instances
+    if (session.is_recurring) {
+      await SessionRecurring.updateMany({ parent_session: sessionId }, { $pull: { teachers: teacherId } });
+    }
+
     return await this.getSessionById(sessionId);
   }
 
+  /**
+   * Validate session references (taxi, classroom, academic period, etc.)
+   * Classroom is always optional and only validated if provided
+   */
   private async validateSessionReferences(sessionData: {
     taxi: string;
-    classroom: string;
+    classroom?: string;
     academic_period: string;
     academic_subperiod?: string;
     students?: string[];
     teachers?: string[];
+    mode?: string;
   }) {
     const taxi = await TaxiSchema.findById(sessionData.taxi);
     if (!taxi) {
       throw new ErrorResponse('Taxi not found', StatusCodes.NOT_FOUND);
     }
 
-    const classroom = await ClassroomSchema.findById(sessionData.classroom);
-    if (!classroom) {
-      throw new ErrorResponse('Classroom not found', StatusCodes.NOT_FOUND);
+    // Classroom is optional for all modes (online, hybrid, in_person)
+    // Only validate classroom if it's provided and not empty
+    if (sessionData.classroom && sessionData.classroom.trim() !== '') {
+      const classroom = await ClassroomSchema.findById(sessionData.classroom);
+      if (!classroom) {
+        throw new ErrorResponse('Classroom not found', StatusCodes.NOT_FOUND);
+      }
     }
 
     const academicPeriod = await AcademicPeriodSchema.findById(sessionData.academic_period);
@@ -992,19 +1556,116 @@ export class SessionService {
         },
       ],
     };
+  }
 
-    if (excludeSessionId) {
-      query._id = { $ne: excludeSessionId };
+  async getSessionsByParentEmail(parentEmail: string, queryParams: any = {}) {
+    // Find students with this parent's email in contacts
+    const students = await UserSchema.find({
+      user_type: 'student',
+      'contacts.email': parentEmail,
+      is_active: true,
+    }).select('_id');
+
+    const studentIds = students.map((s) => s._id);
+
+    if (studentIds.length === 0) {
+      return [];
     }
 
-    const conflictingSession = await SessionSchema.findOne(query).populate('classroom', 'name');
+    // Find sessions that these students are enrolled in
+    const sessions = await SessionSchema.find({
+      students: { $in: studentIds },
+      ...(queryParams.start_date ? { start_date: { $gte: new Date(queryParams.start_date) } } : {}),
+      ...(queryParams.end_date ? { end_date: { $lte: new Date(queryParams.end_date) } } : {}),
+      ...(queryParams.taxi ? { taxi: queryParams.taxi } : {}),
+      ...(queryParams.classroom ? { classroom: queryParams.classroom } : {}),
+    }).populate([
+      { path: 'taxi', model: 'Taxi', select: 'name code color subject level' },
+      { path: 'classroom', model: 'Classroom', select: 'name location' },
+      { path: 'students', model: 'User', select: 'firstname lastname email' },
+      { path: 'teachers', model: 'User', select: 'firstname lastname email' },
+      { path: 'academic_period', model: 'AcademicPeriod', select: 'name' },
+      { path: 'academic_subperiod', model: 'AcademicSubperiod', select: 'name' },
+    ]);
 
-    if (conflictingSession) {
-      const classroomName = (conflictingSession as any)?.classroom?.name || 'selected classroom';
-      throw new ErrorResponse(
-        `Classroom '${classroomName}' is not available during the specified time slot`,
-        StatusCodes.BAD_REQUEST
-      );
+    return sessions;
+  }
+
+  async linkSessionToClassChat(sessionId: string): Promise<any> {
+
+    try {
+
+      console.log('🔗 Attempting to link session to class chat:', sessionId);
+
+      // Get the session with taxi populated
+      const session = await SessionSchema.findById(sessionId)
+        .populate('taxi', '_id name subject level branch');
+
+      if (!session) {
+        console.warn('⚠️ Session not found:', sessionId);
+        throw new ErrorResponse('Session not found', StatusCodes.NOT_FOUND);
+      }
+
+      // Get taxi ID
+
+      const taxiId = session.taxi._id;
+
+      // Import Chat model dynamically
+
+      const Chat = require('../messaging/models/chat.model').default;
+
+      // Find the class group chat
+
+      const classChat = await Chat.findOne({
+        taxiId: new Types.ObjectId(taxiId),
+        type: 'group',
+      });
+
+      if (!classChat) {
+        console.warn(
+          `⚠️ No class group chat found for taxi ${taxiId}. ` + `Session will not be linked.`
+        );
+        return null;
+      }
+
+      console.log('✅ Found class chat:', classChat._id);
+
+      // Check if session already linked
+
+      if (classChat.sessions && classChat.sessions.includes(sessionId)) {
+        console.log('ℹ️ Session already linked to chat');
+        return classChat;
+      }
+
+      // Add session to chat
+
+      if (!classChat.sessions) {
+        classChat.sessions = [];
+      }
+
+      classChat.sessions.push(new Types.ObjectId(sessionId));
+
+      await classChat.save();
+
+      console.log('✅ Session linked to class chat:', {
+        chatId: classChat._id,
+        sessionId: sessionId,
+        totalSessionsInChat: classChat.sessions.length,
+      });
+
+      return classChat;
+
+    } catch (error: any) {
+
+      console.error('❌ Error linking session to class chat:', {
+        error: error.message,
+        sessionId,
+      });
+
+      // Don't throw - session creation should succeed even if linking fails
+
+      return null;
+
     }
   }
 }

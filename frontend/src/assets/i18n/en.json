@@ -7,6 +7,12 @@
       "password": { "label": "Password" },
       "button": { "label": "Log in" },
       "forgot-password": { "label": "Forgot password" }
+    },
+    "forgot-password": {
+      "title": "Forgot password",
+      "subtitle": "Enter your email to reset your password",
+      "email": { "label": "Email" },
+      "button": { "label": "Reset password" }
     }
   },
   "confirm-dialog": {
@@ -41,17 +47,17 @@
     "edit": "Edit",
     "delete": "Delete",
     "retry": "Retry",
+    "yes": "Yes",
+    "no": "No",
     "grid_view": "Grid View",
     "list_view": "List View",
     "view": "View",
     "add": "Add",
     "update": "Update",
     "create": "Create",
-    "close": "Close"
-  },
-  "validation": {
-    "required": "{{field}} is required",
-    "minlength": "{{field}} must be at least {{min}} characters"
+    "search": "Search",
+    "close": "Close",
+    "no_results_found": "No results found"
   },
   "board": {
     "title": "Board",
@@ -71,10 +77,20 @@
         "sample_date": "Sep. 01, 2024"
       },
       "poll": {
-        "add": "Add New Poll"
+        "add": "Add New Poll",
+        "title": "Poll",
+        "question": "Poll Question",
+        "question_placeholder": "Enter your poll question",
+        "allow_multiple": "Allow multiple votes",
+        "options": "Poll Options",
+        "option_placeholder": "Enter option text",
+        "add_option": "Add Option",
+        "remove": "Remove Poll"
       },
       "recipients": {
         "title": "Recipients:",
+        "placeholder": "Select recipients",
+        "search": "Search recipients",
         "all": "All",
         "administrators": "Administrators",
         "non_academic_users": "Non-academic users",
@@ -99,11 +115,19 @@
       },
       "pin": { "yes": "Yes", "no": "No" },
       "publish": { "now": "Now", "later": "Later", "draft": "Save as draft" },
-      "actions": { "cancel": "Cancel", "save": "Save" },
+      "actions": {
+        "cancel": "Cancel",
+        "save": "Save",
+        "delete": "Delete",
+        "edit": "Edit"
+      },
       "messages": {
         "image_uploaded": "Image uploaded successfully",
+        "image_upload_failed": "Failed to upload image. Please try again.",
         "feature_title": "Feature",
         "poll_todo": "Poll functionality will be implemented",
+        "poll_min_options": "Poll must have at least 2 options",
+        "load_recipients_failed": "Failed to load recipients data",
         "created": "Post created successfully",
         "create_failed": "Failed to create post",
         "validation_error": "Validation Error",
@@ -131,13 +155,31 @@
       "other": "Other Posts"
     },
     "no_posts": "No posts available",
+    "no_posts_title": "No Posts Available",
+    "no_posts_message": "There are no posts to display. Create your first post to get started!",
+    "add_new_post": "Add New Post",
+    "like": "like",
+    "likes": "likes",
     "tooltips": {
-      "edit_post": "Edit post"
+      "edit_post": "Edit post",
+      "pin_post": "Pin post",
+      "unpin_post": "Unpin post",
+      "like_post": "Like post",
+      "unlike_post": "Unlike post"
     },
     "messages": {
       "could_not_load": "Could not load posts",
       "failed_to_fetch": "Failed to fetch posts",
-      "export_detail": "Export functionality will be implemented"
+      "export_detail": "Export functionality will be implemented",
+      "post_pinned": "Post pinned successfully",
+      "post_unpinned": "Post unpinned successfully",
+      "pin_toggle_failed": "Failed to update pin status",
+      "post_liked": "Post liked successfully",
+      "post_unliked": "Post unliked successfully",
+      "like_toggle_failed": "Failed to update like status",
+      "confirm_delete": "Are you sure you want to delete the post \"{{title}}\"? This action cannot be undone.",
+      "post_deleted": "Post deleted successfully",
+      "delete_failed": "Failed to delete post"
     }
   },
   "calendar": {
@@ -190,6 +232,13 @@
       "created_updated": "Creation Date / Update",
       "edit": "Edit",
       "delete": "Delete"
+    },
+    "export": {
+      "title": "Download Calendar",
+      "select_format": "Select the format you want to export your calendar:",
+      "ics_description": "Standard calendar format (Google, Apple, Outlook)",
+      "xlsx_description": "Microsoft Excel spreadsheet",
+      "csv_description": "Comma-separated values file"
     }
   },
   "staff": {
@@ -210,6 +259,11 @@
       "manager": "Manager",
       "teacher": "Teacher"
     },
+    "empty": {
+      "title": "No Staff Members",
+      "message": "Get started by adding your first staff member to the system.",
+      "add_staff": "Add New Staff"
+    },
     "single": {
       "upload_dialog": {
         "title": "Upload Document",
@@ -226,6 +280,7 @@
       "address": "Address:",
       "registered_by": "Registered by:",
       "registered": "Registered:",
+      "registration_date": "Registration Date:",
       "last_updated": "Last updated:",
       "documents": "Documents",
       "no_documents": "No documents available",
@@ -320,6 +375,14 @@
     }
   },
   "sessions": {
+    "status": {
+      "scheduled": "Scheduled",
+      "upcoming": "Upcoming",
+      "live": "Live",
+      "in_progress": "Live",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
     "errors": {
       "id_not_found": "Session ID not found",
       "load_failed": "Failed to load session details",
@@ -330,7 +393,6 @@
     "messages": { "deleted": "Session deleted successfully" },
     "confirm_delete": "Are you sure you want to delete this session? This action cannot be undone.",
     "attendance": { "present": "Present", "absent": "Absent" },
-    "status": { "upcoming": "Upcoming", "completed": "Completed", "in_progress": "In Progress" },
     "chat": { "title": "Chat", "opening": "Opening session chat..." },
     "download": { "title": "Download", "downloading": "Downloading session files..." },
     "launch": { "title": "Launch online", "launching": "Launch online session..." },
@@ -365,7 +427,10 @@
       "no_location": "No Location",
       "mode": "Mode",
       "no_mode": "No Mode",
-      "na": "N/A"
+      "na": "N/A",
+      "no_sessions_title": "No Sessions Found",
+      "no_sessions_message": "There are no sessions available yet. Create your first session to get started.",
+      "create_first_session": "Create First Session"
     },
     "table": {
       "code": "Code",
@@ -375,7 +440,7 @@
       "teachers": "Teachers",
       "students": "Students",
       "mode": "Mode",
-      "classroom": "Classroom",
+      "classroom": "Room",
       "location": "Location",
       "absences": "Absences",
       "scheduled_timeframe": "Scheduled Timeframe",
@@ -425,6 +490,33 @@
     }
   },
   "settings": {
+    "title": "School Settings",
+    "schoolInfo": "School Info",
+    "schoolInfoDescription": "Manage your school's basic information and details",
+    "academicYears": "Academic Years",
+    "academicYearsDescription": "Configure and manage academic years, periods, and terms",
+    "classrooms": {
+      "title": "Classrooms",
+      "description": "Manage physical classrooms and their availability",
+      "classroom_details": "Classroom Details",
+      "capacity": "Capacity",
+      "type": "Type",
+      "availability": "Availability",
+      "amenities": "Amenities",
+      "gallery": "Gallery",
+      "classroom_description": "Description",
+      "no_amenities": "No amenities available",
+      "classroom_not_found": "Classroom Not Found",
+      "classroom_not_found_message": "The classroom you're looking for doesn't exist or has been removed.",
+      "availability_status": {
+        "available": "Available",
+        "unavailable": "Unavailable",
+        "out_of_order": "Out of order",
+        "under_maintenance": "Under maintenance"
+      }
+    },
+    "classroomsDescription": "Manage physical classrooms and their availability",
+    "rolesDescription": "Configure user roles and their permissions",
     "roles": {
       "title": "Roles",
       "search_placeholder": "Search in roles",
@@ -457,22 +549,29 @@
     "staff": "Staff",
     "students": "Students",
     "classes": "Classes",
+    "classrooms": "Classrooms",
     "sessions": "Sessions",
     "timetable": "Timetable",
     "board": "Board",
     "calendar": "Calendar",
-    "elibrary": "E-library",
+    "elibrary": "e-Library",
     "assets": "Assets",
     "assignments": "Assignments",
     "progress": "Progress",
     "revision-center": "Revision Center",
     "wellness-center": "Wellness Center",
-    "resources": "Resources"
+    "resources": "Resources",
+    "analytics": "Analytics",
+    "finances": "Finances",
+    "marketing-tool": "Marketing Tool"
   },
   "classrooms": {
     "title": "Classrooms",
     "search_placeholder": "Search in classrooms",
     "add": "Add Classroom",
+    "add_classroom": "Add Classroom",
+    "create_classroom": "Create New Classroom",
+    "edit_classroom": "Edit Classroom",
     "loading": "Loading classrooms...",
     "load_error": "Unable to load classrooms",
     "empty": {
@@ -482,6 +581,8 @@
     "create_header": "Create New Classroom",
     "edit_header": "Edit Classroom",
     "unknown_branch": "Unknown Branch",
+    "no_classrooms_found": "No classrooms found for this branch",
+    "no_branches_found": "No branches found",
     "table": {
       "name": "Name",
       "branch": "Branch",
@@ -505,6 +606,11 @@
       "sessions_per_week": "Sessions/Week",
       "total_duration": "Total Duration",
       "days": "Days"
+    },
+    "empty": {
+      "title": "No Classes Found",
+      "message": "Get started by adding your first class to the system.",
+      "add_class": "Add New Class"
     }
   },
   "dashboard": {
@@ -559,18 +665,49 @@
       "none": "None",
       "branch": "Branch",
       "branch_assigned": "Branch assigned",
-      "no_branch_assigned": "No branch assigned"
+      "no_branch_assigned": "No branch assigned",
+      "view_students": "View my students",
+      "view_linked_contacts": "View linked contacts"
+    },
+    "empty": {
+      "title": "No Students",
+      "message": "Get started by adding your first student to the system.",
+      "add_student": "Add New Student"
     },
     "errors": {
       "no_id": "No student ID provided",
       "fetch_failed": "Failed to fetch student data",
       "update_failed": "Failed to update student",
-      "delete_failed": "Failed to delete student"
+      "delete_failed": "Failed to delete student",
+      "linked_contact_required": "Students under 18 years old must have at least one linked contact. Please add a contact in the Linked Contacts section.",
+      "linked_contact_required_title": "Linked Contact Required",
+      "email_validation_title": "Email Validation Error",
+      "email_must_differ_from_contacts": "The student's email address must be different from all linked contact email addresses."
     },
     "messages": {
       "updated": "Student updated successfully",
       "deleted": "Student has been deleted successfully",
       "document_deleted": "Document deleted successfully"
+    },
+    "linked_contacts": {
+      "title": "Linked Contacts",
+      "view_all": "View All Linked Contacts",
+      "name": "Name",
+      "contact_type": "Contact Type",
+      "student_name": "Student Name",
+      "student_level": "Student Level(s)",
+      "student_class": "Student Class(es)",
+      "student_status": "Student Status",
+      "phone": "Phone",
+      "email": "Email",
+      "address": "Address",
+      "branch": "Branch",
+      "relationship": "Relationship",
+      "primary_contact": "Primary Contact",
+      "parent_guardian": "Parent & Guardian",
+      "caretaker": "Caretaker",
+      "no_contacts": "No Linked Contacts",
+      "no_contacts_message": "No linked contacts found for any students."
     },
     "confirm_delete": {
       "header": "Delete Student",
@@ -591,6 +728,8 @@
         "primary_contact": "Primary contact",
         "health_info": "Health info",
         "siblings_attending": "Siblings attending",
+        "parent_customer": "Parent organization",
+        "parent_email": "Parent email",
         "general_notes": "General notes"
       },
       "tabs": {
@@ -609,7 +748,8 @@
       "title": "Edit Inventory Record"
     },
     "fields": {
-      "billingPerson": "Billing Person",
+      "billingPerson": "Asset Holder",
+      "borrower": "Borrower",
       "billingDate": "Billing Date",
       "returnDate": "Return Date",
       "notes": "Notes",
@@ -623,14 +763,17 @@
     "errors": {
       "customer_missing": "Customer not available",
       "create_failed": "Failed to create inventory record",
-      "update_failed": "Failed to update inventory record"
+      "update_failed": "Failed to update inventory record",
+      "date_range_invalid": "Return date must be after billing date"
     },
     "table": {
       "code": "Code",
-      "title": "Title",
+      "bookTitle": "Book Title",
+      "assetTitle": "Asset Title",
       "billingDate": "Billing Date",
       "returnDate": "Return Date",
-      "billingPerson": "Billing Person"
+      "billingPerson": "Asset Holder",
+      "borrower": "Borrower"
     }
   },
   "assets": {
@@ -770,6 +913,417 @@
       }
     }
   },
+
+  "assignments": {
+    "toolbar": {
+      "select_an_academic_year": "Select an academic year",
+      "select_an_academic_period": "Select an academic period",
+      "select_academic_subperiod": "Select academic subperiod",
+      "create": "Create",
+      "drafted": "Drafted",
+      "deleted": "Deleted",
+      "tile_view": "Tile View",
+      "list_view": "List View",
+      "export": "Export"
+    },
+    "table": {
+      "columns": {
+        "title": "Title",
+        "class": "Class",
+        "start_date": "Start Date",
+        "end_date": "End Date",
+        "created_by": "Created By",
+        "created_at": "Created At",
+        "updated_at": "Updated At"
+      },
+      "rows": {
+        "me": "Me",
+        "not_updated_yet": "—"
+      }
+    }
+  },
+  
+  "poll": {
+    "multiple_choice": "Multiple choice",
+    "vote": "Vote",
+    "total_votes": "Total votes",
+    "you_voted": "You voted",
+    "vote_again": "Vote again",
+    "closed": "This poll is closed",
+    "warning_title": "Warning",
+    "select_option": "Please select at least one option",
+    "success_title": "Success",
+    "vote_success": "Your vote has been recorded",
+    "error_title": "Error",
+    "vote_error": "Failed to submit vote. Please try again."
+  },
+  "resources": {
+    "titleForBooks": "Books",
+    "titleForFiles": "Files",
+    "titleForCustomActivities": "Custom Activities"
+  },
+  
+  "chatbot": {
+    "title": "Assistant",
+    "placeholder": "Type a message...",
+    "send_button": "Send"
+  },
+
+  "wellnessCenter": {
+    "title": "My mood",
+    "tools": "My tools",
+    "question": "How do you feel right now? I feel ",
+    "meditation_button": "Meditation",
+    "relaxing_music_button": "Relaxing music",
+    "calm_time_button": "Calm time",
+    "class_placeholder": "Select a class",
+    "semester_placeholder": "Select a semester",
+    "no_video_label": "No videos to display",
+    "back_button": "Go back",
+    "month_label": "Month",
+    "date_label": "Date",
+    "mood_label": "Mood",
+    "happy": "Happy",
+    "angry": "Angry",
+    "disapointed": "Disapointed",
+    "proud": "Proud",
+    "surprised": "Surprised",
+    "grateful": "Grateful",
+    "tired": "Tired",
+    "excited": "Excited",
+    "sad": "Sad",
+    "stressed": "Stressed",
+    "satisfied": "Satisfied",
+    "nervous": "Nervous",
+    "bored": "Bored",
+    "scared": "Scared",
+    "months": {
+      "0": "January",
+      "1": "February",
+      "2": "March",
+      "3": "April",
+      "4": "May",
+      "5": "June",
+      "6": "July",
+      "7": "August",
+      "8": "September",
+      "9": "October",
+      "10": "November",
+      "11": "December"
+    },
+    "moodSaved": "Mood saved!",
+    "Wrong semester or semester missing.": "Wrong semester or semester missing."
+  },
+
+  "analytics": {
+    "classes_button": "Classes",
+    "engagement_button": "Engagement",
+    "my_activity_button": "My activity",
+    "classes_overview": "Classes overview",
+    "teaching_stats": "Teaching stats",
+    "school_performance": "School performance",
+    "active_classes": "Active classes",
+    "active_students": "Active students",
+    "active_parents": "Active Parents, Guardians, Caretakers",
+    "students_per_class": "Students per class",
+    "teaching_hours_per_class": "Teaching hours per class",
+    "teaching_hours": "Teaching hours",
+    "weekly_sessions": "Weekly session",
+    "avg_number": "Average number",
+    "avg_numbers": "Average numbers",
+    "assignment_completion": "Assignment completion",
+    "overall_achievement": "Overall Achievement",
+    "rewards_per_class": "Rewards per class",
+    "student_engagement": "Student engagement",
+    "attendance": "Attendance",
+    "highest_attendance_record": "Highest attendance record",
+    "lowest_attendance_record": "Lowest attendance record",
+    "assignments_completed_on_time": "Assignments completed on time",
+    "most_engaged_class": "Most engaged class",
+    "least_engaged_class": "Least engaged class",
+    "popup_info": "Based on completion rate, attendance, and platform login data.",
+    "daily_logins": "Daily logins",
+    "daily_time_spent_minutes": "Daily time spent (minutes)",
+    "students": "Students",
+    "teachers": "Teachers",
+    "parents": "Parents",
+    "admins": "Admins",
+    "managers": "Managers",
+    "weekly_time_spent": "Weekly time spent",
+    "weekly_average_duration_in_minutes": "Weekly average duration in minutes",
+    "avg_duration_per_week": "Average duration per week (minutes)",
+    "weekly_time_spent_per_section": "Weekly time spent per section",
+    "classes": "Classes",
+    "lessons": "Lessons",
+    "sessions": "Sessions",
+    "assignments": "Assignments",
+    "progress": "Progress",
+    "timetable": "Timetable",
+    "board": "Board",
+    "calendar": "Calendar",
+    "student_time_spent_per_activity": "Student time spent per activity",
+    "avg_time_per_activity": "Average time per activity (minutes)",
+    "most_visited_assigned_interactive_activities": "Top 5 – Most visited assigned interactive activities",
+    "most_visited_interactive_activities": "Top 5 – Most visited interactive activities",
+    "interactive_activities": "Interactive Activities",
+    "gameplay": "Gameplay",
+    "time": "Time",
+    "plays": "Plays",
+    "live_data": "Live Data",
+    "online_admins": "Online Admins",
+    "online_managers": "Online Managers",
+    "online_teachers": "Online Teachers",
+    "online_students": "Online students",
+    "online_parents": "Online parents",
+    "completed_assignments": "Completed assignments",
+    "assigned_tasks": "Assigned tasks",
+    "assigned_tasks_per_class": "Assigned tasks per class",
+    "feedback": "Feedback",
+    "feedback_offered": "Feedback offered",
+    "stickers_awarded": "Stickers awarded",
+    "time_you_spent_on_the_platform": "Time you spent on the platform",
+    "exclude_session_time": "Exclude session time",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "this_week": "This week",
+    "school_button": "School",
+    "platform_use_button": "Platform use",
+    "learning_button": "Learning",
+    "users_overview": "Users overview",
+    "active_staff_members": "Active Staff Members",
+    "students_per_teacher": "Students per teacher",
+    "teaching_hours_per_teacher": "Teaching hours per teacher",
+    "fees_collected": "Fees collected",
+    "completed_sessions": "Completed sessions",
+    "student_progress": "Student progress",
+    "achievement": "Achievement (%)",
+    "wellness_videos": "Wellness Videos",
+    "views": "Views",
+    "browser_not_support_video_tag": "Your browser does not support the video tag.",
+    "loading_video": "Loading video...",
+    "choose_date": "Choose date",
+    "today": "Today",
+    "clear": "Clear",
+    "monthNames": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    "monthNamesShort": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    "dayNames": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    "dayNamesShort": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    "dayNamesMin": ["S", "M", "T", "W", "T", "F", "S"],
+    "h": "h",
+    "m": "m",
+    "s": "s"
+  },
+
+  "customActivities": {
+    "private_interactive_activities": "Private interactive activities",
+    "public_interactive_activities": "Public interactive activities",
+    "create_interactive_activity": "Create interactive activity",
+    "interactive_activities": "Interactive activities",
+    "class": "Class",
+    "assigned_on": "Assigned on",
+    "assignment_bundle": "Assignment bundle",
+    "template": "Template",
+    "title": "Title",
+    "type": "Type",
+    "gameplay": "Gameplay",
+    "created_by": "Created by",
+    "created_on": "Created on",
+    "public": "Public",
+    "description": "Description",
+    "cefr": "CEFR",
+    "select_cefr": "Select CEFR",
+    "tags": "Tags",
+    "select_tags": "Select hashtags",
+    "activity_type": "Activity type",
+    "settings": {
+      "label": "Settings",
+      "eachSentenceAppearsInASeparatePage": "Each sentence appears in a separate page",
+      "requireHyphensToMatch": "Require hyphens to match",
+      "matchCapitalLettersExactly": "Match capital letters exactly",
+      "public": "Public",
+      "numberItems": "Number items",
+      "displayAnswers": "Display answers",
+      "showAnagrams": "Show anagrams",
+      "numberThePairs": "Number the pairs",
+      "randomizeItems": "Randomize items",
+      "randomizeAnswers": "Randomize answers",
+      "hideMatchedCards": "Hide matched cards",
+      "numberTheBackOfTheCards": "Number the back of the cards"
+    },
+    "activity": "Activity",
+    "loading_activity": "Loading activity...",
+    "edit_player_mode_button": "Edit player mode",
+    "edit_content_button": "Edit content",
+    "edit_template_button": "Edit template",
+    "single_player_button": "Single-player",
+    "multiplayer_button": "Multiplayer",
+    "back_button": "Back",
+    "continue_button": "Continue",
+    "save_button": "Save",
+    "text": "Text",
+    "add_block_button": "Add block",
+    "choose_activity_type_button": "Choose activity type",
+    "choose_player_mode_button": "Choose player mode",
+    "add_content_button": "Add content",
+    "choose_template_button": "Choose template",
+    "freetext": "Freetext",
+    "drag_and_drop": "Drag and drop",
+    "multiple_choice": "Multiple choice",
+    "fill_in_the_gaps": {
+      "label": "Fill in the gaps",
+      "placeholder": "Insert a sentence"
+    },
+    "cloze": {
+      "label": "Cloze",
+      "placeholder": "Insert a text"
+    },
+    "letter_hunt": {
+      "label": "Letter hunt",
+      "placeholder": "Insert a word"
+    },
+    "matching_pairs": {
+      "label": "Matching pairs",
+      "placeholder": "Insert a sentence"
+    },
+    "group_sort": {
+      "label": "Group sort",
+      "placeholder": "Insert a word"
+    },
+    "word_order": {
+      "label": "Word order",
+      "placeholder": "Insert up to 7 words"
+    },
+    "multiple_choice_quiz": {
+      "label": "Multiple choice quiz",
+      "question_placeholder": "Insert a question",
+      "answer_placeholder": "Insert an answer"
+    },
+    "memory_matching_pairs": {
+      "label": "Memory matching pairs",
+      "placeholder": "Insert a sentence"
+    },
+    "sentences": "Sentences",
+    "sentence": "Sentence",
+    "add_a_sentence": "Add a sentence",
+    "words": "Words",
+    "add_a_word": "Add a word",
+    "pairs": "Pairs",
+    "add_a_pair": "Add a pair",
+    "groups": "Groups",
+    "items": "Items",
+    "group_name": "Group name",
+    "add_item": "Add item",
+    "add_group": "Add group",
+    "separate_each_word": "Separate each word",
+    "custom_separated": "Custom-separated",
+    "add_an_answer": "Add an answer",
+    "add_a_question": "Add a question",
+    "pairs_of_the_same_item": "Pairs of the same item",
+    "pairs_of_different_items": "Pairs of different items",
+    "select_a_game": "Select a game",
+    "error_loading_activity": "There was an error loading the activity. Please try again.",
+    "error": "Error",
+    "does_not_exist": "This page does not exist.",
+    "start_activity": "Start activity",
+    "players": "Players",
+    "questions": "Questions",
+    "answers": "Answers",
+    "questions_will_repeat": "Questions will repeat",
+    "please_select_other_text": "Please select other text.",
+    "the_least_amount_of_questions_must_be_one": "The least amount of questions must be one.",
+    "you_cannot_have_less_than_one_group": "You cannot have less than one group.",
+    "you_cannot_have_less_than_one_item_in_each_group": "You cannot have less than one item in each group.",
+    "upload_from_this_computer": "Upload from this computer",
+    "generate_using_ai": "Generate using AI",
+    "search_on_pexels": "Search on pexels",
+    "wrong_file_type": "Wrong file type. Try again using only image file types.",
+    "error_while_upload": "An error occurred during upload. Please try again.",
+    "error_during_delete": "An error occurred during delete. Please try again.",
+    "error_generating_ai": "Something went wrong with AI generation. Please try again.",
+    "error_searching_pexels": "Something went wrong with Pexels search. Please try again.",
+    "no_images_found": "No images were found. Please try searching again.",
+    "delete": "delete",
+    "missing_fields": "Some fields are missing.",
+    "choose_activity_type": "Choose an activity type to continue.",
+    "choose_player_mode": "Choose a player mode to continue.",
+    "uknown_navigation_error": "Uknown navigation error.",
+    "going_back_delete": "Going back will delete all the data you entered.",
+    "you_cannot_have_less_than_one_pair": "You cannot have less than 1 pair.",
+    "least_amount_of_answers_two": "The least amount of answers must be 2.",
+    "insert_up_to_seven_blocks_of_words":"Insert up to 7 blocks of words.",
+    "user_answers": "User answers:",
+    "correct_answers": "Correct answers:",
+    "not_used": "Not used:"
+  },
+  
+  "account": {
+    "title": "Account Settings",
+    "profileTab": "Profile",
+    "securityTab": "Security",
+    "displayTab": "Display",
+    "notificationsTab": "Notifications",
+    "profile": {
+      "loading": "Loading profile...",
+      "error": "Unable to load profile",
+      "personalInfo": "Personal Information",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "phone": "Phone",
+      "role": "Role",
+      "department": "Department"
+    },
+    "security": {
+      "title": "Security",
+      "description": "Manage your password and security settings",
+      "password": "Password",
+      "changePassword": "Change Password",
+      "lastChanged": "Last changed",
+      "changePasswordBtn": "Change Password",
+      "twoFactor": "Two-Factor Authentication",
+      "twoFactorAuth": "Two-Factor Authentication",
+      "status": "Status",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "enable": "Enable",
+      "disable": "Disable",
+      "activeSessions": "Active Sessions",
+      "manageDevices": "Manage Devices",
+      "viewActiveDevices": "View and manage your active devices and sessions",
+      "viewSessions": "View Sessions"
+    },
+    "display": {
+      "title": "Display",
+      "description": "Customize your display preferences",
+      "language": "Language",
+      "selectLanguage": "Select Language",
+      "chooseLanguage": "Choose a language",
+      "languageHint": "Changes will take effect immediately",
+      "theme": "Theme",
+      "selectTheme": "Select Theme",
+      "chooseTheme": "Choose a theme",
+      "themeHint": "Choose between light, dark, or auto theme"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Manage your notification preferences",
+      "emailNotifications": "Email Notifications",
+      "pushNotifications": "Push Notifications",
+      "emailSessions": "Session Updates",
+      "emailSessionsDesc": "Receive email notifications about session changes",
+      "emailAssignments": "Assignments",
+      "emailAssignmentsDesc": "Get notified about new assignments and deadlines",
+      "emailAnnouncements": "Announcements",
+      "emailAnnouncementsDesc": "Receive school announcements via email",
+      "pushSessions": "Session Reminders",
+      "pushSessionsDesc": "Get push notifications before sessions start",
+      "pushMessages": "Messages",
+      "pushMessagesDesc": "Receive notifications for new messages",
+      "pushReminders": "Reminders",
+      "pushRemindersDesc": "Get reminded about upcoming events and tasks"
+    }
+  },
+  
   "messages": {
       "title": "Messages",
       "new_chat": "New Chat",

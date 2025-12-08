@@ -26,6 +26,60 @@ import { APIResponses } from '../../types';
 import { sendNotification } from '@utils/sendNotification';
 import { logger } from '@utils/logger';
 
+// Helper function to annotate students with on_live_session flag
+const annotateStudentsWithLiveFlag = async (students: any, branch?: string) => {
+  try {
+    const now = new Date();
+    // Build branch-aware sessions filter similar to SessionService.getAllSessions
+    const branchFilter = branch?.trim() || '';
+
+    // Resolve taxis for branch (if provided)
+    let taxiFilter: any = {};
+    if (branchFilter) {
+      const taxisInBranch = await Taxi.find({ branch: branchFilter }).select('_id');
+      const taxiIds = taxisInBranch.map((t) => t._id);
+      taxiFilter = taxiIds.length > 0 ? { taxi: { $in: taxiIds } } : { taxi: { $in: [] } };
+    }
+
+    // Reduce scope to current page students for efficiency
+    const currentPageStudentIds = Array.isArray(students?.results)
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        students.results.map((s: any) => (s?.id || s?._id)?.toString()).filter(Boolean)
+      : [];
+
+    // Query active sessions intersecting now and containing any current page student
+    const activeSessions = await Session.find({
+      start_date: { $lte: now },
+      end_date: { $gte: now },
+      ...(currentPageStudentIds.length > 0 ? { students: { $in: currentPageStudentIds } } : {}),
+      ...taxiFilter,
+    }).select('students');
+
+    const liveStudentIds = new Set<string>();
+    for (const session of activeSessions) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (session as any).students?.forEach((sid: any) => liveStudentIds.add(sid.toString()));
+    }
+
+    // Annotate current page results only
+    // students has shape { results, page, limit, totalResults, totalPages }
+    if (Array.isArray(students?.results)) {
+      students.results = students.results.map((stu: any) => {
+        const id = (stu?.id || stu?._id)?.toString();
+        const onLive = id ? liveStudentIds.has(id) : false;
+        // Ensure we return a plain object with existing JSON transforms
+        const json = typeof stu?.toJSON === 'function' ? stu.toJSON() : stu;
+        return { ...json, on_live_session: onLive };
+      });
+    }
+  } catch (e) {
+    // Fail-soft: keep original payload if any error occurs
+    logger.error('Error annotating students with live flag:', e);
+  }
+
+  return students;
+};
+
 const queryAll = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
   const parsedQuery = queryAllSchema.parse(req.query);
   const reqUser = req.user as IUser;
@@ -269,7 +323,12 @@ const getAllStaff = asyncHandler(async (req: Request, res: Response, _next: Next
 });
 
 const getStaffById = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-  const staff = await usersService.getStaffById(req.params.id);
+  const reqUser = req.user as IUser;
+  // Check if current user is admin to allow viewing inactive staff
+  const isAdmin = reqUser?.roles?.some((role: any) => role.title === 'ADMIN');
+  const includeInactive = isAdmin;
+
+  const staff = await usersService.getStaffById(req.params.id, includeInactive);
 
   if (!staff) {
     return jsonResponse(res, {
@@ -389,59 +448,138 @@ const resendPasswordEmail = asyncHandler(async (req: Request, res: Response, _ne
 const getAllStudents = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
   const parsedQuery = queryAllSchema.parse(req.query);
   const reqUser = req.user as IUser;
+
+  // Role-based scoping
+  let scopedQuery = { ...parsedQuery };
+
+  // Check user role and apply appropriate scoping
+  const userRoles = reqUser?.roles?.map((role: any) => role.title) || [];
+  const isTeacher = userRoles.includes('TEACHER');
+  const isParent = userRoles.includes('PARENT_GUARDIAN') || userRoles.includes('PARENT');
+
+  if (isTeacher && !parsedQuery.branch) {
+    // Teachers see students in their default branch or first branch
+    const defaultBranch = reqUser.default_branch || (reqUser.branches && reqUser.branches[0]);
+    if (defaultBranch) {
+      scopedQuery.branch = defaultBranch.toString();
+    }
+  } else if (isParent) {
+    // Parents see only their children - redirect to getChildren endpoint
+    return getChildren(req, res, _next);
+  }
+
   const students = await usersService.queryAll(
-    { ...parsedQuery, overrides: { user_type: IUserType.STUDENT } },
+    {
+      ...scopedQuery,
+      overrides: {
+        user_type: IUserType.STUDENT,
+        //is_active: parsedQuery.is_active !== undefined ? parsedQuery.is_active === 'true' : true, // DEFAULT to active
+      },
+    },
     reqUser
   );
 
   // Compute on_live_session flag for current page of students
-  try {
-    const now = new Date();
-    // Build branch-aware sessions filter similar to SessionService.getAllSessions
-    const branch = parsedQuery.branch?.trim() || '';
+  await annotateStudentsWithLiveFlag(students, parsedQuery.branch);
 
-    // Resolve taxis for branch (if provided)
-    let taxiFilter: any = {};
-    if (branch) {
-      const taxisInBranch = await Taxi.find({ branch }).select('_id');
-      const taxiIds = taxisInBranch.map((t) => t._id);
-      taxiFilter = taxiIds.length > 0 ? { taxi: { $in: taxiIds } } : { taxi: { $in: [] } };
-    }
+  jsonResponse(res, {
+    status: StatusCodes.OK,
+    data: students,
+    success: true,
+  });
+});
 
-    // Reduce scope to current page students for efficiency
-    const currentPageStudentIds = Array.isArray(students?.results)
-      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        students.results.map((s: any) => (s?.id || s?._id)?.toString()).filter(Boolean)
-      : [];
+const getMyStudents = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+  const parsedQuery = queryAllSchema.parse(req.query);
+  const reqUser = req.user as IUser;
 
-    // Query active sessions intersecting now and containing any current page student
-    const activeSessions = await Session.find({
-      start_date: { $lte: now },
-      end_date: { $gte: now },
-      ...(currentPageStudentIds.length > 0 ? { students: { $in: currentPageStudentIds } } : {}),
-      ...taxiFilter,
-    }).select('students');
+  // Verify user is a teacher
+  const userRoles = reqUser?.roles?.map((role: any) => role.title) || [];
+  const isTeacher = userRoles.includes('TEACHER');
 
-    const liveStudentIds = new Set<string>();
-    for (const session of activeSessions) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (session as any).students?.forEach((sid: any) => liveStudentIds.add(sid.toString()));
-    }
-
-    // Annotate current page results only
-    // students has shape { results, page, limit, totalResults, totalPages }
-    if (Array.isArray(students?.results)) {
-      students.results = students.results.map((stu: any) => {
-        const id = (stu?.id || stu?._id)?.toString();
-        const onLive = id ? liveStudentIds.has(id) : false;
-        // Ensure we return a plain object with existing JSON transforms
-        const json = typeof stu?.toJSON === 'function' ? stu.toJSON() : stu;
-        return { ...json, on_live_session: onLive };
-      });
-    }
-  } catch (e) {
-    // Fail-soft: keep original payload if any error occurs
+  if (!isTeacher) {
+    return jsonResponse(res, {
+      status: StatusCodes.FORBIDDEN,
+      message: 'Only teachers can access their students',
+      success: false,
+    });
   }
+
+  // Get teacher ID
+  const teacherId = (reqUser._id as any).toString();
+
+  // Get students for this teacher
+  const students = await usersService.getStudentsForTeacher(teacherId, parsedQuery, reqUser);
+
+  // Compute on_live_session flag for current page of students
+  await annotateStudentsWithLiveFlag(students, parsedQuery.branch);
+
+  jsonResponse(res, {
+    status: StatusCodes.OK,
+    data: students,
+    success: true,
+  });
+});
+
+const getTeacherStudents = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+  const parsedQuery = queryAllSchema.parse(req.query);
+  const reqUser = req.user as IUser;
+  const teacherId = req.params.teacherId;
+
+  if (!teacherId) {
+    return jsonResponse(res, {
+      status: StatusCodes.BAD_REQUEST,
+      message: 'Teacher ID is required',
+      success: false,
+    });
+  }
+
+  // Check user roles
+  const userRoles = reqUser?.roles?.map((role: any) => role.title) || [];
+  const isAdmin = userRoles.includes('ADMIN');
+  const isManager = userRoles.includes('MANAGER');
+  const isTeacher = userRoles.includes('TEACHER');
+  const reqUserId = (reqUser._id as any).toString();
+
+  // Teachers can only query their own students
+  if (isTeacher && !isAdmin && !isManager && teacherId !== reqUserId) {
+    return jsonResponse(res, {
+      status: StatusCodes.FORBIDDEN,
+      message: 'You can only access your own students',
+      success: false,
+    });
+  }
+
+  // Validate that the teacher exists and is actually a teacher
+  const teacher = await User.findById(teacherId).populate('roles');
+  if (!teacher) {
+    return jsonResponse(res, {
+      status: StatusCodes.NOT_FOUND,
+      message: 'Teacher not found',
+      success: false,
+    });
+  }
+
+  // Check if the user is actually a teacher (by user_type or role)
+  const teacherUserType = teacher.user_type === IUserType.TEACHER;
+  const teacherHasTeacherRole = teacher.roles?.some((role: any) => {
+    const roleTitle = typeof role === 'object' ? role.title : role;
+    return roleTitle === 'TEACHER';
+  });
+
+  if (!teacherUserType && !teacherHasTeacherRole) {
+    return jsonResponse(res, {
+      status: StatusCodes.BAD_REQUEST,
+      message: 'The specified user is not a teacher',
+      success: false,
+    });
+  }
+
+  // Get students for this teacher
+  const students = await usersService.getStudentsForTeacher(teacherId, parsedQuery, reqUser);
+
+  // Compute on_live_session flag for current page of students
+  await annotateStudentsWithLiveFlag(students, parsedQuery.branch);
 
   jsonResponse(res, {
     status: StatusCodes.OK,
@@ -453,6 +591,25 @@ const getAllStudents = asyncHandler(async (req: Request, res: Response, _next: N
 const createStudent = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
   const parsedBody = createSchema.parse(req.body);
   parsedBody.user_type = IUserType.STUDENT;
+
+  // Validate that student email is different from all linked contact emails
+  if (parsedBody.contacts && Array.isArray(parsedBody.contacts) && parsedBody.contacts.length > 0) {
+    const studentEmail = parsedBody.email?.toLowerCase().trim();
+    const contactEmails = parsedBody.contacts
+      .map((c: any) => c.email?.toLowerCase().trim())
+      .filter((email: string) => email && email.length > 0);
+
+    if (studentEmail && contactEmails.length > 0) {
+      const matchingContact = contactEmails.find((email: string) => email === studentEmail);
+      if (matchingContact) {
+        return jsonResponse(res, {
+          status: StatusCodes.BAD_REQUEST,
+          message: "The student's email address must be different from all linked contact email addresses.",
+          success: false,
+        });
+      }
+    }
+  }
 
   const userExists = await usersService.isUserDuplicate({
     email: parsedBody.email,
@@ -486,89 +643,7 @@ const createStudent = asyncHandler(async (req: Request, res: Response, _next: Ne
   await redisClient.set(`reset-password-hash-${randomHash}`, JSON.stringify(student.email));
   await sendEmailToCreatePassword(student.email, randomHash);
 
-  // Ensure parent/guardian accounts exist for linked contacts and send invites
-  try {
-    if (Array.isArray(parsedBody.contacts) && parsedBody.contacts.length > 0) {
-      // Use student's first branch if provided to grant access to parents
-      const branchId: string | undefined =
-        Array.isArray(parsedBody.branches) && parsedBody.branches.length > 0
-          ? (parsedBody.branches[0] as unknown as string)
-          : undefined;
-
-      const parentRole = await RoleModel.findOne({ title: 'PARENT' });
-      for (const contact of parsedBody.contacts) {
-        if (!contact?.email) continue;
-
-        // Try to find existing user by email
-        let existingUser = await usersService.querySingleByEmail(contact.email);
-        if (!existingUser) {
-          // Create new parent user
-          const nameParts = (contact.name || '').trim().split(' ');
-          const firstname = nameParts.shift() || contact.name || 'Parent';
-          const lastname = nameParts.join(' ') || 'Guardian';
-
-          const createdParent = await usersService.create({
-            username: contact.email,
-            firstname,
-            lastname,
-            email: contact.email,
-            phone: contact.phone || 'N/A',
-            user_type: IUserType.PARENT,
-            is_active: true,
-            branches: branchId ? [branchId] : [],
-            customers: branchId ? [branchId] : [],
-            roles: parentRole ? [parentRole.id] : [],
-          } as unknown as IUserCreateDTO);
-
-          // Send email to set password for the new parent
-          const parentHash = Math.random().toString(36).substring(7);
-          await redisClient.set(`reset-password-hash-${parentHash}`, JSON.stringify(contact.email));
-          await sendEmailToCreatePassword(contact.email, parentHash);
-          // Refetch as a Mongoose document for subsequent logic
-          existingUser = await usersService.querySingleByEmail(contact.email);
-        } else {
-          // Ensure PARENT role and access to branch/customer
-          let requiresSave = false;
-
-          if (parentRole) {
-            const hasParentRole = (existingUser.roles as any[]).some(
-              (r: any) => r.toString() === parentRole.id.toString()
-            );
-            if (!hasParentRole) {
-              (existingUser.roles as any[]).push(parentRole._id);
-              requiresSave = true;
-            }
-          }
-
-          if (branchId) {
-            const hasCustomer = (existingUser.customers as any[]).some((c: any) => c.toString() === branchId);
-            if (!hasCustomer) {
-              (existingUser.customers as any[]).push(branchId as any);
-              requiresSave = true;
-            }
-            const hasBranch = (existingUser.branches as any[]).some((b: any) => b.toString() === branchId);
-            if (!hasBranch) {
-              (existingUser.branches as any[]).push(branchId as any);
-              requiresSave = true;
-            }
-          }
-
-          if (requiresSave) {
-            await (existingUser as any).save();
-          }
-
-          // If the user has no password set, send set-password email
-          if (!(existingUser as any).passwordHash) {
-            const parentHash = Math.random().toString(36).substring(7);
-            await redisClient.set(`reset-password-hash-${parentHash}`, JSON.stringify(contact.email));
-            await sendEmailToCreatePassword(contact.email, parentHash);
-          }
-        }
-      }
-    }
-  } catch (err) {
-    logger.error('Failed to process parent accounts for student contacts', err as any);
-  }
+  // Contacts are saved only in the student's contacts array, not as separate user documents
 
   await sendNotification(`Student ${student.firstname} ${student.lastname} created successfully`, 'system');
 
@@ -581,7 +656,12 @@ const createStudent = asyncHandler(async (req: Request, res: Response, _next: Ne
 });
 
 const getStudentById = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-  const student = await usersService.querySingle(req.params.id);
+  const reqUser = req.user as IUser;
+  // Check if current user is admin to allow viewing inactive students
+  const isAdmin = reqUser?.roles?.some((role: any) => role.title === 'ADMIN');
+  const includeInactive = isAdmin;
+
+  const student = await usersService.querySingle(req.params.id, IUserType.STUDENT, includeInactive);
 
   if (!student || student.user_type !== IUserType.STUDENT) {
     return jsonResponse(res, {
@@ -599,10 +679,53 @@ const getStudentById = asyncHandler(async (req: Request, res: Response, _next: N
 });
 
 const updateStudent = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-  const parsedBody = updateSchema.parse({ ...req.body, id: req.params.id });
+  // Transform populated fields to IDs before validation
+  const bodyData = { ...req.body, id: req.params.id };
 
-  const existingStudent = await usersService.querySingle(parsedBody.id);
-  if (!existingStudent || existingStudent.user_type !== IUserType.STUDENT) {
+  // Convert populated customers to string IDs if they're objects
+  if (bodyData.customers && Array.isArray(bodyData.customers)) {
+    bodyData.customers = bodyData.customers.map((c: any) =>
+      typeof c === 'object' && c !== null ? (c._id || c.id)?.toString() : c
+    );
+  }
+
+  // Convert populated roles to string IDs if they're objects
+  if (bodyData.roles && Array.isArray(bodyData.roles)) {
+    bodyData.roles = bodyData.roles.map((r: any) =>
+      typeof r === 'object' && r !== null ? (r._id || r.id)?.toString() : r
+    );
+  }
+
+  // Convert populated branches to string IDs if they're objects
+  if (bodyData.branches && Array.isArray(bodyData.branches)) {
+    bodyData.branches = bodyData.branches.map((b: any) =>
+      typeof b === 'object' && b !== null ? (b._id || b.id)?.toString() : b
+    );
+  }
+
+  // Convert populated default_branch to string ID if it's an object
+  if (bodyData.default_branch && typeof bodyData.default_branch === 'object') {
+    bodyData.default_branch = (bodyData.default_branch._id || bodyData.default_branch.id)?.toString();
+  }
+
+  const parsedBody = updateSchema.parse(bodyData);
+
+  // Debug logging
+  logger.info(`Updating student with ID: ${parsedBody.id}`);
+
+  const existingStudent = await usersService.querySingle(parsedBody.id, IUserType.STUDENT, true);
+
+  if (!existingStudent) {
+    logger.warn(`Student not found with ID: ${parsedBody.id}`);
+    return jsonResponse(res, {
+      status: StatusCodes.NOT_FOUND,
+      message: APIResponses.RESOURCE_NOT_FOUND,
+      success: false,
+    });
+  }
+
+  if (existingStudent.user_type !== IUserType.STUDENT) {
+    logger.warn(`User ${parsedBody.id} is not a student. Type: ${existingStudent.user_type}`);
     return jsonResponse(res, {
       status: StatusCodes.NOT_FOUND,
       message: APIResponses.RESOURCE_NOT_FOUND,
@@ -624,87 +747,36 @@ const updateStudent = asyncHandler(async (req: Request, res: Response, _next: Ne
     });
   }
 
+  // Validate that student email is different from all linked contact emails
+  if (parsedBody.contacts && Array.isArray(parsedBody.contacts) && parsedBody.contacts.length > 0) {
+    // Get student email - use parsedBody.email if provided, otherwise use existing student email
+    const studentEmail = (parsedBody.email || existingStudent.email)?.toLowerCase().trim();
+
+    if (studentEmail) {
+      const contactEmails = parsedBody.contacts
+        .map((c: any) => c.email?.toLowerCase().trim())
+        .filter((email: string) => email && email.length > 0);
+
+      if (contactEmails.length > 0) {
+        const matchingContact = contactEmails.find((email: string) => email === studentEmail);
+        if (matchingContact) {
+          return jsonResponse(res, {
+            status: StatusCodes.BAD_REQUEST,
+            message: "The student's email address must be different from all linked contact email addresses.",
+            success: false,
+          });
+        }
+      }
+    }
+  }
+
   // Keep customers in sync with branches for authorization checks
   if (Array.isArray(parsedBody.branches)) {
     (parsedBody as any).customers = [...(parsedBody.branches as unknown as string[])];
   }
   const student = await usersService.update(parsedBody);
 
-  // Ensure parent/guardian accounts exist for linked contacts and send invites
-  try {
-    if (student && Array.isArray(parsedBody.contacts) && parsedBody.contacts.length > 0) {
-      const branchId: string | undefined =
-        Array.isArray(parsedBody.branches) && parsedBody.branches.length > 0
-          ? (parsedBody.branches[0] as unknown as string)
-          : student.branches && student.branches.length > 0
-            ? (student.branches[0] as any).toString()
-            : undefined;
-
-      const parentRole = await RoleModel.findOne({ title: 'PARENT' });
-      for (const contact of parsedBody.contacts) {
-        if (!contact?.email) continue;
-
-        let existingUser = await usersService.querySingleByEmail(contact.email);
-        if (!existingUser) {
-          const nameParts = (contact.name || '').trim().split(' ');
-          const firstname = nameParts.shift() || contact.name || 'Parent';
-          const lastname = nameParts.join(' ') || 'Guardian';
-
-          const createdParent = await usersService.create({
-            username: contact.email,
-            firstname,
-            lastname,
-            email: contact.email,
-            phone: contact.phone || 'N/A',
-            user_type: IUserType.PARENT,
-            is_active: true,
-            branches: branchId ? [branchId] : [],
-            customers: branchId ? [branchId] : [],
-            roles: parentRole ? [parentRole.id] : [],
-          } as unknown as IUserCreateDTO);
-
-          const parentHash = Math.random().toString(36).substring(7);
-          await redisClient.set(`reset-password-hash-${parentHash}`, JSON.stringify(contact.email));
-          await sendEmailToCreatePassword(contact.email, parentHash);
-          // Refetch as a Mongoose document for subsequent logic
-          existingUser = await usersService.querySingleByEmail(contact.email);
-        } else {
-          let requiresSave = false;
-          if (parentRole) {
-            const hasParentRole = (existingUser.roles as any[]).some(
-              (r: any) => r.toString() === parentRole.id.toString()
-            );
-            if (!hasParentRole) {
-              (existingUser.roles as any[]).push(parentRole._id);
-              requiresSave = true;
-            }
-          }
-          if (branchId) {
-            const hasCustomer = (existingUser.customers as any[]).some((c: any) => c.toString() === branchId);
-            if (!hasCustomer) {
-              (existingUser.customers as any[]).push(branchId as any);
-              requiresSave = true;
-            }
-            const hasBranch = (existingUser.branches as any[]).some((b: any) => b.toString() === branchId);
-            if (!hasBranch) {
-              (existingUser.branches as any[]).push(branchId as any);
-              requiresSave = true;
-            }
-          }
-          if (requiresSave) {
-            await (existingUser as any).save();
-          }
-          if (!(existingUser as any).passwordHash) {
-            const parentHash = Math.random().toString(36).substring(7);
-            await redisClient.set(`reset-password-hash-${parentHash}`, JSON.stringify(contact.email));
-            await sendEmailToCreatePassword(contact.email, parentHash);
-          }
-        }
-      }
-    }
-  } catch (err) {
-    logger.error('Failed to process parent accounts on student update', err as any);
-  }
+  // Contacts are saved only in the student's contacts array, not as separate user documents
 
   jsonResponse(res, {
     status: StatusCodes.OK,
@@ -732,6 +804,7 @@ const getChildren = asyncHandler(async (req: Request, res: Response, _next: Next
       overrides: {
         user_type: IUserType.STUDENT,
         'contacts.email': parentEmail,
+        is_active: parsedQuery.is_active !== undefined ? parsedQuery.is_active === 'true' : true, // DEFAULT to active
       },
     } as any,
     reqUser
@@ -745,17 +818,15 @@ const getChildren = asyncHandler(async (req: Request, res: Response, _next: Next
 });
 
 const deleteStudent = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-  const student = await usersService.querySingle(req.params.id);
+  const deletedStudent = await usersService.deleteStudent(req.params.id);
 
-  if (!student || student.user_type !== IUserType.STUDENT) {
+  if (!deletedStudent) {
     return jsonResponse(res, {
       status: StatusCodes.NOT_FOUND,
       message: APIResponses.RESOURCE_NOT_FOUND,
       success: false,
     });
   }
-
-  await usersService.deleteStudent(req.params.id);
 
   jsonResponse(res, {
     status: StatusCodes.NO_CONTENT,
@@ -778,6 +849,8 @@ export default {
   makePrimaryContact,
   resendPasswordEmail,
   getAllStudents,
+  getMyStudents,
+  getTeacherStudents,
   createStudent,
   getStudentById,
   updateStudent,

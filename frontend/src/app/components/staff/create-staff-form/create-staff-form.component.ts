@@ -101,11 +101,13 @@ export class CreateStaffFormComponent implements OnInit {
       // Branch will be automatically set from auth service, no need to handle here
 
       // Convert date strings to Date objects for calendar fields
-      // For edit mode, use createdAt as startDate (similar to student form)
-      if (this.staffData.createdAt && typeof this.staffData.createdAt === 'string') {
-        this.model.startDate = new Date(this.staffData.createdAt);
+      // Prefer registration_date, fallback to startDate, then createdAt
+      if (this.staffData.registration_date && typeof this.staffData.registration_date === 'string') {
+        this.model.startDate = new Date(this.staffData.registration_date);
       } else if (this.staffData.startDate && typeof this.staffData.startDate === 'string') {
         this.model.startDate = new Date(this.staffData.startDate);
+      } else if (this.staffData.createdAt && typeof this.staffData.createdAt === 'string') {
+        this.model.startDate = new Date(this.staffData.createdAt);
       }
 
       // Set edit mode on the form fields service to handle avatar and other fields

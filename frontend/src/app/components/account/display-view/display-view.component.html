@@ -1,0 +1,52 @@
+<div class="display-view-container">
+  <!-- Header -->
+  <div class="mb-4">
+    <h2 class="text-2xl font-semibold text-900 m-0">{{ 'account.display.title' | translate }}</h2>
+    <p class="text-600 mt-2">{{ 'account.display.description' | translate }}</p>
+  </div>
+
+  <!-- Language Section -->
+  <p-card class="mb-4">
+    <ng-template pTemplate="header">
+      <div class="p-3">
+        <h3 class="text-xl font-semibold text-900 m-0">{{ 'account.display.language' | translate }}</h3>
+      </div>
+    </ng-template>
+    
+    <div class="grid">
+      <div class="col-12 md:col-6">
+        <label class="text-600 text-sm font-semibold mb-2 block">{{ 'account.display.selectLanguage' | translate }}</label>
+        <app-primary-dropdown
+          [(ngModel)]="selectedLanguage"
+          [options]="languages"
+          (ngModelChange)="onLanguageChange()"
+          [placeholder]="'account.display.chooseLanguage' | translate">
+        </app-primary-dropdown>
+        <small class="text-600 mt-2 block">{{ 'account.display.languageHint' | translate }}</small>
+      </div>
+    </div>
+  </p-card>
+
+  <!-- Theme Section -->
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="p-3">
+        <h3 class="text-xl font-semibold text-900 m-0">{{ 'account.display.theme' | translate }}</h3>
+      </div>
+    </ng-template>
+
+    <div class="grid">
+      <div class="col-12 md:col-6">
+        <label class="text-600 text-sm font-semibold mb-2 block">{{ 'account.display.selectTheme' | translate }}</label>
+        <app-primary-dropdown
+          [(ngModel)]="selectedTheme"
+          [options]="themes"
+          (ngModelChange)="onThemeChange()"
+          [placeholder]="'account.display.chooseTheme' | translate">
+        </app-primary-dropdown>
+        <small class="text-600 mt-2 block">{{ 'account.display.themeHint' | translate }}</small>
+      </div>
+    </div>
+  </p-card>
+</div>
+

@@ -3,5 +3,6 @@ export const environment = {
   development: false,
   apiUrl: 'https://api-sms.supercourse.dd.softwebpages.com/v1',
   socketUrl: 'https://api-sms.supercourse.dd.softwebpages.com/v1',
-  assetUrl: 'https://api-sms.supercourse.dd.softwebpages.com/public'
+  assetUrl: 'https://api-sms.supercourse.dd.softwebpages.com/public',
+  scapApiAssetsUrl: 'https://api.supercourse.dd.softwebpages.com'
 };

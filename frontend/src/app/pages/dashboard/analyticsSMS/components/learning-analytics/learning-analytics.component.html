@@ -1,0 +1,84 @@
+<div class="icon-label-div">
+  <i class="pi pi-chart-line"></i>
+  <label class="black-label">{{ 'analytics.student_progress' | translate }}</label>
+</div>
+<div class="main-div">
+  <div class="line-chart-container">
+    <canvas baseChart [data]="lineChartData" [options]="lineChartOptions" [type]="'line'"> </canvas>
+  </div>
+
+  <div class="card-div">
+    <div class="card">
+      <label style="font-weight: bolder">{{ 'analytics.assignments_completed_on_time' | translate }}</label>
+      <label style="font-size: 50px; font-weight: bolder">{{ assignmentsCompleted * 100 }}%</label>
+    </div>
+    <div class="card">
+      <label style="font-weight: bolder">{{ 'analytics.highest_attendance_record' | translate }}</label>
+      <label>{{ highestAttendance.class }} {{ highestAttendance.attendance * 100 }}%</label>
+      <label style="font-weight: bolder">{{ 'analytics.lowest_attendance_record' | translate }}</label>
+      <label>{{ lowestAttendance.class }} {{ lowestAttendance.attendance * 100 }}%</label>
+    </div>
+  </div>
+</div>
+
+<div class="icon-label-div">
+  <i class="pi pi-clock"></i>
+  <label class="black-label">{{ 'analytics.student_time_spent_per_activity' | translate }}</label>
+</div>
+<div class="main-div">
+  <!-- Bar Chart -->
+  <div class="chart-container">
+    <canvas baseChart [data]="barChartData" [options]="barChartOptions" chartType="bar" #barChart> </canvas>
+  </div>
+
+  <div style="width: 49%">
+    <!-- Top 5 Most Visited Sites -->
+    <div class="icon-label-div">
+      <i class="pi pi-trophy"></i>
+      <label class="black-label">{{ 'analytics.most_visited_interactive_activities' | translate }}</label>
+    </div>
+    <div class="table">
+      <div class="table-header">
+        <div>#</div>
+        <div>{{ 'analytics.interactive_activities' | translate }}</div>
+        <div>{{ 'analytics.gameplay' | translate }}</div>
+        <div>{{ 'analytics.time' | translate }}</div>
+        <div>{{ 'analytics.plays' | translate }}</div>
+      </div>
+      <div class="table-row" *ngFor="let row of customActivities; let i = index">
+        <div (click)="onGameRowClick(row)">{{ i + 1 }}</div>
+        <div (click)="onGameRowClick(row)">{{ row.title }}</div>
+        <div (click)="onGameRowClick(row)">{{ row.playerModeString }}</div>
+        <div (click)="onGameRowClick(row)">{{ formatAvg(row) }}</div>
+        <div (click)="onGameRowClick(row)">{{ row.plays }}</div>
+      </div>
+    </div>
+
+    <!-- Wellness Videos -->
+    <div class="table">
+      <div class="table-header">
+        <div>#</div>
+        <div>{{ 'analytics.wellness_videos' | translate }}</div>
+        <div>{{ 'analytics.views' | translate }}</div>
+      </div>
+      <div class="table-row" *ngFor="let row of videos">
+        <div (click)="onVideoRowClick(row)">{{ row.rank }}</div>
+        <div (click)="onVideoRowClick(row)">{{ row.title }}</div>
+        <div (click)="onVideoRowClick(row)">{{ row.viewCount }}</div>
+      </div>
+    </div>
+  </div>
+
+  <p-dialog header="{{ selectedVideo?.title }}" [(visible)]="displayDialog" [modal]="true" [style]="{ width: '50vw' }" (onHide)="closeDialog()">
+    <ng-container *ngIf="videoUrl; else loading">
+      <video width="100%" height="auto" controls autoplay>
+        <source [src]="videoUrl" type="video/mp4" />
+        {{ 'analytics.browser_not_support_video_tag' | translate }}
+      </video>
+    </ng-container>
+
+    <ng-template #loading>
+      <p>{{ 'analytics.loading_video' | translate }}</p>
+    </ng-template>
+  </p-dialog>
+</div>

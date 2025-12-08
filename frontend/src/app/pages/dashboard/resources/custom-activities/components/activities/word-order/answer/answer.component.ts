@@ -17,7 +17,8 @@ import { DividerModule } from 'primeng/divider';
 import { ImageModule } from 'primeng/image';
 import { CommonModule } from '@angular/common';
 import { ImageSelectorComponent } from '../../../image-selector/image-selector.component';
-import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'word-order-answer',
@@ -34,6 +35,7 @@ import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-
     CommonModule,
     ImageSelectorComponent,
     WarningDialogComponent,
+    TranslateModule
   ],
   templateUrl: './answer.component.html',
   styleUrl: './answer.component.scss',

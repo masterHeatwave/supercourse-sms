@@ -5,15 +5,16 @@ import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-
 import { CommonModule } from '@angular/common';
 import { Question } from '../../../types';
 import { DataService } from '../../../services/data.service';
-import { WarningDialogComponent } from '../../dialogs/warning-dialog/warning-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
 import { RadioButton, RadioButtonModule } from 'primeng/radiobutton';
 import { FormsModule } from '@angular/forms';
 import { QuestionBlockCardComponent } from './question-block-card/question-block-card.component';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'word-order-activity',
   standalone: true,
-  imports: [QuestionBlockCardComponent, WarningDialogComponent, CommonModule, DragDropModule, RadioButtonModule, FormsModule],
+  imports: [QuestionBlockCardComponent, WarningDialogComponent, CommonModule, DragDropModule, RadioButtonModule, FormsModule, TranslateModule],
   templateUrl: './word-order.component.html',
   styleUrl: './word-order.component.scss'
 })
@@ -27,7 +28,7 @@ export class WordOrderComponent {
   isWarningDialogVisible: boolean = false;
   warningMessage: string = '';
 
-  constructor(private dataService: DataService) {
+  constructor(private dataService: DataService, private translate: TranslateService) {
     this.dataService.getQuestions().subscribe((questions: Question[]) => {
       this.questions = questions;
     });
@@ -100,7 +101,7 @@ export class WordOrderComponent {
       this.questions = [...this.questions];
       this.dataService.setData('questions', this.questions);
     } else {
-      this.warningMessage = 'The least amount of questions must be one.';
+      this.warningMessage = this.translate.instant('customActivities.the_least_amount_of_questions_must_be_one');
       this.isWarningDialogVisible = true;
     }
   }

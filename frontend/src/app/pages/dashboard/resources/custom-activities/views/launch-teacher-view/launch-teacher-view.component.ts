@@ -7,6 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { FormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 //import { MatSliderModule } from '@angular/material/slider';
 
 @Component({
@@ -19,7 +20,8 @@ import { DropdownModule } from 'primeng/dropdown';
     ButtonModule,
     CheckboxModule,
     DropdownModule,
-    FormsModule
+    FormsModule,
+    TranslateModule
     //MatSliderModule,
   ],
   templateUrl: './launch-teacher-view.component.html',
@@ -31,6 +33,9 @@ export class LaunchTeacherViewComponent {
   activityData = {
     _id: '',
     activityType: '',
+    assignmentId: '',
+    studentId: '',
+    completed: false,
     playerMode: '',
     title: '',
     description: '',
@@ -94,13 +99,15 @@ export class LaunchTeacherViewComponent {
   maxQuestions: number = 10;
   players: number = 2;
   maxPlayers: number = 10;
-  playersMessage: string = 'Questions will repeat.';
+  playersMessage: string = this.translate.instant('customActivities.questions_will_repeat');
 
-  message: string = 'Loading activity...';
+  message: string = this.translate.instant('customActivities.loading_activity');
   isLoading: boolean = true;
   isReady: boolean = false;
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(private route: ActivatedRoute, private translate: TranslateService) {
+    this.message = this.translate.instant('customActivities.loading_activity');
+  }
 
   ngOnInit() {
     this.id = this.route.snapshot.paramMap.get('id')!;

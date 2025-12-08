@@ -64,8 +64,6 @@ export const initializeSocket = (httpServer: HttpServer) => {
     allowEIO3: true
   });
 
-  console.log('✅ Socket.IO server configured');
-  console.log('📡 Allowed origins:', config.WEB_HOST);
 
   let messageService: MessageService;
   let chatService: ChatService;
@@ -81,7 +79,6 @@ export const initializeSocket = (httpServer: HttpServer) => {
   notificationService.setSocketIO(io);
 
   io.on('connection', (socket) => {
-    console.log('✅ Client connected:', socket.id);
 
     // ========== AUTHENTICATION ==========
     socket.on('authenticate', async (data: { userId: string; tenantId: string } | string) => {
@@ -100,8 +97,6 @@ export const initializeSocket = (httpServer: HttpServer) => {
           userId = data.userId;
           tenantId = data.tenantId;
         }
-
-        console.log('🔐 Authentication attempt - userId:', userId, 'tenantId:', tenantId);
 
         if (!userId || typeof userId !== 'string') {
           console.error('❌ Invalid userId provided:', userId);
@@ -136,8 +131,7 @@ export const initializeSocket = (httpServer: HttpServer) => {
 
         // Join user to their personal room
         socket.join(`user-${userId}`);
-
-        console.log(`✅ User ${userId} authenticated for tenant ${tenantId}`);
+        
 
         socket.emit('authenticated', {
           userId,
@@ -171,7 +165,6 @@ export const initializeSocket = (httpServer: HttpServer) => {
         }
 
         socket.join(`chat-${chatId}`);
-        console.log(`✅ Socket ${socket.id} (user ${socketData.userId}) joined chat ${chatId}`);
 
         socket.to(`chat-${chatId}`).emit('userJoined', {
           chatId,
@@ -187,7 +180,6 @@ export const initializeSocket = (httpServer: HttpServer) => {
     socket.on('leaveChat', (chatId: string) => {
       try {
         socket.leave(`chat-${chatId}`);
-        console.log(`🚪 Socket ${socket.id} left chat ${chatId}`);
       } catch (error) {
         console.error('❌ Error leaving chat:', error);
       }
@@ -196,7 +188,6 @@ export const initializeSocket = (httpServer: HttpServer) => {
     // ========== MESSAGE EVENTS ==========
     socket.on('sendMessage', async (data) => {
       try {
-        console.log('📤 Sending message:', data);
 
         const { chatId, senderId, content, recipientIds, replyToMessageId } = data;
 
@@ -212,8 +203,6 @@ export const initializeSocket = (httpServer: HttpServer) => {
           socket.emit('messageError', { error: 'Authentication required' });
           return;
         }
-
-        console.log(`📨 Processing message from user ${senderId} in tenant ${socketData.tenantId}`);
 
         if (!messageService) {
           messageService = new MessageService();

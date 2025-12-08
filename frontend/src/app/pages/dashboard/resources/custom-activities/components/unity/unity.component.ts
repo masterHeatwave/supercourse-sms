@@ -1,5 +1,7 @@
-import { Component, ElementRef, Input, SimpleChanges, ViewChild } from '@angular/core';
-import { environment } from '../../environments/environment';
+import { Component, ElementRef, inject, Input, SimpleChanges, ViewChild } from '@angular/core';
+//import { environment } from '../../environments/environment';
+import { environment } from '@environments/environment.development';
+import { CustomActivitiesService } from '@gen-api/custom-activities/custom-activities.service';
 
 declare function createUnityInstance(a: any, b: any, c: any): any;
 
@@ -12,11 +14,15 @@ declare function createUnityInstance(a: any, b: any, c: any): any;
 })
 export class UnityComponent {
   @ViewChild('unityContainer', { static: true }) unityContainer!: ElementRef;
+  customActivityService = inject(CustomActivitiesService);
 
   unityInstance: any;
   unityReady: boolean = false;
-  @Input() data = {
+  @Input() data: any = {
     _id: '',
+    assignmentId: '',
+    studentId: '',
+    completed: false,
     activityType: '',
     playerMode: '',
     title: '',
@@ -173,9 +179,37 @@ export class UnityComponent {
 
     document.body.appendChild(script);
 
-    (window as any).dataReady = (data: any) => {
-      console.log('data', data);
-    };
+    (window as any).SendActivityResult = (data: any) => {
+      const newData = JSON.parse(data);
+      if(!this.data.completed && (this.data.studentId && this.data.assignmentId)){
+        this.customActivityService.patchCustomActivitiesAssignedActivitiesUpdateStatusActivityIdStudentId(this.data.id, this.data.studentId, { status: true}).subscribe({
+          next: (res) => {
+            console.log('PATCH1 successful:', res);
+          },
+          error: (err) => {
+            console.error('PATCH1 failed:', err);
+          }
+        });
+        this.customActivityService.patchCustomActivitiesTaskAnswersAssignmentIdStudentIdCustomActivityId(this.data.assignmentId, this.data.studentId, this.data.id, newData).subscribe({
+          next: (res) => {
+            console.log('PATCH2 successful:', res);
+          },
+          error: (err) => {
+            console.error('PATCH2 failed:', err);
+          }
+        });
+      }
+      
+      const activityId = this.data.originalActivity ? this.data.originalActivity  : this.data.id;
+      this.customActivityService.patchCustomActivitiesActivityId( { duration: newData.duration },  activityId).subscribe({
+        next: (res: any) => {
+          console.log('PATCH3 successful:', res);
+        },
+        error: (err: any) => {
+          console.error('PATCH3 failed:', err);
+        }
+      });
+    }
 
     (window as any).unityReady = () => {
       if (this.unityInstance) {

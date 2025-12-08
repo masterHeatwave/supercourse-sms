@@ -117,12 +117,14 @@ export class AcademicOverviewService {
 
       for (const period of periods) {
         // Find classes (taxis) for the period where the user participates
-        const taxis = await Taxi.find({ academic_year: year._id, academic_period: period._id, users: userId })
-          .select('name branch users')
+        // Note: We search by period only, not by year+period, to handle data inconsistencies
+        const taxis = await Taxi.find({ academic_period: period._id, users: userId })
+          .select('name branch users academic_year academic_period')
           .lean();
-
-        // If user is not related to any taxi in this period, still include branch/role context via branch roles
+        // Get unique branch IDs from taxis
         const branchIds = Array.from(new Set(taxis.map((t) => String(t.branch)).filter(Boolean)));
+
+        // Fetch branch details
         const branches: any[] = branchIds.length
           ? await Customer.find({ _id: { $in: branchIds } })
               .select('name address administrator manager')
@@ -150,20 +152,18 @@ export class AcademicOverviewService {
             teachers.push({ ...base, role: 'TEACHER' });
           }
 
-          // If user's branches include any of the period branches, consider admin/manager based on branch relations
-          const userBranchIds = new Set(((user as any).branches || []).map((b: any) => String(b)));
+          // Check if user is administrator or manager for any of the branches
           for (const br of branches as any[]) {
-            if (userBranchIds.has(String(br._id))) {
-              if (br.administrator && String(br.administrator) === String(user._id)) {
-                administrators.push({ ...base, role: 'ADMIN' });
-              }
-              if (br.manager && String(br.manager) === String(user._id)) {
-                managers.push({ ...base, role: 'MANAGER' });
-              }
+            if (br.administrator && String(br.administrator) === String(user._id)) {
+              administrators.push({ ...base, role: 'ADMIN' });
+            }
+            if (br.manager && String(br.manager) === String(user._id)) {
+              managers.push({ ...base, role: 'MANAGER' });
             }
           }
         }
 
+        // Map classes from taxis
         const classes = taxis.map((t) => ({ id: String(t._id), name: t.name }));
 
         // Skip period if no related data for this user

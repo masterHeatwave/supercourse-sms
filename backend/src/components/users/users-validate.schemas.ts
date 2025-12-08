@@ -88,8 +88,8 @@ export const UserSchema = z
     firstname: z.string(),
     lastname: z.string(),
     email: z.string().email(),
-    phone: z.string(),
-    mobile: z.string().min(1, { message: 'Mobile number is required' }),
+    phone: z.string().min(1, { message: 'Phone is required' }),
+    mobile: z.string().optional(),
     city: z.string().optional(),
     region: z.string().optional(),
     country: z.string().optional(),
@@ -107,6 +107,7 @@ export const UserSchema = z
     role_title: z.string().optional(),
     status: z.boolean().optional(),
     hire_date: z.string().optional(),
+    registration_date: z.string().optional(),
     facebook_link: z.string().optional(),
     twitter_link: z.string().optional(),
     linkedin_link: z.string().optional(),
@@ -213,7 +214,7 @@ const updateSchema = z.object({
   firstname: z.string().min(1).optional(),
   lastname: z.string().min(1).optional(),
   email: z.string().email().optional(),
-  phone: z.string().min(1).optional(),
+  phone: z.string().min(1, { message: 'Phone is required' }).optional(),
   mobile: z.string().optional(),
   password: z.string().min(6).optional(),
   city: z.string().optional(),
@@ -264,6 +265,7 @@ export const createStaffSchema = z
 
     region: z.string().optional(),
     startDate: z.string().datetime({ message: 'Invalid ISO date format for startDate' }).optional(),
+    registration_date: z.string().datetime({ message: 'Invalid ISO date format for registration_date' }).optional(),
 
     country: z.string().optional(),
     address: z.string().optional(),
@@ -315,6 +317,11 @@ export const updateStaffSchema = z.object({
       if (typeof arg == 'string' || arg instanceof Date) return new Date(arg);
     }, z.date())
     .optional(),
+  registration_date: z
+    .preprocess((arg) => {
+      if (typeof arg == 'string' || arg instanceof Date) return new Date(arg);
+    }, z.date())
+    .optional(),
   facebook_link: z.string().url().optional().or(z.literal('')),
   twitter_link: z.string().url().optional().or(z.literal('')),
   linkedin_link: z.string().url().optional().or(z.literal('')),
@@ -333,30 +340,40 @@ export const makePrimaryContactSchema = z.object({
   customer_id: z.string(),
 });
 
+const internalCustomerPayloadSchema = z
+  .object({
+    name: z.string().min(1, 'Customer name is required'),
+    slug: z.string().min(1, 'Customer slug is required'),
+    customer_type: z.nativeEnum(CustomerType),
+    nickname: z.string().optional(),
+    afm: z.string().optional(),
+    scap_id: z.string().optional(),
+    is_main_customer: z.boolean().optional(),
+    is_primary: z.boolean().optional(),
+    email: z.string().email('Invalid email format').optional(),
+    customer_email: z.string().email('Invalid customer email format').optional(),
+    manager_name: z.string().optional(),
+    phone: z.string().optional(),
+    address: z.string().optional(),
+    city: z.string().optional(),
+    zipcode: z.string().optional(),
+    country: z.string().optional(),
+    facebook: z.string().optional(),
+    instagram: z.string().optional(),
+    twitter: z.string().optional(),
+    youtube: z.string().optional(),
+    website: z.string().optional(),
+    description: z.string().optional(),
+    note: z.string().optional(),
+    vat: z.string().optional(),
+    erp_code: z.string().optional(),
+  })
+  .passthrough();
+
 export const internalCreateSchoolSchema = z
   .object({
-    main_customer: z.object({
-      name: z.string().min(1, 'Main customer name is required'),
-      slug: z.string().min(1, 'Main customer slug is required'),
-      customer_type: z.nativeEnum(CustomerType),
-      nickname: z.string().optional(),
-      afm: z.string().optional(),
-      scap_id: z.string().optional(),
-      is_main_customer: z.boolean().optional(),
-      email: z.string().email().optional(),
-    }),
-    branch_customer: z.object({
-      name: z.string().min(1, 'Branch customer name is required'),
-      slug: z.string().min(1, 'Branch customer slug is required'),
-      customer_type: z.nativeEnum(CustomerType),
-      nickname: z.string().optional(),
-      afm: z.string().optional(),
-      email: z.string().email('Invalid email format for branch').optional(),
-      address: z.string().optional(),
-      phone: z.string().optional(),
-      vat: z.string().optional(),
-      mapLocation: z.string().optional(),
-    }),
+    main_customer: internalCustomerPayloadSchema,
+    branch_customer: internalCustomerPayloadSchema.optional(),
     user: z.object({
       username: z.string().min(3, 'Username must be at least 3 characters'),
       firstname: z.string().min(1, 'First name is required'),
@@ -373,20 +390,23 @@ export const internalCreateSchoolSchema = z
 
 export const internalCreateBranchSchema = z
   .object({
-    branch_customer: z.object({
-      name: z.string().min(1, 'Branch customer name is required'),
-      slug: z.string().min(1, 'Branch customer slug is required'),
-      customer_type: z.nativeEnum(CustomerType),
-      nickname: z.string().optional(),
-      afm: z.string().optional(),
-      email: z.string().email('Invalid email format for branch').optional(),
-    }),
+    branch_customer: internalCustomerPayloadSchema,
     supercourse_sub_customer_id: z.string().min(1, 'Supercourse sub-customer ID is required'),
     parent_supercourse_customer_id: z.string().min(1, 'Parent supercourse customer ID is required'),
   })
   .openapi({
     title: 'InternalCreateBranch',
     description: 'Schema for internally creating a branch from supercourse sub-customer',
+  });
+
+export const internalSetPrimaryBranchSchema = z
+  .object({
+    supercourse_sub_customer_id: z.string().min(1, 'Supercourse sub-customer ID is required'),
+    parent_supercourse_customer_id: z.string().min(1, 'Parent supercourse customer ID is required'),
+  })
+  .openapi({
+    title: 'InternalSetPrimaryBranch',
+    description: 'Schema for setting a branch as primary in both main and tenant databases',
   });
 
 export { createSchema, updateSchema };

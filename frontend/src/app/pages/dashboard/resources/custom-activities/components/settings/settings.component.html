@@ -3,7 +3,7 @@
     *ngFor="let key of getOptionKeys(); let i = index"
     [(ngModel)]="options[key]"
     binary="true"
-    [label]="settings[i]"
+    [label]="'customActivities.settings.' + key | translate"
     (onChange)="onOptionChange()"
   >
   </p-checkbox>

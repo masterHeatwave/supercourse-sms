@@ -13,7 +13,7 @@ export interface ISession extends Document {
   start_date: Date;
   end_date: Date;
   taxi: ITaxi | string;
-  classroom: IClassroom | string;
+  classroom?: IClassroom | string; // Optional - can be used with any mode
   students: IUser[] | string[];
   teachers: IUser[] | string[];
   academic_period: IAcademicPeriod | string;
@@ -25,9 +25,8 @@ export interface ISession extends Document {
   invite_participants?: boolean;
   mode?: SessionMode;
   absences?: IAbsence[] | string[]; // Virtual field for absences
-  parent_id?: string; // For tracking recurring session instances
 
-  // Recurring session fields
+  // Recurring session fields - only present when is_recurring = true
   day?: DayOfWeek;
   start_time?: string; // Format: "HH:MM"
   duration?: number; // Duration in hours
@@ -46,7 +45,7 @@ export interface ISessionCreateDTO {
   start_date: Date;
   end_date: Date;
   taxi: string;
-  classroom: string;
+  classroom?: string; // Optional - can be used with any mode (online, hybrid, in_person)
   students?: string[];
   teachers?: string[];
   academic_period: string;
@@ -57,7 +56,6 @@ export interface ISessionCreateDTO {
   notes?: string;
   invite_participants?: boolean;
   mode?: SessionMode;
-  parent_id?: string;
 
   // Recurring session fields
   day?: DayOfWeek;
@@ -75,7 +73,6 @@ export interface ISessionInstance {
   start_date: Date;
   end_date: Date;
   instance_number: number;
-  parent_id?: string;
 }
 
 export interface IOverlapValidationResult {
@@ -112,7 +109,6 @@ export interface ISessionUpdateDTO {
   notes?: string;
   invite_participants?: boolean;
   mode?: SessionMode;
-  parent_id?: string;
 
   // Recurring session fields
   day?: DayOfWeek;

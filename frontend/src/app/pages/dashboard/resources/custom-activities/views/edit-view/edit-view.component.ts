@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 //import { ActivityDataService } from '../../services/';
 import { HeaderComponent } from '../../components/header/header.component';
@@ -11,6 +11,7 @@ import { ButtonModule } from 'primeng/button';
 import { ImageModule } from 'primeng/image';
 import { FormsModule } from '@angular/forms';
 import { CustomActivitiesService } from '@gen-api/custom-activities/custom-activities.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-edit-view',
@@ -41,20 +42,21 @@ export class EditViewComponent {
     template: '',
     cefr: '',
     tags: [],
+    plays: 0,
+    totalDuration: 0,
     settings: {},
     userId: '',
     questions: []
   };
 
-  message: string = 'Loading activity...';
+  message: string = this.translate.instant('customActivities.loading_activity');
 
   isLoading: boolean = false;
-  
-  customActivityService = inject(CustomActivitiesService);
 
   constructor(
     private route: ActivatedRoute,
-    // private customActivityService: CustomActivitiesService //private activityDataService: ActivityDataService
+    private customActivityService: CustomActivitiesService,
+    private translate: TranslateService //private activityDataService: ActivityDataService
   ) {}
 
   ngOnInit(): void {
@@ -64,9 +66,11 @@ export class EditViewComponent {
 
   fetchActivityData(): void {
     //console.log(this.id);
+    this.isLoading = true;
     this.customActivityService.getCustomActivitiesActivityId(this.id).subscribe({
       next: (response: any) => {
         //console.log('response.data', response.data);
+        this.isLoading = false;
         this.activityData = response.data;
         if (this.activityData.activityType === 'fillInTheGaps' || this.activityData.activityType === 'cloze') {
           this.activityData.questions.forEach((question: any) => {
@@ -77,7 +81,8 @@ export class EditViewComponent {
         //console.log(this.activityData);
       },
       error: (err) => {
-        this.message = 'There was an error loading the activity. Please try again.';
+        this.isLoading = false;
+        this.message = this.translate.instant('customActivities.error_loading_activity');
       }
     });
 

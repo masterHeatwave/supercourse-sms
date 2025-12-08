@@ -2,6 +2,14 @@ import {
   createAssignmentForStaffSchema,
   updateAssignmentForStaffSchema,
   AssignmentForStaffSchema,
+  getAssignmentByIDQuerySchema,
+  updateAssignmentQuerySchema,
+  draftAssignmentQuerySchema,
+  undraftAssignmentQuerySchema,
+  deleteAssignmentForMeQuerySchema,
+  restoreAssignmentForMeQuerySchema,
+  deleteAssignmentForEveryoneQuerySchema,
+  restoreAssignmentForEveryoneQuerySchema,
 } from './assignment-staff-validate.schema';
 import { ParameterObject } from 'openapi3-ts/oas31';
 import { z } from 'zod';
@@ -65,7 +73,7 @@ export const assignmentStaffOpenApi = {
             name: 'staffID',
             in: 'query',
             schema: { type: 'string' },
-            description: 'Filter by staff member ID',
+            description: 'Filter by staff member ID (🙋🏻‍♂️ required if "staffRole" is "teacher")',
           } as ParameterObject,
           {
             name: 'classID',
@@ -84,6 +92,7 @@ export const assignmentStaffOpenApi = {
             in: 'query',
             schema: { type: 'string' },
             description: 'Filter by academic year ID',
+            required: true,
           } as ParameterObject,
           {
             name: 'academicPeriodID',
@@ -180,7 +189,8 @@ export const assignmentStaffOpenApi = {
       get: {
         tags: ['Assignments (for Staff)'],
         summary: 'Get assignment by ID',
-        description: 'Retrieve details of a specific assignment by its ID.',
+        description:
+          'Retrieve details of a specific assignment by its ID. Requires authorization parameters to ensure proper access control.',
         security: [{ AuthHeader: [], CustomerSlug: [] }],
         parameters: [
           {
@@ -189,6 +199,30 @@ export const assignmentStaffOpenApi = {
             required: true,
             schema: { type: 'string' },
             description: 'Assignment ID',
+          } as ParameterObject,
+          {
+            name: 'staffID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff member ID for authorization',
+          } as ParameterObject,
+          {
+            name: 'staffRole',
+            in: 'query',
+            required: true,
+            schema: {
+              type: 'string',
+              enum: ['admin', 'manager', 'teacher'],
+            },
+            description: 'Staff role for authorization (admin, manager, or teacher)',
+          } as ParameterObject,
+          {
+            name: 'branchID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Branch ID for authorization',
           } as ParameterObject,
         ],
         responses: {
@@ -200,8 +234,24 @@ export const assignmentStaffOpenApi = {
               },
             },
           },
+          '400': {
+            description: 'Bad Request - Missing required authorization parameters',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
           '401': {
             description: 'Unauthorized',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+          '403': {
+            description: 'Forbidden - User does not have permission to access this assignment',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/Error' },
@@ -221,7 +271,7 @@ export const assignmentStaffOpenApi = {
       put: {
         tags: ['Assignments (for Staff)'],
         summary: 'Update assignment by ID',
-        description: 'Update details of a specific assignment by its ID.',
+        description: 'Update details of a specific assignment by its ID. Requires authorization parameters.',
         security: [{ AuthHeader: [], CustomerSlug: [] }],
         parameters: [
           {
@@ -230,6 +280,30 @@ export const assignmentStaffOpenApi = {
             required: true,
             schema: { type: 'string' },
             description: 'Assignment ID',
+          } as ParameterObject,
+          {
+            name: 'staffID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff member ID for authorization',
+          } as ParameterObject,
+          {
+            name: 'staffRole',
+            in: 'query',
+            required: true,
+            schema: {
+              type: 'string',
+              enum: ['admin', 'manager', 'teacher'],
+            },
+            description: 'Staff role for authorization (admin, manager, or teacher)',
+          } as ParameterObject,
+          {
+            name: 'branchID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Branch ID for authorization',
           } as ParameterObject,
         ],
         requestBody: {
@@ -249,7 +323,7 @@ export const assignmentStaffOpenApi = {
             },
           },
           '400': {
-            description: 'Invalid input - validation error',
+            description: 'Bad Request - Missing required authorization parameters or validation error',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/Error' },
@@ -264,8 +338,24 @@ export const assignmentStaffOpenApi = {
               },
             },
           },
+          '403': {
+            description: 'Forbidden - User does not have permission to update this assignment',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
           '404': {
             description: 'Assignment not found',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+          '500': {
+            description: 'Internal Server Error - Failed to update assignment',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/Error' },
@@ -279,8 +369,8 @@ export const assignmentStaffOpenApi = {
     '/assignments/staff/draft/{id}': {
       patch: {
         tags: ['Assignments (for Staff)'],
-        summary: 'Toggle draft status to drafted.',
-        description: 'Toggle the draft status of a assignment to drafted.',
+        summary: 'Draft assignment',
+        description: 'Mark an assignment as drafted. Requires authorization parameters.',
         security: [{ AuthHeader: [], CustomerSlug: [] }],
         parameters: [
           {
@@ -290,13 +380,45 @@ export const assignmentStaffOpenApi = {
             schema: { type: 'string' },
             description: 'Assignment ID',
           } as ParameterObject,
+          {
+            name: 'staffID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff member ID for authorization',
+          } as ParameterObject,
+          {
+            name: 'staffRole',
+            in: 'query',
+            required: true,
+            schema: {
+              type: 'string',
+              enum: ['admin', 'manager', 'teacher'],
+            },
+            description: 'Staff role for authorization (admin, manager, or teacher)',
+          } as ParameterObject,
+          {
+            name: 'branchID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Branch ID for authorization',
+          } as ParameterObject,
         ],
         responses: {
           '200': {
-            description: 'Draft status updated successfully',
+            description: 'Assignment drafted successfully',
             content: {
               'application/json': {
                 schema: assignmentForStaffResponseSchema,
+              },
+            },
+          },
+          '400': {
+            description: 'Bad Request - Missing required parameters',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
               },
             },
           },
@@ -308,8 +430,24 @@ export const assignmentStaffOpenApi = {
               },
             },
           },
+          '403': {
+            description: 'Forbidden - User does not have permission to draft this assignment',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
           '404': {
             description: 'Assignment not found',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+          '500': {
+            description: 'Internal Server Error - Failed to draft assignment',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/Error' },
@@ -323,8 +461,8 @@ export const assignmentStaffOpenApi = {
     '/assignments/staff/undraft/{id}': {
       patch: {
         tags: ['Assignments (for Staff)'],
-        summary: 'Toggle draft status to undrafted.',
-        description: 'Toggle the draft status of a assignment to undrafted.',
+        summary: 'Undraft assignment',
+        description: 'Mark an assignment as undrafted (publish it). Requires authorization parameters.',
         security: [{ AuthHeader: [], CustomerSlug: [] }],
         parameters: [
           {
@@ -334,13 +472,45 @@ export const assignmentStaffOpenApi = {
             schema: { type: 'string' },
             description: 'Assignment ID',
           } as ParameterObject,
+          {
+            name: 'staffID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff member ID for authorization',
+          } as ParameterObject,
+          {
+            name: 'staffRole',
+            in: 'query',
+            required: true,
+            schema: {
+              type: 'string',
+              enum: ['admin', 'manager', 'teacher'],
+            },
+            description: 'Staff role for authorization (admin, manager, or teacher)',
+          } as ParameterObject,
+          {
+            name: 'branchID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Branch ID for authorization',
+          } as ParameterObject,
         ],
         responses: {
           '200': {
-            description: 'Draft status updated successfully',
+            description: 'Assignment undrafted successfully',
             content: {
               'application/json': {
                 schema: assignmentForStaffResponseSchema,
+              },
+            },
+          },
+          '400': {
+            description: 'Bad Request - Missing required parameters',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
               },
             },
           },
@@ -352,8 +522,24 @@ export const assignmentStaffOpenApi = {
               },
             },
           },
+          '403': {
+            description: 'Forbidden - User does not have permission to undraft this assignment',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
           '404': {
             description: 'Assignment not found',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+          '500': {
+            description: 'Internal Server Error - Failed to undraft assignment',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/Error' },
@@ -367,8 +553,9 @@ export const assignmentStaffOpenApi = {
     '/assignments/staff/delete-for-me/{id}': {
       patch: {
         tags: ['Assignments (for Staff)'],
-        summary: 'Delete assignment for me.',
-        description: 'Mark assignment as deleted for the current user (soft delete for me).',
+        summary: 'Delete assignment temporarily for me',
+        description:
+          'Mark assignment as deleted for the current user (soft delete for me). Requires authorization parameters.',
         security: [{ AuthHeader: [], CustomerSlug: [] }],
         parameters: [
           {
@@ -378,13 +565,45 @@ export const assignmentStaffOpenApi = {
             schema: { type: 'string' },
             description: 'Assignment ID',
           } as ParameterObject,
+          {
+            name: 'staffID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff member ID for authorization',
+          } as ParameterObject,
+          {
+            name: 'staffRole',
+            in: 'query',
+            required: true,
+            schema: {
+              type: 'string',
+              enum: ['admin', 'manager', 'teacher'],
+            },
+            description: 'Staff role for authorization (admin, manager, or teacher)',
+          } as ParameterObject,
+          {
+            name: 'branchID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Branch ID for authorization',
+          } as ParameterObject,
         ],
         responses: {
           '200': {
-            description: 'Assignment deleted for me successfully',
+            description: 'Assignment temporarily deleted for me successfully',
             content: {
               'application/json': {
-                schema: messageResponseSchema,
+                schema: assignmentForStaffResponseSchema,
+              },
+            },
+          },
+          '400': {
+            description: 'Bad Request - Missing required parameters',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
               },
             },
           },
@@ -396,8 +615,24 @@ export const assignmentStaffOpenApi = {
               },
             },
           },
+          '403': {
+            description: 'Forbidden - User does not have permission to delete this assignment',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
           '404': {
             description: 'Assignment not found',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+          '500': {
+            description: 'Internal Server Error - Failed to delete assignment',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/Error' },
@@ -408,8 +643,8 @@ export const assignmentStaffOpenApi = {
       },
       delete: {
         tags: ['Assignments (for Staff)'],
-        summary: 'Delete assignment permanently for me.',
-        description: 'Permanently delete assignment for the current user.',
+        summary: 'Delete assignment permanently for me',
+        description: 'Permanently delete assignment for the current user. Requires authorization parameters.',
         security: [{ AuthHeader: [], CustomerSlug: [] }],
         parameters: [
           {
@@ -419,10 +654,34 @@ export const assignmentStaffOpenApi = {
             schema: { type: 'string' },
             description: 'Assignment ID',
           } as ParameterObject,
+          {
+            name: 'staffID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff member ID for authorization',
+          } as ParameterObject,
+          {
+            name: 'staffRole',
+            in: 'query',
+            required: true,
+            schema: {
+              type: 'string',
+              enum: ['admin', 'manager', 'teacher'],
+            },
+            description: 'Staff role for authorization (admin, manager, or teacher)',
+          } as ParameterObject,
+          {
+            name: 'branchID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Branch ID for authorization',
+          } as ParameterObject,
         ],
         responses: {
           '200': {
-            description: 'Assignment deleted permanently successfully',
+            description: 'Assignment permanently deleted for me successfully',
             content: {
               'application/json': {
                 schema: assignmentForStaffResponseSchema,
@@ -430,7 +689,7 @@ export const assignmentStaffOpenApi = {
             },
           },
           '400': {
-            description: 'Invalid input - validation error',
+            description: 'Bad Request - Missing required parameters',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/Error' },
@@ -445,8 +704,24 @@ export const assignmentStaffOpenApi = {
               },
             },
           },
+          '403': {
+            description: 'Forbidden - User does not have permission to delete this assignment',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
           '404': {
             description: 'Assignment not found',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+          '500': {
+            description: 'Internal Server Error - Failed to permanently delete assignment',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/Error' },
@@ -460,8 +735,8 @@ export const assignmentStaffOpenApi = {
     '/assignments/staff/restore-for-me/{id}': {
       patch: {
         tags: ['Assignments (for Staff)'],
-        summary: 'Restore assignment for me.',
-        description: 'Restore a previously deleted assignment for the current user.',
+        summary: 'Restore assignment for me',
+        description: 'Restore a previously deleted assignment for the current user. Requires authorization parameters.',
         security: [{ AuthHeader: [], CustomerSlug: [] }],
         parameters: [
           {
@@ -471,13 +746,45 @@ export const assignmentStaffOpenApi = {
             schema: { type: 'string' },
             description: 'Assignment ID',
           } as ParameterObject,
+          {
+            name: 'staffID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff member ID for authorization',
+          } as ParameterObject,
+          {
+            name: 'staffRole',
+            in: 'query',
+            required: true,
+            schema: {
+              type: 'string',
+              enum: ['admin', 'manager', 'teacher'],
+            },
+            description: 'Staff role for authorization (admin, manager, or teacher)',
+          } as ParameterObject,
+          {
+            name: 'branchID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Branch ID for authorization',
+          } as ParameterObject,
         ],
         responses: {
           '200': {
-            description: 'Assignment restored successfully for the user',
+            description: 'Assignment restored successfully for me',
             content: {
               'application/json': {
                 schema: assignmentForStaffResponseSchema,
+              },
+            },
+          },
+          '400': {
+            description: 'Bad Request - Missing required parameters',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
               },
             },
           },
@@ -489,8 +796,24 @@ export const assignmentStaffOpenApi = {
               },
             },
           },
+          '403': {
+            description: 'Forbidden - User does not have permission to restore this assignment',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
           '404': {
             description: 'Assignment not found',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+          '500': {
+            description: 'Internal Server Error - Failed to restore assignment',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/Error' },
@@ -504,8 +827,9 @@ export const assignmentStaffOpenApi = {
     '/assignments/staff/delete-for-everyone/{id}': {
       patch: {
         tags: ['Assignments (for Staff)'],
-        summary: 'Delete assignment for everyone.',
-        description: 'Mark assignment as deleted for all users (soft delete for everyone).',
+        summary: 'Delete assignment temporarily for everyone',
+        description:
+          'Mark assignment as deleted for all users (soft delete for everyone). Requires authorization parameters.',
         security: [{ AuthHeader: [], CustomerSlug: [] }],
         parameters: [
           {
@@ -515,13 +839,45 @@ export const assignmentStaffOpenApi = {
             schema: { type: 'string' },
             description: 'Assignment ID',
           } as ParameterObject,
+          {
+            name: 'staffID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff member ID for authorization',
+          } as ParameterObject,
+          {
+            name: 'staffRole',
+            in: 'query',
+            required: true,
+            schema: {
+              type: 'string',
+              enum: ['admin', 'manager', 'teacher'],
+            },
+            description: 'Staff role for authorization (admin, manager, or teacher)',
+          } as ParameterObject,
+          {
+            name: 'branchID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Branch ID for authorization',
+          } as ParameterObject,
         ],
         responses: {
           '200': {
-            description: 'Assignment deleted for everyone successfully',
+            description: 'Assignment temporarily deleted for everyone successfully',
             content: {
               'application/json': {
-                schema: messageResponseSchema,
+                schema: assignmentForStaffResponseSchema,
+              },
+            },
+          },
+          '400': {
+            description: 'Bad Request - Missing required parameters',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
               },
             },
           },
@@ -533,8 +889,24 @@ export const assignmentStaffOpenApi = {
               },
             },
           },
+          '403': {
+            description: 'Forbidden - User does not have permission to delete this assignment',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
           '404': {
             description: 'Assignment not found',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+          '500': {
+            description: 'Internal Server Error - Failed to delete assignment',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/Error' },
@@ -545,8 +917,9 @@ export const assignmentStaffOpenApi = {
       },
       delete: {
         tags: ['Assignments (for Staff)'],
-        summary: 'Delete assignment permanently for everyone.',
-        description: 'Permanently delete assignment for all users.',
+        summary: 'Delete assignment permanently for everyone',
+        description:
+          'Permanently delete assignment for all users. This also deletes all related student assignments. Requires authorization parameters.',
         security: [{ AuthHeader: [], CustomerSlug: [] }],
         parameters: [
           {
@@ -556,10 +929,34 @@ export const assignmentStaffOpenApi = {
             schema: { type: 'string' },
             description: 'Assignment ID',
           } as ParameterObject,
+          {
+            name: 'staffID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff member ID for authorization',
+          } as ParameterObject,
+          {
+            name: 'staffRole',
+            in: 'query',
+            required: true,
+            schema: {
+              type: 'string',
+              enum: ['admin', 'manager', 'teacher'],
+            },
+            description: 'Staff role for authorization (admin, manager, or teacher)',
+          } as ParameterObject,
+          {
+            name: 'branchID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Branch ID for authorization',
+          } as ParameterObject,
         ],
         responses: {
           '200': {
-            description: 'Assignment deleted permanently for everyone successfully',
+            description: 'Assignment permanently deleted for everyone successfully',
             content: {
               'application/json': {
                 schema: assignmentForStaffResponseSchema,
@@ -567,7 +964,7 @@ export const assignmentStaffOpenApi = {
             },
           },
           '400': {
-            description: 'Invalid input - validation error',
+            description: 'Bad Request - Missing required parameters',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/Error' },
@@ -582,8 +979,24 @@ export const assignmentStaffOpenApi = {
               },
             },
           },
+          '403': {
+            description: 'Forbidden - User does not have permission to delete this assignment',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
           '404': {
             description: 'Assignment not found',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+          '500': {
+            description: 'Internal Server Error - Failed to permanently delete assignment',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/Error' },
@@ -597,8 +1010,9 @@ export const assignmentStaffOpenApi = {
     '/assignments/staff/restore-for-everyone/{id}': {
       patch: {
         tags: ['Assignments (for Staff)'],
-        summary: 'Restore assignment for everyone.',
-        description: 'Restore a previously deleted assignment for all users.',
+        summary: 'Restore assignment for everyone',
+        description:
+          'Restore a previously deleted assignment for all users. This also restores all related student assignments. Requires authorization parameters.',
         security: [{ AuthHeader: [], CustomerSlug: [] }],
         parameters: [
           {
@@ -607,6 +1021,30 @@ export const assignmentStaffOpenApi = {
             required: true,
             schema: { type: 'string' },
             description: 'Assignment ID',
+          } as ParameterObject,
+          {
+            name: 'staffID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff member ID for authorization',
+          } as ParameterObject,
+          {
+            name: 'staffRole',
+            in: 'query',
+            required: true,
+            schema: {
+              type: 'string',
+              enum: ['admin', 'manager', 'teacher'],
+            },
+            description: 'Staff role for authorization (admin, manager, or teacher)',
+          } as ParameterObject,
+          {
+            name: 'branchID',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Branch ID for authorization',
           } as ParameterObject,
         ],
         responses: {
@@ -618,6 +1056,14 @@ export const assignmentStaffOpenApi = {
               },
             },
           },
+          '400': {
+            description: 'Bad Request - Missing required parameters',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
           '401': {
             description: 'Unauthorized',
             content: {
@@ -626,8 +1072,24 @@ export const assignmentStaffOpenApi = {
               },
             },
           },
+          '403': {
+            description: 'Forbidden - User does not have permission to restore this assignment',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
           '404': {
             description: 'Assignment not found',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+          '500': {
+            description: 'Internal Server Error - Failed to restore assignment',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/Error' },

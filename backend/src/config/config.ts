@@ -29,6 +29,7 @@ const envSchema = z.object({
   ADMIN_HOST: z.string().url().default('http://localhost:3193'),
   API_HOST: z.string().url().default('http://localhost:3193'),
   SUPERCOURSE_API_URL: z.string().url().default('http://localhost:3000'),
+  SCAP_API_KEY: z.string().min(1),
 });
 
 const validateEnv = () => {
@@ -54,6 +55,7 @@ export const config: ENV = {
   OS_JWT_SUB: validatedEnv.OS_JWT_SUB,
   OS_JWT_EXPIRE_AT: validatedEnv.OS_JWT_EXPIRE_AT,
   API_KEY: validatedEnv.API_KEY,
+  SCAP_API_KEY: validatedEnv.SCAP_API_KEY,
   REDIS: {
     HOST: validatedEnv.REDIS_HOST,
     PORT: validatedEnv.REDIS_PORT,

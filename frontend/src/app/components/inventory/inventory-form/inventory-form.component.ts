@@ -15,11 +15,10 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { UsersService } from '@gen-api/users/users.service';
 import { CustomersService } from '@gen-api/customers/customers.service';
 import { InventoryService } from '@gen-api/inventory/inventory.service';
-import type { GetUsersStudentsClientResult } from '@gen-api/users/users.service';
+import type { GetUsersStaffClientResult, GetUsersStudentsClientResult } from '@gen-api/users/users.service';
 import { PostInventoryBody, PutInventoryIdBody } from '@gen-api/schemas';
 import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
-import { switchMap, tap } from 'rxjs/operators';
 import { PrimaryDropdownComponent } from '@components/inputs/primary-dropdown/primary-dropdown.component';
 import { PrimaryTextareaComponent } from '@components/inputs/primary-textarea/primary-textarea.component';
 import { PrimaryCalendarComponent } from '@components/inputs/primary-calendar/primary-calendar.component';
@@ -90,10 +89,10 @@ export class InventoryFormComponent implements OnInit {
     notes: ''
   };
 
-  // Validation configuration
+  // Validation configuration - will be set dynamically based on context
   private validationConfig: ValidationConfig = {
     fieldLabels: {
-      user: 'Billing Person',
+      user: 'Asset Holder',
       title: 'Asset/Book Title',
       billing_date: 'Billing Date',
       return_date: 'Return Date',
@@ -101,6 +100,7 @@ export class InventoryFormComponent implements OnInit {
     }
   };
   submissionGuard = this.validationService.createSubmissionGuard();
+  private readonly allowedBillingPersonTypes = new Set(['teacher', 'manager']);
 
   get titleLabel() {
     return this.context === 'elibrary'
@@ -129,15 +129,35 @@ export class InventoryFormComponent implements OnInit {
         return null; // Let individual field validators handle invalid dates
       }
 
-      // Check if billing date is before return date
-      if (billing >= returnD) {
+      // Normalize dates to compare only date part (ignore time)
+      const billingNormalized = new Date(billing.getFullYear(), billing.getMonth(), billing.getDate());
+      const returnNormalized = new Date(returnD.getFullYear(), returnD.getMonth(), returnD.getDate());
+
+      // Check if billing date is before or equal to return date (return date must be AFTER billing date)
+      if (billingNormalized >= returnNormalized) {
+        // Set errors on individual controls for better UX
+        const returnControl = control.get('return_date');
+        if (returnControl) {
+          returnControl.setErrors({ 
+            ...(returnControl.errors || {}), 
+            dateRange: { message: 'Return date must be after billing date' }
+          });
+        }
         return { 
           dateRange: { 
-            message: 'Billing date must be before return date',
+            message: 'Return date must be after billing date',
             billingDate: billingDate,
             returnDate: returnDate
           } 
         };
+      }
+
+      // Clear dateRange error from return_date control if validation passes
+      const returnControl = control.get('return_date');
+      if (returnControl?.errors?.['dateRange']) {
+        const errors = { ...returnControl.errors };
+        delete errors['dateRange'];
+        returnControl.setErrors(Object.keys(errors).length > 0 ? errors : null);
       }
 
       return null;
@@ -145,6 +165,15 @@ export class InventoryFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Set context in the service
+    this.detailsFieldsService.setContext(this.context);
+    
+    // Update validation config based on context
+    this.validationConfig.fieldLabels['user'] = this.context === 'elibrary' ? 'Borrower' : 'Asset Holder';
+    this.validationConfig.fieldLabels['title'] = this.context === 'elibrary' 
+      ? this.translate.instant('inventory.fields.bookTitle') || 'Book Title'
+      : this.translate.instant('inventory.fields.assetTitle') || 'Asset Title';
+
     this.form = this.fb.group({
       user: ['', Validators.required],
       title: ['', [Validators.required, Validators.maxLength(200)]],
@@ -187,6 +216,8 @@ export class InventoryFormComponent implements OnInit {
       if (billingDate) {
         // Update return date minimum date to be after billing date
         this.updateReturnDateMinDate(billingDate);
+        // Trigger form validation to check date range
+        this.form.updateValueAndValidity();
       }
     });
 
@@ -222,9 +253,31 @@ export class InventoryFormComponent implements OnInit {
     }
   }
 
+  /**
+   * Format date for API submission without timezone conversion
+   * This ensures the date is sent as the user selected it, not shifted by timezone
+   */
+  private formatDateForAPI(date: Date | string): string {
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      return '';
+    }
+    
+    // Get the date components in local timezone
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    
+    // Return as ISO date string (YYYY-MM-DD) without time component
+    return `${year}-${month}-${day}`;
+  }
+
   private loadData(): void {
-    // Load students and customer data
-    const students$ = this.usersService.getUsersStudents({ page: '1', limit: '100' });
+    // Load users based on context: ASSET = staff (teachers/managers), ELIBRARY = students
+    const users$ = this.context === 'elibrary'
+      ? this.usersService.getUsersStudents({ page: '1', limit: '100' })
+      : this.usersService.getUsersStaff({ page: '1', limit: '100' });
+    
     const customer$ = this.customersService.getCustomersMain();
     
     // Load inventory data if in edit mode
@@ -234,13 +287,17 @@ export class InventoryFormComponent implements OnInit {
 
     // Combine all data loading
     forkJoin({
-      students: students$,
+      users: users$,
       customer: customer$,
       inventory: inventory$
     }).subscribe({
-      next: ({ students, customer, inventory }) => {
-        // Process students data
-        this.processStudentsData(students);
+      next: ({ users, customer, inventory }) => {
+        // Process users data based on context
+        if (this.context === 'elibrary') {
+          this.processStudentsData(users);
+        } else {
+          this.processStaffData(users);
+        }
         
         // Process customer data
         this.processCustomerData(customer);
@@ -259,26 +316,60 @@ export class InventoryFormComponent implements OnInit {
     });
   }
 
+  private processStaffData(resp: any): void {
+    const page: GetUsersStaffClientResult = resp;
+    const items = (page?.data?.results || []) as any[];
+    const eligibleItems = items.filter((s: any) => this.isEligibleBillingPerson(s));
+
+    this.students = eligibleItems
+      .map((s: any) => this.mapUserToOption(s))
+      .filter((o) => !!o.value);
+
+    // Ensure currently selected user (e.g., when editing) is available even if not eligible
+    const currentUserId = this.model?.user;
+    if (currentUserId && !this.students.some((option) => option.value === currentUserId)) {
+      const currentUser = items.find((s: any) => s?.id === currentUserId);
+      if (currentUser) {
+        this.students.unshift(this.mapUserToOption(currentUser));
+      }
+    }
+    
+    // Update the field service with the loaded options
+    this.detailsFieldsService.setStudentsOptions(this.students);
+    this.detailsFields = this.detailsFieldsService.getFields();
+  }
+
   private processStudentsData(resp: any): void {
     const page: GetUsersStudentsClientResult = resp;
     const items = (page?.data?.results || []) as any[];
+    
+    // For ELIBRARY, all students are eligible (no filtering needed)
     this.students = items
-      .map((s: any) => ({
-        label:
-          s?.name ||
-          s?.full_name ||
-          (s?.first_name && s?.last_name ? `${s.first_name} ${s.last_name}` : undefined) ||
-          (s?.firstname && s?.lastname ? `${s.firstname} ${s.lastname}` : undefined) ||
-          s?.username ||
-          s?.code ||
-          s?.id,
-        value: s?.id
-      }))
+      .map((s: any) => this.mapUserToOption(s))
       .filter((o) => !!o.value);
     
     // Update the field service with the loaded options
     this.detailsFieldsService.setStudentsOptions(this.students);
     this.detailsFields = this.detailsFieldsService.getFields();
+  }
+
+  private isEligibleBillingPerson(user: any): boolean {
+    const userType = (user?.user_type || user?.role || '').toString().toLowerCase();
+    return this.allowedBillingPersonTypes.has(userType);
+  }
+
+  private mapUserToOption(user: any) {
+    return {
+      label:
+        user?.name ||
+        user?.full_name ||
+        (user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : undefined) ||
+        (user?.firstname && user?.lastname ? `${user.firstname} ${user.lastname}` : undefined) ||
+        user?.username ||
+        user?.code ||
+        user?.id,
+      value: user?.id
+    };
   }
 
   private processCustomerData(resp: any): void {
@@ -327,20 +418,46 @@ export class InventoryFormComponent implements OnInit {
       return;
     }
 
+    // Trigger validation to ensure dateRange validator runs
+    this.form.updateValueAndValidity();
+
+    const missingDateLabels = this.getMissingRequiredDateLabels();
+
+    // Check for date range validation error first (before checking form.invalid)
+    const hasDateRangeError = this.form.errors?.['dateRange'] || 
+                              this.form.get('return_date')?.errors?.['dateRange'] ||
+                              this.hasInvalidDateRange();
+
+    if (hasDateRangeError) {
+      this.form.markAllAsTouched();
+      this.form.get('billing_date')?.markAsTouched();
+      this.form.get('return_date')?.markAsTouched();
+      this.messageService.add({
+        severity: 'error',
+        summary: this.translate.instant('api_messages.error_title'),
+        detail: this.translate.instant('inventory.errors.date_range_invalid') || 'Return date must be after billing date'
+      });
+      this.submissionGuard.endSubmission();
+      return;
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      
-      // Check for date range validation error
-      if (this.form.errors?.['dateRange']) {
-        this.messageService.add({
-          severity: 'error',
-          summary: this.translate.instant('api_messages.error_title'),
-          detail: this.translate.instant('inventory.errors.date_range_invalid') || 'Billing date must be before return date'
-        });
-      } else {
-        this.validationService.showValidationErrors(this.form, this.validationConfig);
-      }
-      
+      this.validationService.showValidationErrors(
+        this.form,
+        this.validationConfig,
+        missingDateLabels
+      );
+      this.submissionGuard.endSubmission();
+      return;
+    }
+
+    if (missingDateLabels.length > 0) {
+      this.validationService.showValidationErrors(
+        this.form,
+        this.validationConfig,
+        missingDateLabels
+      );
       this.submissionGuard.endSubmission();
       return;
     }
@@ -348,8 +465,8 @@ export class InventoryFormComponent implements OnInit {
     const basePayload = {
       user: this.form.value.user,
       title: this.form.value.title,
-      billing_date: this.form.value.billing_date ? new Date(this.form.value.billing_date).toISOString() : undefined,
-      return_date: this.form.value.return_date ? new Date(this.form.value.return_date).toISOString() : undefined,
+      billing_date: this.form.value.billing_date ? this.formatDateForAPI(this.form.value.billing_date) : undefined,
+      return_date: this.form.value.return_date ? this.formatDateForAPI(this.form.value.return_date) : undefined,
       notes: this.form.value.notes || undefined,
       customer: this.customerId,
       item_type: this.context.toUpperCase() as 'ASSET' | 'ELIBRARY'
@@ -398,4 +515,42 @@ export class InventoryFormComponent implements OnInit {
   onCancel() {
     this.router.navigate(this.returnTo);
   }
+
+  private getMissingRequiredDateLabels(): string[] {
+    const requiredDateFields: Array<'billing_date' | 'return_date'> = ['billing_date', 'return_date'];
+    return requiredDateFields
+      .filter((field) => {
+        const control = this.form.get(field);
+        return !control || control.invalid || !control.value;
+      })
+      .map((field) => this.getFieldLabel(field));
+  }
+
+  private getFieldLabel(field: string): string {
+    return this.validationConfig.fieldLabels[field] || field.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  private hasInvalidDateRange(): boolean {
+    const billingDateValue = this.form.get('billing_date')?.value;
+    const returnDateValue = this.form.get('return_date')?.value;
+
+    if (!billingDateValue || !returnDateValue) {
+      return false;
+    }
+
+    const billingDate = new Date(billingDateValue);
+    const returnDate = new Date(returnDateValue);
+
+    if (isNaN(billingDate.getTime()) || isNaN(returnDate.getTime())) {
+      return false;
+    }
+
+    // Normalize dates to compare only date part (ignore time)
+    const billingNormalized = new Date(billingDate.getFullYear(), billingDate.getMonth(), billingDate.getDate());
+    const returnNormalized = new Date(returnDate.getFullYear(), returnDate.getMonth(), returnDate.getDate());
+
+    // Return date must be AFTER billing date (not equal or before)
+    return billingNormalized >= returnNormalized;
+  }
+
 }

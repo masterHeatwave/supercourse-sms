@@ -16,6 +16,7 @@ export const initialState: IAuthState = {
   currentRoleId: null,
   currentRoleTitle: null,
   isRefreshingToken: false,
+  hasShownSessionExpiredMessage: false,
   impersonation: {
     active: false,
     original: null
@@ -49,6 +50,15 @@ export const authReducer = createReducer(
     const initialRoleId = initialRole ? String(initialRole.id) : null;
     const initialRoleTitle = initialRole ? String(initialRole.title) : null;
     
+    // Debug logging
+    console.log('🔐 Login Success - User Roles:', {
+      userRoleTitle: user?.role_title,
+      rolesArray: rolesArr,
+      initialRole,
+      initialRoleId,
+      initialRoleTitle
+    });
+    
     return {
       ...state,
       user: user || null,
@@ -61,7 +71,8 @@ export const authReducer = createReducer(
       currentCustomerId: null,
       parentCurrentCustomerId,
       currentRoleId: initialRoleId,
-      currentRoleTitle: initialRoleTitle
+      currentRoleTitle: initialRoleTitle,
+      hasShownSessionExpiredMessage: false
     };
   }),
   on(AuthActions.loginFailure, (state, { error }) => ({
@@ -83,17 +94,35 @@ export const authReducer = createReducer(
     error: null,
     isRefreshingToken: true
   })),
-  on(AuthActions.refreshSuccess, (state, { token, refreshToken, user }) => ({
-    ...state,
-    token,
-    refreshToken,
-    user: user || state.user,
-    isAuthenticated: true,
-    loading: false,
-    success: true,
-    error: null,
-    isRefreshingToken: false
-  })),
+  on(AuthActions.refreshSuccess, (state, { token, refreshToken, user }) => {
+    // If user data is provided in refresh, update role information
+    let updatedRoleId = state.currentRoleId;
+    let updatedRoleTitle = state.currentRoleTitle;
+    
+    if (user) {
+      const rolesArr: any[] = Array.isArray(user?.roles) ? (user!.roles as any[]) : [];
+      const roleFromTitle = user?.role_title
+        ? rolesArr.find((r: any) => r?.title === user!.role_title)
+        : undefined;
+      const initialRole = roleFromTitle || rolesArr[0] || null;
+      updatedRoleId = initialRole ? String(initialRole.id) : state.currentRoleId;
+      updatedRoleTitle = initialRole ? String(initialRole.title) : state.currentRoleTitle;
+    }
+    
+    return {
+      ...state,
+      token,
+      refreshToken,
+      user: user || state.user,
+      isAuthenticated: true,
+      loading: false,
+      success: true,
+      error: null,
+      isRefreshingToken: false,
+      currentRoleId: updatedRoleId,
+      currentRoleTitle: updatedRoleTitle
+    };
+  }),
   on(AuthActions.refreshFailure, (state, { error }) => ({
     ...state,
     error,
@@ -170,5 +199,9 @@ export const authReducer = createReducer(
     currentRoleTitle: state.impersonation?.original?.currentRoleTitle ?? state.currentRoleTitle,
     customerContext: state.impersonation?.original?.customerContext ?? state.customerContext,
     impersonation: { active: false, original: null },
+  })),
+  on(AuthActions.setSessionExpiredMessageShown, (state, { shown }) => ({
+    ...state,
+    hasShownSessionExpiredMessage: shown
   }))
 );

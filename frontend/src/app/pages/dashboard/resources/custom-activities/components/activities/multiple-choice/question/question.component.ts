@@ -10,7 +10,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ImageSelectorComponent } from '../../../image-selector/image-selector.component';
 import { LoadingComponent } from '../../../loading/loading.component';
-import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'multiple-choice-question',
@@ -20,6 +21,7 @@ import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-
     ImageSelectorComponent,
     LoadingComponent,
     WarningDialogComponent,
+    TranslateModule
   ],
   templateUrl: './question.component.html',
   styleUrl: './question.component.scss',

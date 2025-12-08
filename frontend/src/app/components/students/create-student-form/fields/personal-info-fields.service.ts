@@ -251,12 +251,12 @@ export class PersonalInfoFieldsService {
                     template: '<h3 class="text-primary font-bold text-2xl mb-2">Branch</h3>',
                   },
                   {
-                    fieldGroupClassName: 'grid',
+                    fieldGroupClassName: 'flex flex-row gap-3 align-items-start',
                     fieldGroup: [
                       {
                         key: 'branch',
                         type: 'primary-input',
-                        className: 'col-12 md:col-6 lg:col-4',
+                        className: 'flex-1',
                         props: {
                           required: true,
                           placeholder: 'Current Branch',
@@ -268,8 +268,11 @@ export class PersonalInfoFieldsService {
                       {
                         key: 'date',
                         type: 'primary-calendar',
-                        className: 'col-12 md:col-4',
+                        className: 'self-center',
                         props: {
+                          label: 'Registration Date:',
+                          labelPosition: 'left',
+                          labelBold: true,
                           required: false,
                           placeholder: '21/01/2025',
                           dateFormat: 'dd/mm/yy',
@@ -281,7 +284,7 @@ export class PersonalInfoFieldsService {
                       {
                         key: 'status',
                         type: 'primary-toggle',
-                        className: 'col-12 md:col-4',
+                        className: 'flex-1 font-bold self-center mt-2',
                         props: {
                           label: 'Status:',
                           disabled: false,
@@ -320,27 +323,17 @@ export class PersonalInfoFieldsService {
                         defaultValue: defaultValues.lastname
                       },
                       {
-                        key: 'username',
-                        type: 'primary-input',
-                        className: 'col-12 md:col-6',
-                        props: {
-                          required: true,
-                          placeholder: 'Username'
-                        },
-                        defaultValue: defaultValues.username
-                      },
-                      {
                         key: 'dateOfBirth',
                         type: 'primary-calendar',
                         className: 'col-12 md:col-6',
                         props: {
                           required: false,
-                          placeholder: '21/12/2024',
+                          placeholder: 'Date of Birth',
                           dateFormat: 'dd/mm/yy',
                           showIcon: true,
                           showClear: true
                         },
-                        defaultValue: defaultValues.dateOfBirth
+                        defaultValue: undefined
                       }
                     ]
                   },
@@ -374,22 +367,12 @@ export class PersonalInfoFieldsService {
                         defaultValue: defaultValues.phone
                       },
                       {
-                        key: 'mobile',
-                        type: 'primary-input',
-                        className: 'col-12 md:col-6',
-                        props: {
-                          required: false,
-                          placeholder: 'Mobile'
-                        },
-                        defaultValue: defaultValues.mobile
-                      },
-                      {
                         key: 'optionalPhone',
                         type: 'primary-input',
                         className: 'col-12 md:col-6',
                         props: {
                           required: false,
-                          placeholder: 'Optional Phone'
+                          placeholder: 'Mobile'
                         },
                         defaultValue: defaultValues.optionalPhone
                       }

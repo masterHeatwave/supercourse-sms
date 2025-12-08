@@ -1,4 +1,5 @@
 import { FilterQuery } from 'mongoose';
+import mongoose from 'mongoose';
 import Customer from './customer.model';
 import { CustomerType, ICustomer, ICustomerCreateDTO, ICustomerUpdateDTO } from './customer.interface';
 import { ErrorResponse } from '@utils/errorResponse';
@@ -14,26 +15,22 @@ export class CustomerService {
 
   private async addActiveAcademicYear(customer: ICustomer): Promise<any> {
     try {
-      // First try to get academic year by date range
+      // Get the current active academic year (prioritizes date-derived, falls back to manually set)
       const activeAcademicYear = await this.academicYearService.getCurrentAcademicYear();
+      // Get the manually activated academic year
+      const manualActiveAcademicYear = await this.academicYearService.getManualActiveAcademicYear();
+
       return {
         ...customer.toObject(),
         active_academic_year: activeAcademicYear,
+        manual_active_academic_year: manualActiveAcademicYear,
       };
     } catch (error) {
-      // If no academic year found by date, try to get the one marked as current
-      try {
-        const currentAcademicYear = await AcademicYear.findOne({ is_current: true });
-        return {
-          ...customer.toObject(),
-          active_academic_year: currentAcademicYear,
-        };
-      } catch (fallbackError) {
-        return {
-          ...customer.toObject(),
-          active_academic_year: null,
-        };
-      }
+      return {
+        ...customer.toObject(),
+        active_academic_year: null,
+        manual_active_academic_year: null,
+      };
     }
   }
 
@@ -155,5 +152,44 @@ export class CustomerService {
 
   async getCustomersByType(customerType: CustomerType): Promise<ICustomer[]> {
     return Customer.find({ customer_type: customerType });
+  }
+
+  async getMainCustomersPublic(): Promise<Array<{ name: string; slug: string; avatar?: string }>> {
+    const db = mongoose.connection.db;
+
+    if (!db) {
+      throw new ErrorResponse('Database connection not available', 500);
+    }
+
+    // Get all collection names from the database
+    const collections = await db.listCollections().toArray();
+    const collectionNames = collections.map((col: any) => col.name);
+
+    // Extract unique prefixes (school names) from collection names
+    const schoolPrefixes = new Set<string>();
+
+    for (const collectionName of collectionNames) {
+      // Check if collection name contains underscore
+      if (collectionName.includes('_')) {
+        const prefix = collectionName.split('_')[0];
+        // Add prefix if it's not empty and not a system collection
+        if (prefix && !prefix.startsWith('system')) {
+          schoolPrefixes.add(prefix);
+        }
+      }
+    }
+
+    // Convert to array and sort
+    const schools = Array.from(schoolPrefixes)
+      .sort()
+      .map((slug) => ({
+        name: slug
+          .split(/[-_]/)
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' '),
+        slug: slug,
+      }));
+
+    return schools;
   }
 }

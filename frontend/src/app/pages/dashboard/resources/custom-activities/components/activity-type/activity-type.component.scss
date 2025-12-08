@@ -60,7 +60,7 @@
   }
 
   label {
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 500;
     color: var(--primary-color-text);
     text-shadow: 0px 0px 2px black;
@@ -69,7 +69,8 @@
 }
 
 .radioGroup {
-  margin-top: -24px;
+  margin-top: -20px;
+  padding-bottom: 10px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;

@@ -1,0 +1,29 @@
+:host ::ng-deep .p-toolbar {
+  background-color: rgba(255, 255, 255, 1.0);
+  border: none;
+  padding: 1rem;
+}
+
+:host ::ng-deep .p-dropdown {
+  border: 1px solid #0071bb;
+}
+
+:host ::ng-deep .p-dropdown-item {
+  padding: 0.5rem 1rem;
+}
+
+:host ::ng-deep .p-multiselect {
+  border: 1px solid #0071bb;
+}
+
+:host ::ng-deep .p-multiselect-trigger {
+  color: #6b7280;
+}
+
+:host ::ng-deep .p-multiselect-item {
+  padding: 0.5rem 1rem;
+}
+
+:host ::ng-deep .p-checkbox {
+  margin-right: 0.5rem;
+}

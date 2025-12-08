@@ -3,3 +3,7 @@
   width: 100%;
   background-color: var(--primary-color);
 }
+
+::ng-deep .p-tabview-nav-container {
+  margin-bottom: 2rem !important;
+}

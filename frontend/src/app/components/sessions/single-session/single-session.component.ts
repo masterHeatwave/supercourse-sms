@@ -20,8 +20,9 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ColorDotComponent } from '@components/labels/color-dot/color-dot.component';
 import { OutlineButtonComponent } from '@components/buttons/outline-button/outline-button.component';
 import { ConfirmDialogComponent } from '@components/confirm-dialog/confirm-dialog.component';
+import { getModeLabel } from '../../../utils/session-modes.util';
+import { MessagingContainerComponent } from "@components/messaging/messaging-container/messaging-container.component";
 import { MessagingWrapperService } from '@services/messaging/messaging-wrapper.service';
-import { MessagingContainerComponent } from '@components/messaging/messaging-container/messaging-container.component';
 
 interface SessionStudent {
   id: string;
@@ -43,12 +44,10 @@ interface SessionMaterial {
   styleUrl: './single-session.component.scss',
   providers: [MessageService]
 })
-
 export class SingleSessionComponent implements OnInit {
   @ViewChild('confirmDlg') confirmDlgRef: any;
   @ViewChild('absenceConfirmDlg') absenceConfirmDlgRef: any;
   @ViewChild(MessagingContainerComponent) messagingContainer!: MessagingContainerComponent;
-
   #route = inject(ActivatedRoute);
   #router = inject(Router);
   #sessionsService = inject(SessionsService);
@@ -58,7 +57,7 @@ export class SingleSessionComponent implements OnInit {
   #messagingWrapper = inject(MessagingWrapperService);
 
   sessionId: string | null = null;
-  session: Session | null = null;
+  session: (Session & { absences?: any[] }) | null = null;
   isLoading = true;
   isDeleting = false;
   isLoadingStudents = false;
@@ -101,7 +100,16 @@ export class SingleSessionComponent implements OnInit {
         next: (response) => {
           if (response.success && response.data) {
             this.session = response.data;
-            this.loadSessionAbsences();
+
+            // Check if absences are included in the session response
+            if (this.session.absences && Array.isArray(this.session.absences)) {
+              console.log('Using absences from session response:', this.session.absences);
+              this.sessionAbsences = this.session.absences;
+              this.loadSessionStudents();
+            } else {
+              // Fallback to loading absences separately
+              this.loadSessionAbsences();
+            }
           } else {
             this.showError(this.#translate.instant('sessions.errors.load_failed'));
           }
@@ -214,41 +222,51 @@ export class SingleSessionComponent implements OnInit {
   }
 
   updateAttendanceFromAbsences(absences: any[]) {
-    if (!absences || !Array.isArray(absences)) return;
+    if (!absences || !Array.isArray(absences) || absences.length === 0) {
+      console.log('No absences to process');
+      return;
+    }
 
     console.log('Updating attendance from absences:', absences);
 
     // Create a map of student IDs to absence status
+    // Use the most recent absence if there are duplicates
     const absenceMap = new Map<string, { status: string; date: string; id: string }>();
 
     absences.forEach((absence: any) => {
+      let studentId: string | undefined;
+
+      // Extract student ID from various possible structures
       if (absence.student && typeof absence.student === 'object') {
-        const studentId = absence.student.id || absence.student._id;
-        if (studentId) {
+        studentId = absence.student.id || absence.student._id;
+      } else if (typeof absence.student === 'string') {
+        studentId = absence.student;
+      }
+
+      if (studentId) {
+        // Check if we already have an absence for this student
+        const existing = absenceMap.get(studentId);
+        if (!existing || new Date(absence.date) > new Date(existing.date)) {
+          // Keep the most recent absence
           absenceMap.set(studentId, {
             status: absence.status,
             date: absence.date,
-            id: absence.id
+            id: absence.id || absence._id
           });
         }
-      } else if (typeof absence.student === 'string') {
-        absenceMap.set(absence.student, {
-          status: absence.status,
-          date: absence.date,
-          id: absence.id
-        });
       }
     });
 
-    console.log('Absence map:', absenceMap);
+    console.log('Absence map (student ID -> absence):', absenceMap);
 
     // Update student attendance status
     this.students = this.students.map(student => {
       const absence = absenceMap.get(student.id);
-      console.log(`Checking student ${student.firstname} ${student.lastname} (ID: ${student.id}) against absence map:`, absence);
+      console.log(`Checking student ${student.firstname} ${student.lastname} (ID: ${student.id}):`, absence ? 'HAS ABSENCE' : 'NO ABSENCE');
+
       if (absence) {
         // If there's an absence record, mark as absent
-        console.log(`✅ Student ${student.firstname} ${student.lastname} is ABSENT`);
+        console.log(`  → Marking as ABSENT (status: ${absence.status})`);
         return {
           ...student,
           present: false,
@@ -256,7 +274,7 @@ export class SingleSessionComponent implements OnInit {
         };
       } else {
         // No absence record means present
-        console.log(`❌ Student ${student.firstname} ${student.lastname} is PRESENT (no absence found)`);
+        console.log(`  → Marking as PRESENT`);
         return {
           ...student,
           present: true,
@@ -265,7 +283,7 @@ export class SingleSessionComponent implements OnInit {
       }
     });
 
-    console.log('Updated students:', this.students);
+    console.log('Updated students with attendance:', this.students);
   }
 
   deleteSession() {
@@ -385,17 +403,7 @@ export class SingleSessionComponent implements OnInit {
 
   // Map API mode values to user-friendly labels
   formatMode(mode?: string): string {
-    if (!mode) return 'N/A';
-    switch (mode) {
-      case 'in_person':
-        return 'In-person';
-      case 'online':
-        return 'Online';
-      case 'hybrid':
-        return 'Hybrid';
-      default:
-        return 'N/A';
-    }
+    return getModeLabel(mode);
   }
 
   getAttendanceStatus(student: SessionStudent): string {
@@ -450,34 +458,34 @@ export class SingleSessionComponent implements OnInit {
       this.showError(this.#translate.instant('sessions.errors.no_session_data'));
       return;
     }
-  
+
     const taxiId = this.session.taxi?.id;
     if (!taxiId) {
       console.error('❌ No taxi ID found in session');
       this.showError(this.#translate.instant('sessions.errors.no_class_found'));
       return;
     }
-  
+
     console.log('💬 Opening class chat for taxi:', taxiId);
-  
+
     // Show the messaging container first
     this.messagingContainer.show();
-  
+
     // Then load and select the class chat
     this.#messagingWrapper.getClassChat(taxiId)
       .subscribe({
         next: (chat) => {
           console.log('✅ Class chat loaded successfully:', chat._id);
-          
+
           // Select the chat in the messaging container
           this.messagingContainer.selectedChat = chat;
-          
+
           // Add to chat list if not already there
           const chatExists = this.messagingContainer.chats.some(c => c._id === chat._id);
           if (!chatExists) {
             this.messagingContainer.chats.unshift(chat);
           }
-          
+
           this.#messageService.add({
             severity: 'success',
             summary: this.#translate.instant('sessions.chat.opened'),

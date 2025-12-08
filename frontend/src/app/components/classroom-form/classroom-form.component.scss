@@ -1,0 +1,61 @@
+.classroom-form {
+  max-width: 100%;
+
+  ::ng-deep {
+    // Grid system styling
+    .grid {
+      margin: 0;
+
+      [class*='col-'] {
+        padding: 0.5rem;
+      }
+    }
+
+    // Label styling
+    label {
+      font-weight: 500;
+      color: var(--text-color);
+      margin-bottom: 0.5rem;
+      display: block;
+      font-size: 0.875rem;
+    }
+
+    // Input field styling
+    .p-inputtext,
+    .p-inputtextarea,
+    .p-dropdown,
+    .p-multiselect {
+      border: 1px solid var(--surface-border);
+      border-radius: 6px;
+      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+      &:enabled:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.25);
+      }
+
+      &:enabled:hover {
+        border-color: var(--primary-color);
+      }
+    }
+
+    // Error state styling
+    .ng-invalid.ng-touched {
+      .p-inputtext,
+      .p-inputtextarea,
+      .p-dropdown,
+      .p-multiselect {
+        border-color: var(--red-500);
+      }
+    }
+
+    // Error message styling
+    formly-validation-message {
+      color: var(--red-500);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      display: block;
+    }
+  }
+}
+

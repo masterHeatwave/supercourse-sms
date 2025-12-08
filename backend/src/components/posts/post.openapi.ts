@@ -32,6 +32,7 @@ export const postOpenApi = {
         tags: ['Posts'],
         summary: 'Get all posts',
         description: 'Retrieve a list of all posts with optional filtering',
+        security: [{ AuthHeader: [], CustomerSlug: [] }],
         parameters: [
           {
             name: 'author',
@@ -135,6 +136,7 @@ export const postOpenApi = {
         tags: ['Posts'],
         summary: 'Get post by ID',
         description: 'Retrieve details of a specific post by ID',
+        security: [{ AuthHeader: [], CustomerSlug: [] }],
         parameters: [
           {
             name: 'id',
@@ -418,6 +420,108 @@ export const postOpenApi = {
             content: {
               'application/json': {
                 schema: postResponseSchema,
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthorized',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+          '404': {
+            description: 'Post not found',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/posts/{id}/like': {
+      post: {
+        tags: ['Posts'],
+        summary: 'Like a post',
+        description: 'Add the authenticated user to the list of users who liked this post',
+        security: [{ AuthHeader: [], CustomerSlug: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Post ID',
+          } as ParameterObject,
+        ],
+        responses: {
+          '200': {
+            description: 'Post liked successfully',
+            content: {
+              'application/json': {
+                schema: postResponseSchema,
+              },
+            },
+          },
+          '400': {
+            description: 'Invalid input or already liked',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthorized',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+          '404': {
+            description: 'Post not found',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/posts/{id}/unlike': {
+      post: {
+        tags: ['Posts'],
+        summary: 'Unlike a post',
+        description: 'Remove the authenticated user from the list of users who liked this post',
+        security: [{ AuthHeader: [], CustomerSlug: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Post ID',
+          } as ParameterObject,
+        ],
+        responses: {
+          '200': {
+            description: 'Post unliked successfully',
+            content: {
+              'application/json': {
+                schema: postResponseSchema,
+              },
+            },
+          },
+          '400': {
+            description: 'Invalid input or not liked',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
               },
             },
           },

@@ -1,4 +1,4 @@
-import { Component, inject, Input, OnInit, Output, EventEmitter, ChangeDetectorRef, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, inject, Input, OnInit, Output, EventEmitter, ViewChild, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ClassFormFields } from './class-form.fields';
 import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
@@ -11,26 +11,18 @@ import { CalendarModule } from 'primeng/calendar';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { FileUploadModule } from 'primeng/fileupload';
 import { InputTextareaModule } from 'primeng/inputtextarea';
-import { DocumentListComponent } from '../../document-list/document-list.component';
 import { CommonModule } from '@angular/common';
-import { PrimayColorSelectComponent } from '@components/inputs/primay-color-select/primay-color-select.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { SpinnerComponent } from '@components/spinner/spinner.component';
 import { OutlineButtonComponent } from '@components/buttons/outline-button/outline-button.component';
 import { SessionFormComponent } from '../../shared/session-form/session-form.component';
 import { SessionManagementService, SessionFormData } from '@services/session-management.service';
 import { TaxisService } from '@gen-api/taxis/taxis.service';
-import { SessionsService } from '@gen-api/sessions/sessions.service';
-import { ClassroomsService } from '@gen-api/classrooms/classrooms.service';
-import { AcademicPeriodsService } from '@gen-api/academic-periods/academic-periods.service';
-import { UsersService } from '@gen-api/users/users.service';
-import { InventoryService } from '@gen-api/inventory/inventory.service';
 import { PostTaxisBody, PutTaxisIdBody } from '@gen-api/schemas';
-import { catchError, of, switchMap, take } from 'rxjs';
+import { catchError, of, switchMap, take, Subject, takeUntil } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { AppState } from '@store/app.state';
-import { FormValidationService, CLASS_FIELD_LABELS, SESSION_FIELD_LABELS } from '../../../services/validation/form-validation.service';
+import { FormValidationService, CLASS_FIELD_LABELS } from '../../../services/validation/form-validation.service';
 
 
 @Component({
@@ -49,16 +41,13 @@ import { FormValidationService, CLASS_FIELD_LABELS, SESSION_FIELD_LABELS } from 
     InputSwitchModule,
     FileUploadModule,
     InputTextareaModule,
-    DocumentListComponent,
-    PrimayColorSelectComponent,
-    SpinnerComponent,
     OutlineButtonComponent,
     SessionFormComponent
   ],
   templateUrl: './create-class.component.html',
   styleUrl: './create-class.component.scss'
 })
-export class CreateClassComponent implements OnInit, AfterViewInit {
+export class CreateClassComponent implements OnInit, OnDestroy {
   @Input() isEditMode = false;
   @Input() classData: any = null;
   @Input() submitButtonLabel = 'Save';
@@ -68,171 +57,158 @@ export class CreateClassComponent implements OnInit, AfterViewInit {
   @Output() formSubmitError = new EventEmitter<any>();
   @Output() cancelForm = new EventEmitter<void>();
 
-  @ViewChild('sessionsContainer', { static: false }) sessionsContainer!: ElementRef;
   @ViewChild(SessionFormComponent, { static: false }) sessionsComponent!: SessionFormComponent;
 
+  private readonly destroy$ = new Subject<void>();
+  
   formFieldsService = inject(ClassFormFields);
-  private cdr = inject(ChangeDetectorRef);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private messageService = inject(MessageService);
   private taxisService = inject(TaxisService);
-  private sessionsService = inject(SessionsService);
-  private classroomsService = inject(ClassroomsService);
-  private academicPeriodsService = inject(AcademicPeriodsService);
-  private usersService = inject(UsersService);
-  private inventoryService = inject(InventoryService);
   private store = inject(Store<AppState>);
   private validationService = inject(FormValidationService);
   private sessionManagementService = inject(SessionManagementService);
+  private cdr = inject(ChangeDetectorRef);
 
   form = new FormGroup({});
   model: any = { sessions: [] };
-
-  classInfoFields: FormlyFieldConfig[];
-  // Removed debug properties - no longer needed
+  classInfoFields: FormlyFieldConfig[] = [];
   isLoading = false;
+  isLoadingFormData = true; // Flag to show loader until form data is ready
   classId: string | null = null;
-
-  // Complete fake data for edit mode
-  fakeClassData = {
-    sessions: [
-      {
-        day: 'monday',
-        startTime: '10:00',
-        duration: 1,
-        dateRange: [new Date(), new Date(new Date().setMonth(new Date().getMonth() + 3))] as [Date, Date],
-        frequencyValue: 1,
-        mode: 'in_person'
-      },
-      {
-        day: 'wednesday',
-        startTime: '10:00',
-        duration: 1,
-        dateRange: [new Date(), new Date(new Date().setMonth(new Date().getMonth() + 3))] as [Date, Date],
-        frequencyValue: 1,
-        mode: 'in_person'
-      }
-    ] as SessionFormData[]
-  };
-
-  // Empty model template for create mode
-  emptyClassModel = {
-    sessions: []
-  };
+  private isLoadingSessionsData = false; // Flag to prevent overwriting during load
 
   constructor() {
     this.form = new FormGroup({});
-    this.classInfoFields = [];
   }
 
   ngOnInit(): void {
-    // Ensure fields are populated after dynamic data (academic years/periods) is fetched from API
-    this.formFieldsService.getClassInfoFieldsWithData().then((fields) => {
-      this.classInfoFields = fields;
-      this.cdr.detectChanges();
-    });
-
-    // Set up periodic refresh to catch field updates
-    this.setupFieldRefresh();
-
-    // Check if we're in edit mode from the route
-    this.route.params.subscribe((params) => {
-      if (params['id']) {
-        this.classId = params['id'];
-        this.isEditMode = true;
-        this.submitButtonLabel = 'Update';
-        this.loadClassData(params['id']);
-      } else {
-        // For create mode, initialize with proper empty model
-        this.model = JSON.parse(JSON.stringify(this.emptyClassModel));
-      }
-    });
-
-    // If classData is already provided via @Input, use it
-    if (this.isEditMode && this.classData) {
-      this.model = JSON.parse(JSON.stringify(this.classData));
-    }
-
-    // Ensure branch field is populated immediately after form initialization
-    setTimeout(() => {
-      this.formFieldsService.fetchCurrentBranchName();
-    }, 0);
-
-    this.cdr.detectChanges();
+    this.initializeForm();
+    this.setupRouteSubscription();
+    this.setupFormValueChanges();
   }
 
-  ngAfterViewInit(): void {
-    // Sessions component will be rendered in the parent component
+  private async initializeForm(): Promise<void> {
+    try {
+      this.isLoadingFormData = true;
+      this.classInfoFields = await this.formFieldsService.getClassInfoFieldsWithData();
+      this.isLoadingFormData = false;
+    } catch (error) {
+      console.error('Error initializing form fields:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to load form data'
+      });
+      this.isLoadingFormData = false;
+    }
+  }
+
+  private setupRouteSubscription(): void {
+    this.route.params
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((params) => {
+        if (params['id']) {
+          this.classId = params['id'];
+          this.isEditMode = true;
+          this.submitButtonLabel = 'Update';
+          this.loadClassData(params['id']);
+        } else {
+          this.initializeCreateMode();
+        }
+      });
+  }
+
+  private initializeCreateMode(): void {
+    this.model = { sessions: [] };
+    
+    // If classData is provided via @Input, use it
+    if (this.classData) {
+      this.model = { ...this.classData };
+    }
+  }
+
+  private setupFormValueChanges(): void {
+    this.form.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((values: any) => {
+        // Update model with form values to keep data in sync
+        if (values.teachers !== undefined) {
+          this.model.teachers = values.teachers;
+        }
+        if (values.students !== undefined) {
+          this.model.students = values.students;
+        }
+        if (values.academicPeriod !== undefined) {
+          this.model.academicPeriod = values.academicPeriod;
+        }
+      });
   }
 
   onSessionsChange(sessions: SessionFormData[]): void {
-    this.model.sessions = sessions;
+    // Don't overwrite sessions if we're in the middle of loading them
+    if (!this.isLoadingSessionsData) {
+      this.model.sessions = sessions;
+    }
   }
 
   onSessionValidationChange(isValid: boolean): void {
-    // Handle session validation change if needed
-    console.log('Sessions validation status:', isValid);
-  }
-
-  private setupFieldRefresh(): void {
-    // Check for field updates every 2 seconds for the first 30 seconds
-    let refreshCount = 0;
-    const maxRefreshes = 15; // 15 * 2 seconds = 30 seconds
-    
-    const refreshInterval = setInterval(() => {
-      const currentFields = this.formFieldsService.getClassInfoFields();
-      if (currentFields !== this.classInfoFields) {
-        this.classInfoFields = currentFields;
-        this.cdr.detectChanges();
-        console.log('Fields refreshed with updated data');
-      }
-
-      // Also try to refresh branch data if needed
-      if (refreshCount === 0 || refreshCount === 5) {
-        this.formFieldsService.refreshBranchData();
-      }
-
-      refreshCount++;
-      if (refreshCount >= maxRefreshes) {
-        clearInterval(refreshInterval);
-      }
-    }, 2000);
+    // Session validation is handled in the session component
+    // This method can be used for additional validation logic if needed
   }
 
 
   loadClassData(classId: string): void {
     this.isLoading = true;
 
-    this.taxisService.getTaxisId(classId).subscribe({
-      next: (response: any) => {
-        this.transformApiDataToModel(response.data);
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error loading class data:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to load class data'
-        });
-        this.isLoading = false;
-      }
-    });
+    // First, get the taxi data
+    this.taxisService.getTaxisId(classId)
+      .pipe(
+        switchMap((taxiResponse: any) => {
+          // Then, get the sessions separately using the new endpoint
+          return this.taxisService.getTaxisIdSessions(classId).pipe(
+            switchMap((sessionsResponse: any) => {
+              // Combine both responses
+              return of({
+                taxi: taxiResponse.data,
+                sessions: sessionsResponse.data.sessions
+              });
+            })
+          );
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: (combinedData: any) => {
+          this.transformApiDataToModel(combinedData.taxi, combinedData.sessions);
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error loading class data:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to load class data'
+          });
+          this.isLoading = false;
+        }
+      });
   }
 
-  private transformApiDataToModel(apiData: any): void {
-  
+  private transformApiDataToModel(apiData: any, sessionsData: any[] = []): void {
+    // Extract teachers and students from users array based on user_type
+    const teachers = apiData.users ? apiData.users.filter((user: any) => user.user_type === 'teacher') : [];
+    const students = apiData.users ? apiData.users.filter((user: any) => user.user_type === 'student') : [];
+
     // Transform API data back to form model structure
     this.model = {
       // Basic class info
       name: apiData.name || '',
       classColor: apiData.color || '#ff0000',
-      classId: '', // This field doesn't exist in API data
       subject: apiData.subject || '',
       level: apiData.level || '',
-      notes: '', // This field doesn't exist in API data - could be added later
+      notes: apiData.notes || '',
 
       // Academic info (use IDs for form fields)
       academicYear: apiData.academic_year?._id || apiData.academic_year?.id || '',
@@ -242,44 +218,54 @@ export class CreateClassComponent implements OnInit, AfterViewInit {
       branch: apiData.branch?._id || apiData.branch?.id || apiData.branch || '',
 
       // Users - extract IDs for form (use _id from API response)
-      teachers: apiData.teachers ? apiData.teachers.map((teacher: any) => teacher._id) : [],
-      students: apiData.students ? apiData.students.map((student: any) => student._id) : [],
+      teachers: teachers.map((teacher: any) => teacher._id),
+      students: students.map((student: any) => student._id),
       materials: apiData.scap_products || [],
 
-      // Sessions - transform session data to form format
-      sessions: this.transformSessionsForForm(apiData.sessions || [])
+      // Sessions - use sessions from the separate endpoint
+      sessions: this.transformSessionsForForm(sessionsData)
     };
 
-    console.log('Transformed model for form:', this.model);
-    console.log('Academic Year ID:', this.model.academicYear);
-    console.log('Academic Period ID:', this.model.academicPeriod);
-    console.log('Teachers IDs:', this.model.teachers);
-    console.log('Students IDs:', this.model.students);
     this.classData = this.model;
 
-    // Load sessions into the component after a brief delay to ensure component is ready
+    // Set flag BEFORE updating form to prevent session overwrites
+    this.isLoadingSessionsData = true;
+
+    // Update form fields with the loaded data to ensure default values are set
+    this.updateFormFieldsWithData();
+
+    // Load sessions into the component after change detection
     setTimeout(() => {
       if (this.sessionsComponent && this.model.sessions?.length > 0) {
-        console.log('Loading sessions into component:', this.model.sessions);
         this.sessionsComponent.loadSessionsData(this.model.sessions);
+        
+        // Clear flag after a short delay to allow the form to stabilize
+        setTimeout(() => {
+          this.isLoadingSessionsData = false;
+        }, 200);
+        
+        // Manually trigger change detection after programmatic update
+        this.cdr.detectChanges();
+      } else {
+        // Clear flag even if no sessions to load
+        this.isLoadingSessionsData = false;
       }
     }, 100);
   }
 
-  private transformSessionsForForm(sessions: any[]): SessionFormData[] {
-    console.log('Transforming sessions for form:', sessions);
-
-    return sessions.map((session, index) => {
-      console.log(`Processing session ${index + 1}:`, session);
-      const transformedSession = this.sessionManagementService.transformFromApiFormat(session as any);
-      console.log(`Transformed session ${index + 1}:`, transformedSession);
-      return transformedSession;
-    });
+  private updateFormFieldsWithData(): void {
+    // Update the form fields with the loaded data, passing model as default values
+    // Pass isEditMode flag so form fields service knows whether to filter by active year or selected year
+    this.classInfoFields = this.formFieldsService.getClassInfoFields(this.model, this.isEditMode);
+    
+    // Update the form with the model data
+    this.form.patchValue(this.model);
   }
 
-  loadFakeClassData(): void {
-    // Deprecated - keeping for backward compatibility but should not be used
-    console.warn('loadFakeClassData is deprecated, use loadClassData instead');
+  private transformSessionsForForm(sessions: any[]): SessionFormData[] {
+    return sessions.map((session) => {
+      return this.sessionManagementService.transformFromApiFormat(session as any);
+    });
   }
 
   async onSubmit() {
@@ -352,7 +338,6 @@ export class CreateClassComponent implements OnInit, AfterViewInit {
             return this.sessionManagementService.createBulkSessions(this.model.sessions, createdTaxi.id).pipe(
               switchMap((result) => {
                 if (!result.success && result.errors.length > 0) {
-                  console.warn('Some sessions failed to create:', result.errors);
                   // Show warning but don't fail the whole operation
                   this.messageService.add({
                     severity: 'warn',
@@ -376,7 +361,8 @@ export class CreateClassComponent implements OnInit, AfterViewInit {
         catchError((error: any) => {
           console.error('Failed to create taxi:', error);
           throw error;
-        })
+        }),
+        takeUntil(this.destroy$)
       )
       .subscribe({
         next: (result: any) => {
@@ -414,7 +400,6 @@ export class CreateClassComponent implements OnInit, AfterViewInit {
           return this.sessionManagementService.updateBulkSessions(this.model.sessions || [], this.classId!).pipe(
             switchMap((result) => {
               if (!result.success && result.errors.length > 0) {
-                console.warn('Some sessions failed to update:', result.errors);
                 // Show warning but don't fail the whole operation
                 this.messageService.add({
                   severity: 'warn',
@@ -435,7 +420,8 @@ export class CreateClassComponent implements OnInit, AfterViewInit {
         catchError((error: any) => {
           console.error('Failed to update taxi:', error);
           throw error;
-        })
+        }),
+        takeUntil(this.destroy$)
       )
       .subscribe({
         next: (result: any) => {
@@ -475,7 +461,8 @@ export class CreateClassComponent implements OnInit, AfterViewInit {
       academic_year: activeAcademicYearId || '',
       academic_period: formData.academicPeriod || '',
       users: allUsers,
-      scap_products: formData.materials || []
+      scap_products: formData.materials || [],
+      notes: formData.notes || undefined
     };
   }
 
@@ -504,6 +491,11 @@ export class CreateClassComponent implements OnInit, AfterViewInit {
     }
 
     return branchId;
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
 

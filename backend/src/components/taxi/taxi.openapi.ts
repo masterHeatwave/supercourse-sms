@@ -5,6 +5,7 @@ import {
   removeUserSchema,
   TaxiSchema,
   TaxiAttendanceSchema,
+  SessionSchema,
 } from './taxi-validate.schema';
 import { ParameterObject } from 'openapi3-ts/oas31';
 import { z } from 'zod';
@@ -24,6 +25,19 @@ const taxisListResponseSchema = z.object({
     totalPages: z.number(),
   }),
   data: z.array(TaxiSchema),
+});
+
+const taxiSessionsResponseSchema = z.object({
+  success: z.boolean(),
+  count: z.number(),
+  data: z.object({
+    taxi: z.object({
+      id: z.string(),
+      name: z.string(),
+    }),
+    sessions: z.array(SessionSchema),
+    count: z.number(),
+  }),
 });
 
 export const taxiOpenApi = {
@@ -72,10 +86,23 @@ export const taxiOpenApi = {
             description: 'Filter by level',
           } as ParameterObject,
           {
+            name: 'code',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Filter by taxi code',
+          } as ParameterObject,
+          {
             name: 'search',
             in: 'query',
             schema: { type: 'string' },
             description: 'Search term for taxi name',
+          } as ParameterObject,
+          {
+            name: 'archived',
+            in: 'query',
+            schema: { type: 'string' },
+            description:
+              'Filter by archived status (true/false). If not provided, returns all taxis (archived and non-archived)',
           } as ParameterObject,
         ],
         responses: {
@@ -237,8 +264,8 @@ export const taxiOpenApi = {
       },
       delete: {
         tags: ['Taxis'],
-        summary: 'Delete taxi',
-        description: 'Delete a specific taxi',
+        summary: 'Archive taxi (soft delete)',
+        description: 'Archive a specific taxi by setting archived to true instead of deleting it',
         security: [{ AuthHeader: [], CustomerSlug: [] }],
         parameters: [
           {
@@ -250,8 +277,13 @@ export const taxiOpenApi = {
           } as ParameterObject,
         ],
         responses: {
-          '204': {
-            description: 'Taxi deleted successfully',
+          '200': {
+            description: 'Taxi archived successfully',
+            content: {
+              'application/json': {
+                schema: taxiResponseSchema,
+              },
+            },
           },
           '401': {
             description: 'Unauthorized',
@@ -304,6 +336,49 @@ export const taxiOpenApi = {
           },
           '401': { description: 'Unauthorized' },
           '404': { description: 'Taxi not found' },
+        },
+      },
+    },
+    '/taxis/{id}/sessions': {
+      get: {
+        tags: ['Taxis'],
+        summary: 'Get taxi sessions',
+        description: 'Retrieve all sessions for a specific taxi/class',
+        security: [{ AuthHeader: [], CustomerSlug: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Taxi ID',
+          } as ParameterObject,
+        ],
+        responses: {
+          '200': {
+            description: 'Taxi sessions retrieved successfully',
+            content: {
+              'application/json': {
+                schema: taxiSessionsResponseSchema,
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthorized',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+          '404': {
+            description: 'Taxi not found',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
         },
       },
     },

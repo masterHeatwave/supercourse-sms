@@ -1,0 +1,25 @@
+.calendar {
+  margin-top: 10px;
+  margin-left: 10px;
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+:host ::ng-deep {
+  p-calendar {
+    span {
+      .p-button {
+        //background-color: #4b738d;
+        //color: white;
+      }
+    }
+    input {
+      width: 250px;
+      font-size: 14px;
+    }
+    .p-button {
+      width: 50px;
+      border-radius: 5px;
+    }
+  }
+}

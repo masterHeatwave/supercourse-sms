@@ -32,7 +32,6 @@ import { Router } from '@angular/router';
 export class ViewAcademicYearComponent implements OnInit {
   @Input() academicYear!: AcademicYear;
   @Output() onClose = new EventEmitter<void>();
-  @Output() onEdit = new EventEmitter<AcademicYear>();
   @Output() onDelete = new EventEmitter<AcademicYear>();
 
   periods: AcademicPeriod[] = [];
@@ -142,11 +141,6 @@ export class ViewAcademicYearComponent implements OnInit {
   close() {
     // Navigate back to academic years list
     this.router.navigate(['/dashboard/settings/academic-years']);
-  }
-
-  edit() {
-    // Navigate to edit page
-    this.router.navigate(['/dashboard/settings/academic-years/edit', this.academicYear.id]);
   }
 
   onRetry() {

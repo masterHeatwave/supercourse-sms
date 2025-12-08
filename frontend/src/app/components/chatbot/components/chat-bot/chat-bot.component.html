@@ -1,0 +1,45 @@
+<div #chatButton class="bottom-right-corner">
+  <p-button styleClass="p-button-rounded p-button-lg floating-button" (click)="showChatClick()">
+    <ng-template pTemplate="content">
+      <img src="assets/images/chatbot/chatbot.svg" class="chat-icon" alt="chat icon" width="24" height="24" />
+    </ng-template>
+  </p-button>
+</div>
+
+<p-dialog
+  [header]="'chatbot.title' | translate"
+  [modal]="false"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [baseZIndex]="1001"
+  [style]="{
+    position: 'fixed',
+    bottom: '75px',
+    right: '20px'
+  }"
+  [(visible)]="showChat"
+  headerStyleClass="my-dialog-header"
+>
+  <div class="chat-container">
+    <div class="messages-wrapper" #scrollMe>
+      <div class="messages-div" *ngFor="let message of chatHistory; let i = index">
+        <div class="user-messages">{{ messages[i] }}</div>
+        <div class="bot-messages" *ngFor="let botReply of message.bot" [innerHTML]="botReply"></div>
+      </div>
+      <div *ngIf="isBotTyping" class="typing-indicator"><span></span><span></span><span></span></div>
+    </div>
+    <div style="display: flex; gap: 10px; padding: 10px">
+      <input
+        pInputText
+        [autofocus]="false"
+        [(ngModel)]="userMessage"
+        (keydown.enter)="sendMessage()"
+        (keydown)="choosePreviousMessage($event)"
+        [placeholder]="'chatbot.placeholder' | translate"
+        [readonly]="isBotTyping"
+      />
+      <p-button [label]="'chatbot.send_button' | translate" icon="pi pi-send" (click)="sendMessage()"></p-button>
+    </div>
+  </div>
+</p-dialog>

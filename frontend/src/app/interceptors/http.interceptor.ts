@@ -96,9 +96,9 @@ export const httpInterceptor: HttpInterceptorFn = (req, next) => {
 
         return next(finalReq).pipe(
           catchError((error: HttpErrorResponse) => {
-            // Handle 401 Unauthorized error - simply logout to prevent multiple popups
+            // Handle 401 Unauthorized error - suppress all notifications for 401s
             if (error.status === 401) {
-              console.log('[HTTP Interceptor] Received 401 Unauthorized error, checking if already logged out');
+              console.log('[HTTP Interceptor] Received 401 Unauthorized error, suppressing notification');
               
               // Don't force logout on public routes - let them handle 401s gracefully
               if (isPublicRoute) {
@@ -115,9 +115,13 @@ export const httpInterceptor: HttpInterceptorFn = (req, next) => {
                 console.log('[HTTP Interceptor] User already logged out, skipping forceLogout dispatch');
               }
               
-              // Return a clean error without retrying to prevent cascading errors
+              // Return a silent error that won't trigger notifications
+              // This prevents any 401 error from showing as a notification
               return throwError(() => new HttpErrorResponse({
-                error: { message: 'Session expired. Please login again.' },
+                error: { 
+                  message: 'Session expired. Please login again.',
+                  suppressNotification: true // Custom flag to indicate this shouldn't show notifications
+                },
                 status: 401,
                 statusText: 'Unauthorized - Session Expired'
               }));

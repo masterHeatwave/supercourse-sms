@@ -1,6 +1,6 @@
 <app-info-dialog [infoMessage]="infoMessage" [isDialogVisible]="isInfoDialogVisible" (onClose)="isInfoDialogVisible = false" />
 <label *ngIf="moods && moods.length > 0" (click)="onClick($event)"
-  >Month
+  >{{ 'wellnessCenter.month_label' | translate }}
   <i
     class="pi"
     [ngClass]="{
@@ -10,7 +10,7 @@
   ></i>
 </label>
 <div class="month" *ngFor="let month of monthsMoods | keyvalue : sortByDate; let i = index">
-  <label>{{ month.key }}</label>
+  <label>{{ 'wellnessCenter.months.' + month.key.split('-')[0] | translate }} {{ month.key.split('-')[1] }}</label>
   <div class="days" *ngFor="let entry of month.value; let j = index">
     <image-text
       [text]="entry.day.toString()"

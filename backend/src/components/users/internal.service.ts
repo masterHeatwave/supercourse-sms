@@ -1,4 +1,11 @@
-import { IInternalUserCreateDTO, IUser, IInternalSchoolCreateDTO, IBranchCreateDTO, IUserType } from './user.interface';
+import {
+  IInternalUserCreateDTO,
+  IUser,
+  IInternalSchoolCreateDTO,
+  IBranchCreateDTO,
+  ISetPrimaryBranchDTO,
+  IUserType,
+} from './user.interface';
 import User from './user.model';
 import Customer from '@components/customers/customer.model';
 import { ICustomer } from '@components/customers/customer.interface';
@@ -63,17 +70,21 @@ export class InternalService {
 
   async createSchool(
     schoolData: IInternalSchoolCreateDTO
-  ): Promise<{ mainCustomer: ICustomer; branchCustomer: ICustomer; user: IUser }> {
+  ): Promise<{ mainCustomer: ICustomer; branchCustomer?: ICustomer; user: IUser }> {
     const mainCustomerExists = await Customer.findOne({ slug: schoolData.main_customer.slug });
     if (mainCustomerExists) {
       throw new ErrorResponse(`Main customer slug '${schoolData.main_customer.slug}' already exists`, 400);
     }
-    const branchCustomerExists = await Customer.findOne({ slug: schoolData.branch_customer.slug });
-    if (branchCustomerExists) {
-      throw new ErrorResponse(`Branch customer slug '${schoolData.branch_customer.slug}' already exists`, 400);
-    }
-    if (schoolData.main_customer.slug === schoolData.branch_customer.slug) {
-      throw new ErrorResponse('Main customer slug and branch customer slug cannot be the same', 400);
+
+    // Only validate branch customer if it's provided
+    if (schoolData.branch_customer) {
+      const branchCustomerExists = await Customer.findOne({ slug: schoolData.branch_customer!.slug });
+      if (branchCustomerExists) {
+        throw new ErrorResponse(`Branch customer slug '${schoolData.branch_customer!.slug}' already exists`, 400);
+      }
+      if (schoolData.main_customer.slug === schoolData.branch_customer!.slug) {
+        throw new ErrorResponse('Main customer slug and branch customer slug cannot be the same', 400);
+      }
     }
     const emailExists = await User.findOne({ email: schoolData.user.email });
     if (emailExists) {
@@ -100,11 +111,15 @@ export class InternalService {
         is_main_customer: true,
       });
 
-      branchCustomerInMainDb = await Customer.create({
-        ...schoolData.branch_customer,
-        parent_customer: mainCustomerInMainDb?._id,
-        is_main_customer: false,
-      });
+      // Only create branch customer if provided
+      if (schoolData.branch_customer) {
+        branchCustomerInMainDb = await Customer.create({
+          ...schoolData.branch_customer,
+          parent_customer: mainCustomerInMainDb?._id,
+          is_main_customer: false,
+          is_primary: true,
+        });
+      }
 
       await requestContextLocalStorage.run(tenantId, async () => {
         logger.info(`[${tenantId}] Starting setup for new tenant.`);
@@ -117,17 +132,27 @@ export class InternalService {
         delete (tenantMainCustomerData as any)._id; // Remove ID for new creation
         const savedTenantMainCustomer = await Customer.create(tenantMainCustomerData);
 
-        const tenantBranchCustomerData = {
-          ...schoolData.branch_customer,
-          parent_customer: savedTenantMainCustomer._id,
-          is_main_customer: false,
-          is_primary: false,
-        };
-        delete (tenantBranchCustomerData as any)._id;
-        const savedTenantBranchCustomer = await Customer.create(tenantBranchCustomerData);
+        let savedTenantBranchCustomer: ICustomer | null = null;
+
+        // Only create branch customer in tenant if provided
+        if (schoolData.branch_customer) {
+          const tenantBranchCustomerData = {
+            ...schoolData.branch_customer,
+            parent_customer: savedTenantMainCustomer._id,
+            is_main_customer: false,
+            is_primary: true,
+          };
+          delete (tenantBranchCustomerData as any)._id;
+          savedTenantBranchCustomer = await Customer.create(tenantBranchCustomerData);
+        }
 
         logger.info(`[${tenantId}] Starting comprehensive database seeding...`);
-        await seedNewTenant(tenantId);
+
+        // Skip academic and user seeding for all new customers created via API
+        // Academic years/periods and users should be managed manually by the customer
+        logger.info(`[${tenantId}] Skipping academic years/periods and user seeding for new customer`);
+
+        await seedNewTenant(tenantId, { skipAcademic: true, skipUsers: true });
         logger.info(`[${tenantId}] Comprehensive database seeding complete.`);
 
         const adminRoleInTenant = await Role.findOne({ title: 'ADMIN' });
@@ -140,7 +165,7 @@ export class InternalService {
           mobile: schoolData.user.phone, // Add mobile field using phone number
           passwordHash: bcrypt.hashSync(schoolData.user.password, 10),
           roles: [adminRoleInTenant._id],
-          customers: [savedTenantBranchCustomer._id],
+          customers: [savedTenantBranchCustomer?._id || savedTenantMainCustomer._id],
           is_active: true,
           user_type: IUserType.ADMIN,
         };
@@ -158,7 +183,7 @@ export class InternalService {
 
       return {
         mainCustomer: mainCustomerInMainDb!,
-        branchCustomer: branchCustomerInMainDb!,
+        branchCustomer: branchCustomerInMainDb || undefined,
         user: userInTenantCollections!,
       };
     } catch (error) {
@@ -171,7 +196,9 @@ export class InternalService {
         await requestContextLocalStorage.run(tenantId, async () => {
           logger.warn(`[${tenantId}] Attempting cleanup in tenant-specific collections...`);
           await Customer.deleteOne({ slug: schoolData.main_customer.slug });
-          await Customer.deleteOne({ slug: schoolData.branch_customer.slug });
+          if (schoolData.branch_customer) {
+            await Customer.deleteOne({ slug: schoolData.branch_customer!.slug });
+          }
 
           await User.deleteOne({ username: schoolData.user.username });
 
@@ -254,13 +281,24 @@ export class InternalService {
       branchData.branch_customer.name = `${branchData.branch_customer.name} (${timestamp})`;
     }
 
+    const hasExistingBranches = await Customer.exists({
+      parent_customer: parentCustomer._id,
+      is_main_customer: false,
+    });
+    const isFirstBranch = !hasExistingBranches;
+
+    const branchCustomerForCreation = {
+      ...branchData.branch_customer,
+      is_primary: isFirstBranch,
+    };
+
     const tenantId = sanitizeDbName(parentCustomer.slug);
     let branchCustomerInMainDb: ICustomer | null = null;
 
     try {
       // Create branch customer in main database
       branchCustomerInMainDb = await Customer.create({
-        ...branchData.branch_customer,
+        ...branchCustomerForCreation,
         parent_customer: parentCustomer._id,
         is_main_customer: false,
         supercourse_sub_customer_id: branchData.supercourse_sub_customer_id,
@@ -270,6 +308,16 @@ export class InternalService {
       await requestContextLocalStorage.run(tenantId, async () => {
         logger.info(`[${tenantId}] Creating branch customer in parent's tenant database`);
 
+        // Find parent in tenant DB (prefer scap_id, fallback to slug)
+        const tenantParent =
+          (await Customer.findOne({ is_main_customer: true, scap_id: branchData.parent_supercourse_customer_id })) ||
+          (await Customer.findOne({ is_main_customer: true, slug: parentCustomer.slug }));
+
+        if (!tenantParent) {
+          logger.warn(`[${tenantId}] Tenant parent not found; skipping tenant branch creation`);
+          return;
+        }
+
         // Check if branch already exists in tenant database
         const existingTenantBranch = await Customer.findOne({
           slug: branchData.branch_customer.slug,
@@ -277,8 +325,8 @@ export class InternalService {
 
         if (!existingTenantBranch) {
           await Customer.create({
-            ...branchData.branch_customer,
-            parent_customer: parentCustomer._id,
+            ...branchCustomerForCreation,
+            parent_customer: tenantParent._id, // use TENANT parent's id
             is_main_customer: false,
             supercourse_sub_customer_id: branchData.supercourse_sub_customer_id,
           });
@@ -312,6 +360,116 @@ export class InternalService {
       if (error instanceof ErrorResponse) throw error;
       const errorMessage = error instanceof Error ? error.message : String(error);
       throw new ErrorResponse(`Failed to create branch: ${errorMessage}`, 500);
+    }
+  }
+
+  async setPrimaryBranch(data: ISetPrimaryBranchDTO): Promise<void> {
+    // Find parent customer in SMS system using scap_id that matches parent_supercourse_customer_id
+    let parentCustomer = await Customer.findOne({
+      is_main_customer: true,
+      scap_id: data.parent_supercourse_customer_id,
+    });
+
+    // Fallback: If scap_id lookup fails, try to find by name (similar to createBranch)
+    if (!parentCustomer) {
+      const allMainCustomers = await Customer.find({ is_main_customer: true }).select('name slug scap_id');
+      logger.error(
+        `Parent customer with supercourse ID '${data.parent_supercourse_customer_id}' not found. Available main customers:`,
+        allMainCustomers.map((c) => ({ name: c.name, slug: c.slug, scap_id: c.scap_id }))
+      );
+
+      throw new ErrorResponse(
+        `Parent customer with supercourse ID '${data.parent_supercourse_customer_id}' not found`,
+        400
+      );
+    }
+
+    // Find the target branch by supercourse_sub_customer_id
+    const targetBranch = await Customer.findOne({
+      supercourse_sub_customer_id: data.supercourse_sub_customer_id,
+      is_main_customer: false,
+    });
+
+    if (!targetBranch) {
+      throw new ErrorResponse(
+        `Branch with supercourse sub-customer ID '${data.supercourse_sub_customer_id}' not found`,
+        404
+      );
+    }
+
+    const tenantId = sanitizeDbName(parentCustomer.slug);
+
+    try {
+      // Update in main database: set target branch to primary and siblings to false
+      logger.info(
+        `[Main DB] Setting branch '${targetBranch.slug}' as primary and siblings to false for parent '${parentCustomer.slug}'`
+      );
+
+      // Set target branch to primary
+      await Customer.findByIdAndUpdate(targetBranch._id, { is_primary: true });
+
+      // Set all sibling branches (same parent, not the target) to false
+      await Customer.updateMany(
+        {
+          parent_customer: parentCustomer._id,
+          is_main_customer: false,
+          _id: { $ne: targetBranch._id },
+        },
+        { is_primary: false }
+      );
+
+      // Update in tenant database
+      await requestContextLocalStorage.run(tenantId, async () => {
+        logger.info(`[${tenantId}] Setting branch as primary in tenant database`);
+
+        // Find the tenant parent customer
+        const tenantParent = await Customer.findOne({
+          slug: parentCustomer.slug,
+          is_main_customer: true,
+        });
+
+        if (!tenantParent) {
+          logger.warn(`[${tenantId}] Parent customer not found in tenant database, skipping tenant update`);
+          return;
+        }
+
+        // Find target branch in tenant by supercourse_sub_customer_id or slug
+        const tenantTargetBranch = await Customer.findOne({
+          supercourse_sub_customer_id: data.supercourse_sub_customer_id,
+          is_main_customer: false,
+        });
+
+        if (!tenantTargetBranch) {
+          logger.warn(
+            `[${tenantId}] Target branch with supercourse_sub_customer_id '${data.supercourse_sub_customer_id}' not found in tenant database`
+          );
+          return;
+        }
+
+        // Set target branch to primary
+        await Customer.findByIdAndUpdate(tenantTargetBranch._id, { is_primary: true });
+
+        // Set all sibling branches to false
+        await Customer.updateMany(
+          {
+            parent_customer: tenantParent._id,
+            is_main_customer: false,
+            _id: { $ne: tenantTargetBranch._id },
+          },
+          { is_primary: false }
+        );
+
+        logger.info(`[${tenantId}] Successfully updated primary branch in tenant database`);
+      });
+
+      logger.info(
+        `Successfully set branch '${targetBranch.slug}' as primary for parent '${parentCustomer.slug}' in both main and tenant databases`
+      );
+    } catch (error) {
+      logger.error(`Error setting primary branch: ${error}`);
+      if (error instanceof ErrorResponse) throw error;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new ErrorResponse(`Failed to set primary branch: ${errorMessage}`, 500);
     }
   }
 }

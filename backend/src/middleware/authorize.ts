@@ -159,7 +159,16 @@ export const authorize = (roles?: string[] | string, permissionKey?: string) => 
         if (roles) {
           const allowedRoles = Array.isArray(roles) ? roles : [roles];
 
-          const hasRole = userWithRoles.roles.some((role: IRole) => allowedRoles.includes(role.title));
+          const hasRole = userWithRoles.roles.some((role: IRole) => {
+            // Handle PARENT alias for backward compatibility
+            if (role.title === 'PARENT' && allowedRoles.includes('PARENT_GUARDIAN')) {
+              return true;
+            }
+            if (role.title === 'PARENT_GUARDIAN' && allowedRoles.includes('PARENT')) {
+              return true;
+            }
+            return allowedRoles.includes(role.title);
+          });
 
           if (!hasRole) {
             return createForbiddenResponse(res, 'You do not have the required role to access this resource');

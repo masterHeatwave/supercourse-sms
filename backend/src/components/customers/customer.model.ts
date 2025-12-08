@@ -68,7 +68,16 @@ const CustomerSchema: Schema<ICustomer> = new mongoose.Schema(
     email: {
       type: String,
     },
+    customer_email: {
+      type: String,
+    },
+    manager_name: {
+      type: String,
+    },
     description: {
+      type: String,
+    },
+    note: {
       type: String,
     },
     order: {
@@ -87,6 +96,15 @@ const CustomerSchema: Schema<ICustomer> = new mongoose.Schema(
       ref: 'User',
     },
     address: {
+      type: String,
+    },
+    city: {
+      type: String,
+    },
+    zipcode: {
+      type: String,
+    },
+    country: {
       type: String,
     },
     phone: {

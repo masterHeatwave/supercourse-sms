@@ -23,6 +23,7 @@ export const AuthActions = createActionGroup({
     'Force Logout': emptyProps(),
     'Impersonate Student': props<{ studentId: string }>(),
     'Impersonate Success': props<{ user: any; token: string; refreshToken: string }>(),
-    'Exit Impersonation': emptyProps()
+    'Exit Impersonation': emptyProps(),
+    'Set Session Expired Message Shown': props<{ shown: boolean }>()
   }
 });

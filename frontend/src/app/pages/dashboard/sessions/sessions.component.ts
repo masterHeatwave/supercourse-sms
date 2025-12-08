@@ -16,6 +16,8 @@ import * as XLSX from 'xlsx';
 import { Store } from '@ngrx/store';
 import { AppState } from '@store/app.state';
 import { selectAuthState } from '@store/auth/auth.selectors';
+import { getModeLabel } from '../../../utils/session-modes.util';
+import { calculateSessionStatus, getSessionStatusSeverity, getSessionStatusLabel } from '../../../utils/session-status.util';
 
 @Component({
   selector: 'app-sessions',
@@ -47,7 +49,7 @@ export class SessionsComponent implements OnInit {
     { field: 'absences', header: 'sessions.table.absences', filterType: 'text' },
     { field: 'scheduledTimeframe', header: 'Scheduled Timeframe', type: 'timeframe', filterType: 'text' },
     { field: 'startTime', header: 'Started At', type: 'time', filterType: 'text' },
-    { field: 'endsIn', header: 'Ends', type: 'duration', filterType: 'text' }
+    { field: 'endsIn', header: 'Ends In', type: 'duration', filterType: 'text' }
   ];
 
   private searchQuerySubject = new BehaviorSubject<string>('');
@@ -67,29 +69,11 @@ export class SessionsComponent implements OnInit {
 
   // Helper functions to transform session data for display
   getStatusSeverity(status: string): string {
-    switch (status) {
-      case 'scheduled':
-        return 'info';
-      case 'in_progress':
-        return 'success';
-      case 'completed':
-        return 'success';
-      case 'cancelled':
-        return 'danger';
-      default:
-        return 'warning';
-    }
+    return getSessionStatusSeverity(status as 'Live' | 'Scheduled' | 'Completed' | 'Cancelled');
   }
 
   getStatusLabel(status: string): string {
-    const map: Record<string, string> = {
-      scheduled: 'sessions.status.upcoming',
-      in_progress: 'sessions.status.in_progress',
-      completed: 'sessions.status.completed',
-      cancelled: 'sessions.status.cancelled'
-    };
-    const key = map[status] || 'common.unknown';
-    return this.#translateService.instant(key);
+    return getSessionStatusLabel(status as 'Live' | 'Scheduled' | 'Completed' | 'Cancelled', this.#translateService);
   }
 
   formatTimeframe(startTime: string, endTime: string): string {
@@ -166,20 +150,20 @@ export class SessionsComponent implements OnInit {
     return {
       ...session,
       // Transform nested objects to display values
-      code: session.id?.substring(0, 8) || this.#translateService.instant('sessions.list.na'), // Use first 8 chars of ID as code
+      code: session.id?.substring(0, 8).toUpperCase() || this.#translateService.instant('sessions.list.na'), // Use first 8 chars of ID as code
       title: session.taxi
         ? `${session.taxi.subject || this.#translateService.instant('common.unknown')} - ${session.taxi.level || this.#translateService.instant('common.unknown')}`
         : this.#translateService.instant('sessions.list.no_subject'), // Combine subject and level
       class: session.taxi?.name || this.#translateService.instant('sessions.list.no_class'), // Use taxi name as class
       teacher: this.formatTeachers(session.teachers || []), // Format teacher names
-      mode: session.mode || '',
+      mode: getModeLabel(session.mode), // Use centralized mode label mapping
       classroom: session.classroom?.name || this.#translateService.instant('sessions.list.no_classroom'), // Use classroom name
       room: session.classroom?.location || this.#translateService.instant('sessions.list.no_location'), // Use classroom location as room
       absences: this.formatAbsences(session.absences || []), // Format absences count
       scheduledTimeframe: this.formatTimeframe(session.start_date, session.end_date),
       startTime: this.formatStartTime(session.start_time),
       endsIn: this.calculateSessionDuration(session.start_date, session.end_date),
-      status: this.calculateSessionStatus(session.start_date, session.end_date),
+      status: calculateSessionStatus(session.start_date, session.end_date, session.start_time, session.duration, session.is_cancelled || false),
       studentsCount: session.students?.length || 0 // Add students count for reference
     };
   }
@@ -205,27 +189,19 @@ export class SessionsComponent implements OnInit {
   }
 
   // Format absences for display
-  private formatAbsences(absences: any[]): string {
-    if (!absences || absences.length === 0) {
+  private formatAbsences(absences: any): string {
+    // Handle case where absences might be a number instead of an array
+    if (typeof absences === 'number') {
+      return absences.toString();
+    }
+    
+    if (!absences || !Array.isArray(absences) || absences.length === 0) {
       return '0';
     }
+    
     return absences.length.toString();
   }
 
-  // Calculate session status based on start and end dates
-  private calculateSessionStatus(startDate: string, endDate: string): string {
-    const now = new Date();
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-
-    if (now < start) {
-      return 'scheduled';
-    } else if (now >= start && now <= end) {
-      return 'in_progress';
-    } else {
-      return 'completed';
-    }
-  }
 
   sessions$ = combineLatest({
     page: this.pageSubject,

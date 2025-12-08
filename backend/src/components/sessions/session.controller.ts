@@ -20,6 +20,7 @@ import {
   IBulkSessionCreateDTO,
   IBulkSessionUpdateDTO,
 } from './session.interface';
+import { IUser } from '@components/users/user.interface';
 
 export class SessionController {
   private sessionService: SessionService;
@@ -41,7 +42,8 @@ export class SessionController {
 
   getSessionById = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     try {
-      const session = await this.sessionService.getSessionById(req.params.id);
+      const includeInstances = req.query.include_instances === 'true';
+      const session = await this.sessionService.getSessionById(req.params.id, includeInstances);
 
       jsonResponse(res, {
         status: StatusCodes.OK,
@@ -79,7 +81,7 @@ export class SessionController {
         data: result,
         warnings: result.warnings,
         message: result.isRecurring
-          ? `Successfully created ${result.totalSessions} recurring sessions`
+          ? `Successfully created recurring session with ${result.totalInstances} instances`
           : 'Session successfully created',
       });
     } catch (error: any) {
@@ -165,8 +167,7 @@ export class SessionController {
         status: StatusCodes.CREATED,
         success: true,
         data: result,
-        warnings: result.warnings,
-        message: `Successfully created ${result.totalCreated} sessions from ${bulkData.sessions.length} requests`,
+        message: `Successfully created ${result.totalCreated} main sessions with ${result.totalInstances} recurring instances from ${bulkData.sessions.length} requests`,
       });
     } catch (error: any) {
       if (error.message.includes('Session overlaps detected')) {
@@ -200,9 +201,10 @@ export class SessionController {
         success: true,
         data: result,
         warnings: result.warnings,
-        message: result.isRecurring
-          ? `Successfully updated recurring session with ${result.totalSessions} instances`
-          : 'Session successfully updated',
+        message:
+          result.isRecurring && result.totalInstances
+            ? `Successfully updated recurring session with ${result.totalInstances} instances`
+            : 'Session successfully updated',
       });
     } catch (error: any) {
       if (error.message.includes('Session overlaps detected')) {
@@ -573,7 +575,7 @@ export class SessionController {
           data: {
             valid: true,
             message: 'No overlaps detected - safe to create',
-            estimatedSessions: result.isRecurring ? result.totalSessions : 1,
+            estimatedSessions: result.isRecurring ? result.totalInstances : 1,
           },
         });
       } catch (error: any) {
@@ -645,4 +647,59 @@ export class SessionController {
 
     return details;
   }
+
+  getMySessions = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const reqUser = req.user as IUser;
+    const queryParams = querySessionSchema.parse(req.query);
+
+    // For teachers, get sessions they teach
+    // For students, get sessions they are enrolled in
+    const userRoles = reqUser?.roles?.map((role: any) => role.title) || [];
+    const isTeacher = userRoles.includes('TEACHER');
+    const isStudent = userRoles.includes('STUDENT');
+
+    let scopedQuery = { ...queryParams };
+
+    if (isTeacher) {
+      // Teachers see sessions they teach
+      scopedQuery.teacherId = (reqUser._id as any).toString();
+    } else if (isStudent) {
+      // Students see sessions they are enrolled in
+      scopedQuery.studentId = (reqUser._id as any).toString();
+    }
+
+    const sessions = await this.sessionService.getAllSessions(scopedQuery);
+
+    jsonResponse(res, {
+      status: StatusCodes.OK,
+      success: true,
+      count: Array.isArray(sessions) ? sessions.length : 0,
+      data: sessions,
+    });
+  });
+
+  getChildrenSessions = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const reqUser = req.user as IUser;
+    const queryParams = querySessionSchema.parse(req.query);
+
+    // Parents see sessions for their children
+    const parentEmail = reqUser?.email;
+    if (!parentEmail) {
+      return jsonResponse(res, {
+        status: StatusCodes.BAD_REQUEST,
+        message: 'Authenticated user has no email',
+        success: false,
+      });
+    }
+
+    // Get children's sessions by finding students with this parent's email in contacts
+    const sessions = await this.sessionService.getSessionsByParentEmail(parentEmail, queryParams);
+
+    jsonResponse(res, {
+      status: StatusCodes.OK,
+      success: true,
+      count: Array.isArray(sessions) ? sessions.length : 0,
+      data: sessions,
+    });
+  });
 }

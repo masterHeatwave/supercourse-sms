@@ -107,11 +107,6 @@ export const seedCustomer = async () => {
         name: 'Supercourse Tenant',
         email: 'contact@supercourse.com',
       },
-      {
-        slug: 'piedpiper',
-        name: 'Pied Piper Tenant',
-        email: 'contact@piedpiper.com',
-      },
     ];
 
     for (const tenant of tenants) {

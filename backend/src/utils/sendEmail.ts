@@ -20,20 +20,12 @@ transport
 const sendEmail = async (options: EmailOptions): Promise<void> => {
   let message = {
     from: `Super Course <${config.FROM_EMAIL}>`,
-    to: 'super-int-test@softweb.gr',
+    to: options.to,
     cc: ['swp1@supercourse.gr', 'efthymis@softweb.gr'],
+    //cc: ['koukis@softweb.gr'],
     subject: options.subject,
     html: options.html,
   };
-  if (config.NODE_ENV !== 'production') {
-    message = {
-      from: `Super Course <${config.FROM_EMAIL}>`,
-      to: 'kourouklis@softweb.gr',
-      cc: ['koukis@softweb.gr'],
-      subject: options.subject,
-      html: options.html,
-    };
-  }
 
   const info = await transport.sendMail(message);
   if (config.NODE_ENV !== 'test') {
@@ -65,7 +57,7 @@ const sendVerificationEmail = async (verificationToken: string, origin: string, 
     html: `
       <h4 style="color: #333;">Email Verification Needed</h4>
       ${message}
-      <p>Welcome aboard!<br>The Souper Course Team</p>
+      <p>Welcome aboard!<br>The Super Course Team</p>
     `,
   });
 };
@@ -77,14 +69,14 @@ const sendPasswordResetEmail = async (resetToken: string, email: string): Promis
     <p>It looks like you requested a password reset. Click the link below to proceed:</p>
     <p><a href="${resetUrl}" style="color: #4CAF50; text-decoration: none;">Reset My Password</a></p>
     <p>This link is valid for the next 24 hours. If you didn’t request a reset, you can safely ignore this email.</p>
-    <p>Take care,<br>Souper Course Support Team</p>
+    <p>Take care,<br>Super Course Support Team</p>
   `;
 
   logger.info(resetUrl); // This logging is important for debugging.
 
   await sendEmail({
     to: email,
-    subject: `Password Reset for Souper Course`,
+    subject: `Password Reset for Super Course`,
     html: `<h4 style="color: #333;">Password Reset Request</h4>${message}`,
   });
 };

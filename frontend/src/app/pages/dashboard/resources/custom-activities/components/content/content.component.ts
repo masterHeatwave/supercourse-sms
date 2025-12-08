@@ -20,6 +20,7 @@ import { MemoryMatchingPairsComponent } from '../activities/memory-matching-pair
 import { Item } from '../../types';
 import { DropdownModule } from 'primeng/dropdown';
 import { MultiSelectChangeEvent, MultiSelectModule } from 'primeng/multiselect';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-content',
@@ -41,7 +42,8 @@ import { MultiSelectChangeEvent, MultiSelectModule } from 'primeng/multiselect';
     MatchingPairsComponent,
     MemoryMatchingPairsComponent,
     DropdownModule,
-    MultiSelectModule
+    MultiSelectModule,
+    TranslateModule
   ],
   templateUrl: './content.component.html',
   styleUrl: './content.component.scss'
@@ -57,6 +59,8 @@ export class ContentComponent implements OnInit {
   @Input() activitySettings = {};
   @Input() activityCEFR = '';
   @Input() activityTags = [];
+  @Input() plays = 0;
+  @Input() totalDuration = 0;
   @Input() userId = '';
   @Input() activityQuestions: Array<any> = [
     {
@@ -69,7 +73,7 @@ export class ContentComponent implements OnInit {
       questionText: '',
       option: '',
       groupNumber: 1,
-      groupName: 'Group name',
+      groupName: '',
       items: []
     }
   ];
@@ -108,7 +112,7 @@ export class ContentComponent implements OnInit {
     { label: 'English for Specific Purposes', value: 'English for Specific Purposes' }
   ];
 
-  selectedTags = [{}];
+  selectedTags = [''];
 
   constants = Constants;
   constructor(public navigationService: NavigationService, private dataService: DataService) {}
@@ -168,6 +172,12 @@ export class ContentComponent implements OnInit {
     if (changes['userId']) {
       //console.log('user id changed:', this.userId);
       this.dataService.setData('userId', this.userId);
+    }
+    if(changes['plays']){
+      this.dataService.setData('plays', this.plays);
+    }
+    if(changes['totalDuration']){
+      this.dataService.setData('totalDuration', this.totalDuration);
     }
   }
 

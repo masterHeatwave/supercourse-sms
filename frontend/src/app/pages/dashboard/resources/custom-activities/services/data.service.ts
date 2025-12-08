@@ -1,19 +1,37 @@
-import { ChangeDetectorRef, Injectable, Output, EventEmitter, inject } from '@angular/core';
+import { ChangeDetectorRef, Injectable, Output, EventEmitter } from '@angular/core';
 import { Question, SaveResponse, ValidationObject } from '../types';
 import { BehaviorSubject, Observable, tap, throwError } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
 import { INITIAL_QUESTION } from '../Constants';
 import * as constants from '../Constants';
 //import { environment } from '../../environments/environment';
 import { CustomActivitiesService } from '@gen-api/custom-activities/custom-activities.service';
 import { CustomActivity } from '@gen-api/schemas';
+import { TranslateService } from '@ngx-translate/core';
+
+interface Data {
+  activityType: string;
+  typeString: string;
+  playerMode: string;
+  playerModeString: string;
+  title: string;
+  description: string;
+  template: string;
+  templateURL: string;
+  userId: string;
+  cefr: string;
+  plays: number;
+  totalDuration: number;
+  tags: any[];
+  questions: any[];
+  settings: any;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
   private activityID: string = '';
-  private data = {
+  private data: Data = {
     activityType: '',
     typeString: '',
     playerMode: '',
@@ -24,6 +42,8 @@ export class DataService {
     templateURL: '',
     userId: '',
     cefr: '',
+    plays: 0,
+    totalDuration: 0,
     tags: [],
     questions: [JSON.parse(JSON.stringify(INITIAL_QUESTION))],
     settings: {}
@@ -35,7 +55,9 @@ export class DataService {
   private templateURLSubject = new BehaviorSubject<string>(this.data.templateURL);
   private userIdSubject = new BehaviorSubject<string>(this.data.userId);
   private cefrSubject = new BehaviorSubject<string>(this.data.cefr);
-  private tagsSubject = new BehaviorSubject<Array<{}>>(this.data.tags);
+  private playsSubject = new BehaviorSubject<number>(this.data.plays);
+  private totalDurationSubject = new BehaviorSubject<number>(this.data.totalDuration);
+  private tagsSubject = new BehaviorSubject<Array<string>>(this.data.tags);
   private settingsSubject = new BehaviorSubject<object>(this.data.settings);
   private questionsSubject = new BehaviorSubject<Question[]>(this.data.questions);
   private activityTypeSubject = new BehaviorSubject<string>(this.data.activityType);
@@ -44,10 +66,8 @@ export class DataService {
   private playerModeStringSubject = new BehaviorSubject<string>(this.data.playerModeString);
 
   //private apiUrl = environment.apiUrl + '/activitySave/';
-  
-  customActivityService = inject(CustomActivitiesService);
-  
-  constructor(private http: HttpClient) {}
+
+  constructor(private customActivityService: CustomActivitiesService, private translate: TranslateService) {}
 
   @Output() onResponse: EventEmitter<void> = new EventEmitter<void>();
 
@@ -69,7 +89,7 @@ export class DataService {
 
   saveData(): Observable<any> {
     if (this.validationCheck().error) {
-      return throwError(() => new Error('Some fields are missing.'));
+      return throwError(() => new Error(this.translate.instant('customActivities.missing_fields')));
     }
     if (this.data.activityType === 'letterHunt') {
       for (let i = 0; i < this.data.questions.length; i++) {
@@ -79,31 +99,12 @@ export class DataService {
     if (this.data.activityType === 'fillInTheGaps' || this.data.activityType === 'cloze') {
       for (let i = 0; i < this.data.questions.length; i++) {
         this.data.questions[i].document = this.data.questions[i].document.replace(/#@/g, '').replace(/_{2,}/g, (match: any) => `#@${match}#@`);
-        //this.data.questions[i].document = this.data.questions[i].document.replace(/_{2,}/g, (match: any) => `#@${match}#@`);
-        //this.data.questions[i].document = this.data.questions[i].document.replace(/(?<!#@)_{2,}(?!#@)/g, (match: any) => `#@${match}#@`);
-        //console.log(this.data);
       }
     }
     if (this.activityID !== '') {
       return this.customActivityService.putCustomActivitiesActivityId(this.data as CustomActivity, this.activityID);
-      /*next: (response) => {
-          //console.log(response);
-          this.onResponse.emit();
-        },
-        error: (err) => {
-          console.error(err.error);
-          this.onResponse.emit();
-        }*/
     } else {
       return this.customActivityService.postCustomActivities(this.data as CustomActivity);
-      /*next: (response) => {
-          //console.log(response);
-          this.onResponse.emit();
-        },
-        error: (err) => {
-          console.error(err.error);
-          this.onResponse.emit();
-        }*/
     }
   }
 
@@ -159,17 +160,15 @@ export class DataService {
     //console.log('Teacher ID is:', this.data.teacherId);
   }
 
-  setData(key: keyof typeof this.data, value: any): void {
+  setData<K extends keyof Data>(key: K, value: Data[K]): void {
     this.data[key] = value;
     switch (key) {
       case 'userId': {
         this.userIdSubject.next(value);
-        //console.log('Teacher ID:', this.data.teacherId);
         break;
       }
       case 'cefr': {
         this.cefrSubject.next(value);
-        //console.log('cefr:', this.data.cefr);
         break;
       }
       case 'tags': {
@@ -182,6 +181,14 @@ export class DataService {
       }
       case 'description': {
         this.descriptionSubject.next(value);
+        break;
+      }
+      case 'plays': {
+        this.playsSubject.next(value);
+        break;
+      }
+      case 'totalDuration': {
+        this.totalDurationSubject.next(value);
         break;
       }
       case 'activityType': {
@@ -214,9 +221,7 @@ export class DataService {
         if (value === constants.MEMORY_MATCHING_PAIRS_VALUE) {
           this.typeStringSubject.next(constants.MEMORY_MATCHING_PAIRS_TEXT);
         }
-        //console.log('value to type:', value);
         this.data.typeString = this.typeStringSubject.value;
-        //console.log('typeStringSubject', this.typeStringSubject.value);
         break;
       }
       case 'playerMode': {
@@ -227,9 +232,7 @@ export class DataService {
         if (value === constants.MULTI_PLAYER_MODE_VALUE) {
           this.playerModeStringSubject.next(constants.MULTI_PLAYER_MODE_TEXT);
         }
-        //console.log('value to type:', value);
         this.data.playerModeString = this.playerModeStringSubject.value;
-        //console.log('typeStringSubject', this.playerModeStringSubject.value);
         break;
       }
       case 'settings': {
@@ -238,11 +241,7 @@ export class DataService {
       }
       case 'template': {
         this.templateSubject.next(value);
-        //SOS
-        //this.templateURLSubject.next(environment.apiUrl + '/' + value + '.png');
         this.templateURLSubject.next(value);
-        //'https://coolbackgrounds.imgix.net/219VUMa1SOxASKqCE2OgT4/be1c810344587bd7f6f203337d23602a/ranger-4df6c1b6.png?w=3840&q=60&auto=format,compress'
-        //assets/images/custom-activities/' + value + '.png');
         this.data.templateURL = this.templateURLSubject.value;
         break;
       }
@@ -273,6 +272,8 @@ export class DataService {
       description: '',
       template: '',
       templateURL: '',
+      plays: 0,
+      totalDuration: 0,
       questions: [JSON.parse(JSON.stringify(INITIAL_QUESTION))],
       settings: {}
     };
@@ -300,7 +301,7 @@ export class DataService {
             } else {
               return {
                 isValid: false,
-                reason: 'Choose an activity type to continue.'
+                reason: this.translate.instant('customActivities.choose_activity_type')
               };
             }
           }
@@ -312,13 +313,13 @@ export class DataService {
               } else {
                 return {
                   isValid: false,
-                  reason: 'Choose a player mode to continue.'
+                  reason: this.translate.instant('customActivities.choose_player_mode')
                 };
               }
             } else {
               return {
                 isValid: false,
-                reason: 'Choose an activity type to continue.'
+                reason: this.translate.instant('customActivities.choose_activity_type')
               };
             }
           } else {
@@ -328,7 +329,7 @@ export class DataService {
               } else {
                 return {
                   isValid: false,
-                  reason: 'Choose a player mode to continue.'
+                  reason: this.translate.instant('customActivities.choose_player_mode')
                 };
               }
             }
@@ -336,6 +337,6 @@ export class DataService {
         }
       }
     }
-    return { isValid: false, reason: 'Uknown navigation error.' };
+    return { isValid: false, reason: this.translate.instant('customActivities.uknown_navigation_error') };
   }
 }

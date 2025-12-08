@@ -1,0 +1,130 @@
+<p-confirmDialog #cd [dismissableMask]="true" [style]="{width: '450px'}">
+  <ng-template pTemplate="headless" let-message>
+    <div class="flex flex-column align-items-center p-5 surface-overlay border-round-xl">
+      <div class="border-circle bg-red-100 inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-4">
+        <i class="pi pi-exclamation-triangle text-5xl text-red-500"></i>
+      </div>
+      <span class="font-bold text-2xl block mb-2 mt-4 text-900">
+        {{ message.header }}
+      </span>
+      <p class="mb-0 text-600 text-center line-height-3">{{ message.message }}</p>
+      <div class="flex align-items-center gap-3 mt-5">
+        <p-button 
+          [label]="'common.cancel' | translate" 
+          icon="pi pi-times"
+          severity="secondary" 
+          size="large"
+          [style]="{'min-width': '120px'}"
+          (click)="cd.reject()" />
+        <p-button 
+          [label]="'common.delete' | translate" 
+          icon="pi pi-trash"
+          severity="danger" 
+          size="large"
+          [style]="{'min-width': '120px'}"
+          (click)="cd.accept()" />
+      </div>
+    </div>
+  </ng-template>
+</p-confirmDialog>
+
+<div class="card">
+  <!-- Header with Actions -->
+  <div class="flex justify-content-between align-items-center mb-4">
+    <div></div>
+    <div class="flex align-items-center gap-2">
+      <!-- Action Buttons -->
+      <p-button 
+        icon="pi pi-plus" 
+        styleClass="p-button-text border-circle"
+        (onClick)="onAdd()">
+      </p-button>
+    </div>
+  </div>
+
+  <div class="position-relative">
+    <!-- Add spinner with overlay when loading -->
+    <app-spinner *ngIf="isLoading" [overlay]="true"></app-spinner>
+
+    <!-- Display tables for each customer -->
+    <div *ngFor="let customerData of customersWithClassrooms" class="mb-6">
+      <div class="card">
+        <!-- Customer Header -->
+        <div class="customer-header flex justify-content-between align-items-center">
+          <div>
+            <h3 class="text-xl font-semibold text-900 m-0 mb-1">
+              {{ customerData.customer.label }}
+            </h3>
+          </div>
+        </div>
+
+        <!-- Classrooms Table for this Customer -->
+        <app-primary-table
+          *ngIf="customerData.classrooms.length > 0"
+          [data]="customerData.classrooms"
+          [columns]="tableColumns"
+          [rows]="10"
+          [totalRecords]="customerData.totalRecords"
+          [showActions]="true"
+          [selectionEnabled]="true"
+          (editRow)="onEdit($event)"
+          (deleteRow)="onDelete($event)"
+          (viewRow)="onView($event)"
+          (restoreRow)="onView($event)"
+          (rowSelect)="onRowSelect($event)"
+          [dataKey]="'id'"
+        >
+        </app-primary-table>
+
+        <!-- No classrooms message -->
+        <div *ngIf="customerData.classrooms.length === 0" class="empty-state">
+          <i class="pi pi-building text-4xl text-400 mb-3"></i>
+          <p class="text-600 m-0">{{ 'classrooms.no_classrooms_found' | translate }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- No branches message -->
+    <div *ngIf="!isLoading && customersWithClassrooms.length === 0" class="empty-state">
+      <i class="pi pi-exclamation-triangle text-4xl text-400 mb-3"></i>
+      <p class="text-600 m-0">{{ 'classrooms.no_branches_found' | translate }}</p>
+    </div>
+  </div>
+</div>
+
+<!-- Create Dialog -->
+<p-dialog
+  [(visible)]="showCreateDialog"
+  [header]="'classrooms.create_classroom' | translate"
+  [modal]="true"
+  [style]="{width: '50vw'}"
+  [contentStyle]="{'overflow': 'visible'}"
+  [dismissableMask]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [blockScroll]="true">
+  <app-classroom-form
+    [isEditMode]="false"
+    (formSubmitted)="onFormSubmitted($event)"
+    (formCancelled)="onFormCancelled()">
+  </app-classroom-form>
+</p-dialog>
+
+<!-- Edit Dialog -->
+<p-dialog
+  [(visible)]="showEditDialog"
+  [header]="'classrooms.edit_classroom' | translate"
+  [modal]="true"
+  [style]="{width: '50vw'}"
+  [contentStyle]="{'overflow': 'visible'}"
+  [dismissableMask]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [blockScroll]="true">
+  <app-classroom-form
+    [isEditMode]="true"
+    [classroomData]="selectedClassroom"
+    (formSubmitted)="onFormSubmitted($event)"
+    (formCancelled)="onFormCancelled()">
+  </app-classroom-form>
+</p-dialog>

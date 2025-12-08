@@ -20,9 +20,14 @@ const AcademicYearSchema: Schema<IAcademicYear> = new mongoose.Schema(
       type: Date,
       required: [true, 'Please add an end date'],
     },
+    is_manual_active: {
+      type: Boolean,
+      default: false,
+    },
     is_current: {
       type: Boolean,
       default: false,
+      description: 'Computed field: true if current date falls within start_date and end_date',
     },
     notes: {
       type: String,
@@ -40,6 +45,24 @@ AcademicYearSchema.virtual('academic_periods', {
   ref: 'AcademicPeriod',
   localField: '_id',
   foreignField: 'academic_year',
+});
+
+/**
+ * Pre-save hook to compute is_current based on date range
+ * Checks if today's date falls within the academic year's start and end dates
+ */
+AcademicYearSchema.pre('save', function (next) {
+  const now = new Date();
+  const startDate = new Date(this.start_date);
+  const endDate = new Date(this.end_date);
+
+  // Reset time parts to compare dates only
+  now.setHours(0, 0, 0, 0);
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(0, 0, 0, 0);
+
+  this.is_current = startDate <= now && now <= endDate;
+  next();
 });
 
 AcademicYearSchema.plugin(toJson);

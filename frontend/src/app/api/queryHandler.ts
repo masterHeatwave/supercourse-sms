@@ -14,6 +14,11 @@ export class QueryHandler {
   ) { }
 
   handleError(error: any) {
+    // Don't show notifications for errors that should be suppressed
+    if (error.error?.suppressNotification) {
+      return;
+    }
+    
     const translatedKey = this.getTranslatedKey(error.error.message);
     this.translateService.get(translatedKey).subscribe((translatedMessage) => {
       this.messageService.add({

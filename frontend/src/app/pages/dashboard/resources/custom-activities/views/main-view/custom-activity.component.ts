@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -15,6 +15,17 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { selectAuthState } from '@store/auth/auth.selectors';
 import { CustomActivitiesService } from '@gen-api/custom-activities/custom-activities.service';
+import { CustomerService } from '@services/customer.service';
+import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
+import { OverlayModule } from 'primeng/overlay';
+import { CheckboxModule } from 'primeng/checkbox';
+import { LoadingComponent } from '../../components/loading/loading.component';
+import { InfoDialogComponent } from '@components/dialogs/info-dialog/info-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
+import { TranslateModule } from '@ngx-translate/core';
+import { LaunchStudentViewComponent } from '../launch-student-view/launch-student-view.component';
+import { LaunchTeacherViewComponent } from '../launch-teacher-view/launch-teacher-view.component';
+import { SolvedViewComponent } from '../solved-view/solved-view.component';
 //import { LocalStorageService } from '../../services/local-storage.service';
 
 @Component({
@@ -28,7 +39,16 @@ import { CustomActivitiesService } from '@gen-api/custom-activities/custom-activ
     FormsModule,
     CardModule,
     //RouterModule,
-    AccordionModule
+    AccordionModule,
+    OverlayModule,
+    OverlayPanelModule,
+    CheckboxModule,
+    LoadingComponent,
+    WarningDialogComponent,
+    InfoDialogComponent,
+    TranslateModule,
+    LaunchStudentViewComponent,
+    SolvedViewComponent
   ],
   templateUrl: './custom-activity.component.html',
   styleUrl: './custom-activity.component.scss'
@@ -39,6 +59,7 @@ export class CustomActivityComponent {
   publicCustomActivities: any = [];
 
   studentActivities: any = [];
+  assignments: any = [];
 
   userId: string = '';
   userType: string = '';
@@ -47,20 +68,32 @@ export class CustomActivityComponent {
   view: string = 'table';
 
   store = inject(Store);
-  customActivityService = inject(CustomActivitiesService);
 
   currentSchoolSlug: string = '';
   currentSchoolID: string = '';
   currentBranchID: string = '';
   currentRoleTitle: string = '';
   currentUserID: string = '';
+  //branches: [] = [];
+  //buttons = [{ id: '1', label: '' }];
+  //selectedActivityId: string = '';
+  //@ViewChild('op') op!: OverlayPanel;
+  isLoading: boolean = false;
+  isWarningDialogVisible: boolean = false;
+  warningMessage: string = '';
+  isInfoDialogVisible: boolean = false;
+  infoMessage: string = '';
+  active: boolean = false;
+  activityId: string = '';
 
   constructor(
     private dataService: DataService,
     private router: Router,
     private route: ActivatedRoute,
-    // private customActivityService: CustomActivitiesService
-  ) {}
+    private customActivityService: CustomActivitiesService,
+    private branchesService: CustomerService
+  ) {
+  }
 
   ngOnInit() {
     this.store.select(selectAuthState).subscribe((authState: any) => {
@@ -70,112 +103,161 @@ export class CustomActivityComponent {
       this.currentRoleTitle = authState.currentRoleTitle || authState.user?.roles[0].title || '';
       this.currentUserID = authState.user?.id || '';
       this.user = authState.user;
-      this.userType = authState.user.user_type;
-    });
-    this.dataService.setData('userId', this.currentUserID);
-    if (this.user.user_type !== 'student') {
-      this.customActivityService.getCustomActivitiesUserUserId(this.currentUserID).subscribe({
+      this.isLoading = true;
+      /*this.branchesService.getCurrentUserCustomers().subscribe({
         next: (response: any) => {
-          this.privateCustomActivities = response.data;
-          this.customActivityService.getCustomActivitiesPublicActivitiesUserId(this.currentUserID).subscribe({
-            next: (response) => {
-              //console.log(response);
-              this.publicCustomActivities = response.data;
-            },
-            error: (err) => {
-              console.log(err.error);
-            }
+          this.branches = response.filter((branch: any) => branch.is_main_customer === false);
+          this.branches.forEach((branch: any, i) => {
+            this.buttons[i] = { label: '', id: (i + 1).toString() };
+            this.buttons[i].label = branch.name;
+            this.buttons[i].id = branch.id;
           });
-          //this.user = response.data.userId;
-          //console.log('response.data', response.data);
-        },
-        error: (err) => {
-          console.log(err.error);
+          console.log(this.buttons);
         }
-      });
+      });*/
+
+      this.dataService.setData('userId', this.currentUserID);
+      if (this.currentRoleTitle.toLocaleLowerCase() !== 'student') {
+        this.customActivityService.getCustomActivitiesUserUserId(this.currentUserID).subscribe({
+          next: (response: any) => {
+            this.privateCustomActivities = response.data;
+          },
+          error: (err) => {
+            console.log(err.error.data.error.message);
+          }
+        });
+        this.customActivityService.getCustomActivitiesPublicActivitiesUserId(this.currentUserID).subscribe({
+          next: (response) => {
+            this.publicCustomActivities = response.data;
+          },
+          error: (err) => {
+            console.log(err.error.data.error.message);
+          }
+        });
+      } else {
+        this.customActivityService.getCustomActivitiesStudentActivitiesUserUserId(this.currentUserID).subscribe({
+          next: (response: any) => {
+            this.studentActivities = response.data;
+            this.studentActivities = response.data.filter((activity: any) =>
+              activity.students.some((student: any) => student.studentId === this.currentUserID && student.completed === true)
+            );
+
+            console.log(this.studentActivities);
+          },
+          error: (err) => {
+            console.log(err.error.data.error.message);
+          }
+        });
+      }
+      this.isLoading = false;
+    });
+  }
+
+  showOverlay(event: Event, activityId: string) {
+    //this.selectedActivityId = activityId;
+    //this.op.toggle(event);
+  }
+
+  buttonClicked(branchId: string, op: OverlayPanel, activityId: string) {
+    /*this.isLoading = true;
+    this.customActivityService.postCustomActivitiesDuplicateActivityId(activityId).subscribe({
+      next: (response: any) => {
+        this.isLoading = false;
+        this.infoMessage = 'Copy was successful.';
+        this.isInfoDialogVisible = true;
+        if (branchId === this.currentBranchID) {
+          this.privateCustomActivities.push(response.data);
+        }
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.warningMessage = err.error.data.error.message;
+        this.isWarningDialogVisible = true;
+        console.log(err);
+      }
+    });
+    op.hide();*/
+  }
+
+  toggleView(event: MouseEvent) {
+    if (this.view === 'tiles') {
+      this.view = 'table';
     } else {
-      this.customActivityService.getCustomActivitiesStudentActivitiesUserUserId(this.currentUserID).subscribe({
-        next: (response) => {
-          this.studentActivities = response.data;
-        },
-        error: (err) => {
-          console.log(err.error);
-        }
-      });
+      this.view = 'tiles';
     }
   }
 
-  onTileClick(event: MouseEvent) {
-    this.view = 'tiles';
-  }
-
-  onTableClick(event: MouseEvent) {
-    this.view = 'table';
-  }
-
   onCreateClick(event: MouseEvent, userId: string) {
-    //console.log('Clicked');
-    //console.log('userId = ', userId);
-    this.router.navigate(
-      ['create'],
-      {
-        relativeTo: this.route
-      }
-      //{ queryParams: { userId } }
-    );
+    this.router.navigate(['create'], {
+      relativeTo: this.route
+    });
   }
 
   duplicateActivity(id: string) {
-    //console.log('duplicating1', id);
+    this.isLoading = true;
     this.customActivityService.postCustomActivitiesDuplicateActivityId(id).subscribe({
       next: (response: any) => {
-        //console.log(response);
+        this.isLoading = false;
+        //this.infoMessage = 'Copy was successful.';
+        //this.isInfoDialogVisible = true;
         this.privateCustomActivities.push(response.data);
       },
       error: (err) => {
+        this.isLoading = false;
+        this.warningMessage = err.error.data.error.message;
+        this.isWarningDialogVisible = true;
         console.log(err);
       }
     });
   }
 
   duplicatePublicActivity(id: string) {
-    //console.log('duplicating2', id);
+    this.isLoading = true;
     this.customActivityService.postCustomActivitiesDuplicatePublicActivityIdUserUserId(id, this.currentUserID).subscribe({
       next: (response: any) => {
-        //console.log(response);
+        this.isLoading = false;
         this.privateCustomActivities.push(response.data);
       },
       error: (err) => {
+        this.isLoading = false;
+        this.warningMessage = err.error.data.error.message;
+        this.isWarningDialogVisible = true;
         console.log(err);
       }
     });
   }
 
   editActivity(id: string) {
-    //console.log('id', id);
-    //this.router.navigate(['edit', id]);
-    this.router.navigate(
-      ['edit', id],
-      {
-        relativeTo: this.route
-      }
-      //{ queryParams: { userId } }
-    );
-  }
-
-  launchActivity(id: string) {
-    //this.router.navigate(['/resources/custom-activities/launch/' + this.userType, id]);
-    this.router.navigate(['launch/teacher', id], {
+    this.router.navigate(['edit', id], {
       relativeTo: this.route
     });
   }
 
+  launchActivity(id: string) {
+    let route = '';
+    if (this.currentRoleTitle === 'STUDENT') {
+      this.activityId = id;
+      console.log('Launging activity:', this.activityId);
+      this.active = true;
+    } else {
+      route = 'teacher';
+      this.router.navigate(['launch/' + route, id], {
+        relativeTo: this.route
+      });
+    }
+  }
+
   deleteActivity(id: string) {
+    this.isLoading = true;
     this.customActivityService.deleteCustomActivitiesActivityId(id).subscribe({
       next: (response) => {
+        this.isLoading = false;
         this.privateCustomActivities = this.privateCustomActivities.filter((activity: any) => activity.id !== id);
       },
       error: (err) => {
+        this.isLoading = false;
+        this.warningMessage = err.error.data.error.message;
+        this.isWarningDialogVisible = true;
         console.log(err);
       }
     });

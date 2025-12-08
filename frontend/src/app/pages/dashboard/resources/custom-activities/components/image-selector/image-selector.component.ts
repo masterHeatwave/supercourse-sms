@@ -3,18 +3,16 @@ import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { ImageModule } from 'primeng/image';
-//import { ImageUploadService } from './services/image-upload.service';
-//import { AIImageGeneratorService } from './services/aiimage-generator.service';
 import { FormsModule } from '@angular/forms';
 import { LoadingComponent } from '../loading/loading.component';
-//import { PexelImageSearchService } from './services/pexel-image-search.service';
 import { environment } from '@environments/environment.development';
 import { CustomActivitiesService } from '@gen-api/custom-activities/custom-activities.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-image-selector',
   standalone: true,
-  imports: [DialogModule, ButtonModule, ImageModule, CommonModule, FormsModule, LoadingComponent],
+  imports: [DialogModule, ButtonModule, ImageModule, CommonModule, FormsModule, LoadingComponent, TranslateModule],
   templateUrl: './image-selector.component.html',
   styleUrl: './image-selector.component.scss'
 })
@@ -35,7 +33,8 @@ export class ImageSelectorComponent {
   validExtensions = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'webp', 'svg', 'tiff', 'heif', 'heic'];
 
   constructor(
-    private customActivityService: CustomActivitiesService //private mediaUploadService: MediaUploadService
+    private customActivityService: CustomActivitiesService,
+    private translate: TranslateService //private mediaUploadService: MediaUploadService
   ) {}
 
   ngAfterViewInit(): void {
@@ -57,7 +56,7 @@ export class ImageSelectorComponent {
         this.uploadImage();
         input.value = '';
       } else {
-        this.onErrorMessage.emit('Wrong file type (' + extension + '). Try again using only image file types.');
+        this.onErrorMessage.emit(this.translate.instant('customActivities.wrong_file_type')); //'Wrong file type (' + extension + '). Try again using only image file types.');
       }
     }
   }
@@ -69,6 +68,9 @@ export class ImageSelectorComponent {
 
   uploadImage() {
     if (this.selectedFile) {
+      //const formData = new FormData();
+      //formData.append('media', this.selectedFile);
+      //const file = this.selectedFile; // from an <input type="file">
       const body = { media: this.selectedFile };
 
       this.customActivityService.postCustomActivitiesSaveImage(body).subscribe({
@@ -84,7 +86,7 @@ export class ImageSelectorComponent {
         error: (err) => {
           this.isLoading = false;
           console.error('Error in image upload:', err);
-          this.onErrorMessage.emit('An error occurred during upload. Please try again.');
+          this.onErrorMessage.emit(this.translate.instant('customActivities.error_while_upload')); //'An error occurred during upload. Please try again.');
         }
       });
     }
@@ -116,7 +118,7 @@ export class ImageSelectorComponent {
       },
       error: (err) => {
         console.error('Error in image upload:', err);
-        this.onErrorMessage.emit('An error occurred during delete. Please try again.');
+        this.onErrorMessage.emit(this.translate.instant('customActivities.error_during_delete')); //'An error occurred during delete. Please try again.');
       }
     });
   }
@@ -148,7 +150,7 @@ export class ImageSelectorComponent {
       },
       error: (error) => {
         this.isLoading = false;
-        this.onErrorMessage.emit('Something went wrong with AI generation. Please try again.');
+        this.onErrorMessage.emit(this.translate.instant('customActivities.error_generating_ai')); //'Something went wrong with AI generation. Please try again.');
       }
     });
   }
@@ -167,13 +169,13 @@ export class ImageSelectorComponent {
             this.imageIcon.nativeElement.classList.add('image-selected-style');
           }
         } else {
-          this.onErrorMessage.emit(response.message);
+          this.onErrorMessage.emit(this.translate.instant('customActivities.no_images_found')); //response.message);
         }
         this.isLoading = false;
       },
       error: (error) => {
         this.isLoading = false;
-        this.onErrorMessage.emit('Something went wrong with Pexels search. Please try again.');
+        this.onErrorMessage.emit(this.translate.instant('customActivities.error_searching_pexels')); //'Something went wrong with Pexels search. Please try again.');
       }
     });
   }

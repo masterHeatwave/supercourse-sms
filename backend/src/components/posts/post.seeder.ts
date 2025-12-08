@@ -89,6 +89,8 @@ const seedTenantPosts = async (tenantId: string) => {
           tags,
           status: PostStatus.PUBLISHED,
           published_at: chance.date({ year: 2025, month: chance.integer({ min: 1, max: 5 }) }),
+          pinned: false,
+          likedBy: [],
         });
       }
 
@@ -103,7 +105,6 @@ const seedTenantPosts = async (tenantId: string) => {
 
 const seedPosts = async () => {
   await seedTenantPosts('supercourse');
-  await seedTenantPosts('piedpiper');
 };
 
 export { seedTenantPosts };

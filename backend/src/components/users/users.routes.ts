@@ -1,5 +1,6 @@
 import express from 'express';
 import { authorize } from '@middleware/authorize';
+import { Role } from '@middleware/constants/role';
 import usersController from '@components/users/users.controller';
 
 export const userRouter = express.Router();
@@ -27,14 +28,26 @@ userRouter.route('/staff/:id').get(authorize('STAFF_QUERY_SINGLE'), usersControl
 userRouter.route('/staff/:id').put(authorize('STAFF_UPDATE'), usersController.updateStaff);
 userRouter.route('/staff/:id').delete(authorize('STAFF_DELETE'), usersController.deleteStaff);
 
-userRouter.route('/students').get(authorize('STUDENT_QUERY_ALL'), usersController.getAllStudents);
-userRouter.route('/students').post(authorize('STUDENT_CREATE'), usersController.createStudent);
+userRouter
+  .route('/students')
+  .get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.PARENT_GUARDIAN]), usersController.getAllStudents);
+userRouter.route('/students').post(authorize([Role.ADMIN, Role.MANAGER]), usersController.createStudent);
 
-userRouter.route('/students/:id').get(authorize('STUDENT_QUERY_SINGLE'), usersController.getStudentById);
-userRouter.route('/students/:id').put(authorize('STUDENT_UPDATE'), usersController.updateStudent);
-userRouter.route('/students/:id').delete(authorize('STUDENT_DELETE'), usersController.deleteStudent);
+userRouter.route('/teachers/me/students').get(authorize([Role.TEACHER]), usersController.getMyStudents);
+
+userRouter
+  .route('/teachers/:teacherId/students')
+  .get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), usersController.getTeacherStudents);
+
+userRouter
+  .route('/students/:id')
+  .get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.PARENT_GUARDIAN]), usersController.getStudentById);
+userRouter.route('/students/:id').put(authorize([Role.ADMIN, Role.MANAGER]), usersController.updateStudent);
+userRouter.route('/students/:id').delete(authorize([Role.ADMIN, Role.MANAGER]), usersController.deleteStudent);
 
 // Parents: list children (students linked via contacts.email)
-userRouter.route('/children').get(authorize(['ADMIN', 'MANAGER', 'PARENT']), usersController.getChildren);
+userRouter
+  .route('/children')
+  .get(authorize([Role.ADMIN, Role.MANAGER, Role.PARENT_GUARDIAN]), usersController.getChildren);
 
 export default userRouter;

@@ -117,7 +117,7 @@ export class InventoryDetailsComponent {
     const labels: Record<string, Record<string, string>> = {
       asset: {
         field1: 'inventory.fields.billingPerson',
-        field2: 'inventory.table.title',
+        field2: 'inventory.table.assetTitle',
         field3: 'inventory.fields.billingDate',
         field4: 'inventory.fields.returnDate',
         field5: 'inventory.fields.notes',
@@ -125,8 +125,8 @@ export class InventoryDetailsComponent {
         field7: ''
       },
       elibrary: {
-        field1: 'inventory.fields.billingPerson',
-        field2: 'inventory.table.title',
+        field1: 'inventory.fields.borrower',
+        field2: 'inventory.table.bookTitle',
         field3: 'inventory.fields.billingDate',
         field4: 'inventory.fields.returnDate',
         field5: 'inventory.fields.notes',

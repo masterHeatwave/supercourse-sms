@@ -1,40 +1,28 @@
-import { Component, inject, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { QuestionCardComponent } from './question-card/question-card.component';
 import { NgZone } from '@angular/core';
-import {
-  CdkDragDrop,
-  DragDropModule,
-  moveItemInArray,
-} from '@angular/cdk/drag-drop';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { Question } from '../../../types';
 import { INITIAL_QUESTION } from '../../../Constants';
 import { DataService } from '../../../services/data.service';
-import { WarningDialogComponent } from '../../dialogs/warning-dialog/warning-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'letter-hunt-activity',
   standalone: true,
-  imports: [
-    QuestionCardComponent,
-    WarningDialogComponent,
-    CommonModule,
-    DragDropModule,
-  ],
+  imports: [QuestionCardComponent, WarningDialogComponent, CommonModule, DragDropModule, TranslateModule],
   templateUrl: './letter-hunt.component.html',
-  styleUrl: './letter-hunt.component.scss',
+  styleUrl: './letter-hunt.component.scss'
 })
 export class LetterHuntComponent {
-  @Input() questions: Question[] = [
-    JSON.parse(JSON.stringify(INITIAL_QUESTION)),
-  ];
+  @Input() questions: Question[] = [JSON.parse(JSON.stringify(INITIAL_QUESTION))];
   @Input() hasData: boolean = false;
   isWarningDialogVisible: boolean = false;
   warningMessage: string = '';
-  
-  dataService = inject(DataService);
-  
-  constructor() {
+
+  constructor(private dataService: DataService, private translate: TranslateService) {
     this.dataService.getQuestions().subscribe((questions: Question[]) => {
       this.questions = questions;
     });
@@ -58,14 +46,10 @@ export class LetterHuntComponent {
   handleAnswersChange(newValue: object, index: number) {
     const updatedQuestion = {
       ...this.questions[index],
-      answers: Array.isArray(newValue) ? newValue : [newValue],
+      answers: Array.isArray(newValue) ? newValue : [newValue]
     };
 
-    const updatedQuestions = [
-      ...this.questions.slice(0, index),
-      updatedQuestion,
-      ...this.questions.slice(index + 1),
-    ];
+    const updatedQuestions = [...this.questions.slice(0, index), updatedQuestion, ...this.questions.slice(index + 1)];
 
     this.questions = updatedQuestions;
     this.dataService.setData('questions', updatedQuestions);
@@ -77,7 +61,7 @@ export class LetterHuntComponent {
       this.questions = [...this.questions];
       this.dataService.setData('questions', this.questions);
     } else {
-      this.warningMessage = 'The least amount of questions must be one.';
+      this.warningMessage = this.translate.instant('customActivities.the_least_amount_of_questions_must_be_one'); //'The least amount of questions must be one.';
       this.isWarningDialogVisible = true;
     }
   }

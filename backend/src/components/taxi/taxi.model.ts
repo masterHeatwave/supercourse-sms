@@ -19,6 +19,12 @@ const TaxiSchema: Schema<ITaxi> = new mongoose.Schema(
       type: String,
       required: [true, 'Please add a name'],
     },
+    code: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
     color: {
       type: String,
     },
@@ -64,6 +70,13 @@ const TaxiSchema: Schema<ITaxi> = new mongoose.Schema(
         type: String,
       },
     ],
+    archived: {
+      type: Boolean,
+      default: false,
+    },
+    notes: {
+      type: String,
+    },
   },
   {
     timestamps: true,
@@ -77,6 +90,35 @@ TaxiSchema.virtual('sessions', {
   ref: 'Session',
   localField: '_id',
   foreignField: 'taxi',
+});
+
+// Generate a unique 6-character code before validation if missing
+TaxiSchema.pre('validate', async function (next) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const doc: any = this;
+  if (doc.code) return next();
+
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // avoid ambiguous chars
+  const gen = () => Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+
+  let tries = 0;
+  while (tries < 10) {
+    const candidate = gen();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const exists = await (doc.constructor as any).exists({ code: candidate });
+    if (!exists) {
+      doc.code = candidate;
+      break;
+    }
+    tries++;
+  }
+
+  if (!doc.code) {
+    // fallback to timestamp-based suffix if collisions persist
+    doc.code = `TXI${Date.now().toString().slice(-6)}`;
+  }
+
+  next();
 });
 
 TaxiSchema.plugin(toJson);

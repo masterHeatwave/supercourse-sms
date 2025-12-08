@@ -1,0 +1,455 @@
+.board-container {
+  min-height: 100vh;
+  background-color: var(--surface-ground);
+}
+
+.custom-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+::ng-deep .custom-paginator {
+  border: none !important;
+  background: transparent !important;
+
+  .p-paginator {
+    border: none !important;
+    background: white !important;
+    padding: 1rem !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.5rem !important;
+  }
+
+  // Page numbers
+  .p-paginator-pages .p-paginator-page {
+    background: white !important;
+    border: 1px solid var(--surface-300) !important;
+    color: var(--text-color) !important;
+    min-width: 2.5rem !important;
+    height: 2.5rem !important;
+    border-radius: 6px !important;
+    margin: 0 0.25rem !important;
+    transition: all 0.2s ease !important;
+    font-weight: 500 !important;
+
+    &.p-highlight {
+      background: var(--primary-color) !important;
+      border-color: var(--primary-color) !important;
+      color: white !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+      transform: scale(1.05) !important;
+    }
+
+    &:hover:not(.p-highlight) {
+      background: var(--surface-100) !important;
+      border-color: var(--primary-color) !important;
+      color: var(--primary-color) !important;
+    }
+  }
+
+  // Previous/Next buttons
+  .p-paginator-prev,
+  .p-paginator-next,
+  .p-paginator-first,
+  .p-paginator-last {
+    background: white !important;
+    border: 1px solid var(--surface-300) !important;
+    color: var(--text-color) !important;
+    min-width: 2.5rem !important;
+    height: 2.5rem !important;
+    border-radius: 6px !important;
+    transition: all 0.2s ease !important;
+
+    &:not(.p-disabled):hover {
+      background: var(--primary-color) !important;
+      border-color: var(--primary-color) !important;
+      color: white !important;
+      transform: translateY(-1px) !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    &.p-disabled {
+      opacity: 0.4 !important;
+      cursor: not-allowed !important;
+    }
+  }
+
+  // Rows per page dropdown
+  .p-dropdown {
+    border: 1px solid var(--surface-300) !important;
+    border-radius: 6px !important;
+    height: 2.5rem !important;
+    transition: all 0.2s ease !important;
+    background: white !important;
+    
+    &:hover {
+      border-color: var(--primary-color) !important;
+      box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1) !important;
+    }
+
+    &:focus,
+    &.p-focus {
+      border-color: var(--primary-color) !important;
+      box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2) !important;
+    }
+
+    .p-dropdown-label {
+      padding: 0.5rem 0.75rem !important;
+      font-weight: 500 !important;
+    }
+
+    .p-dropdown-trigger {
+      width: 2.5rem !important;
+      color: var(--text-color) !important;
+    }
+  }
+
+  // Dropdown panel
+  .p-dropdown-panel {
+    border-radius: 6px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid var(--surface-300) !important;
+    margin-top: 0.25rem !important;
+
+    .p-dropdown-items {
+      padding: 0.25rem !important;
+
+      .p-dropdown-item {
+        border-radius: 4px !important;
+        margin: 0.125rem 0 !important;
+        padding: 0.5rem 0.75rem !important;
+        font-weight: 500 !important;
+        transition: all 0.15s ease !important;
+
+        &:hover {
+          background: var(--surface-100) !important;
+          color: var(--primary-color) !important;
+        }
+
+        &.p-highlight {
+          background: var(--primary-color) !important;
+          color: white !important;
+        }
+      }
+    }
+  }
+
+  // Current page report
+  .p-paginator-current {
+    color: var(--text-color) !important;
+    font-weight: 500 !important;
+    padding: 0 0.5rem !important;
+  }
+}
+
+// Icon-only buttons (Create and View Toggle)
+.icon-only-button {
+  background: none;
+  border: none;
+  padding: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  color: var(--text-color);
+
+  i {
+    font-size: 1.25rem;
+    transition: all 0.2s ease;
+  }
+
+  &:hover {
+    color: var(--primary-color);
+    transform: scale(1.1);
+  }
+
+  &.active {
+    color: var(--primary-color);
+    font-weight: bold;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// Filter section styling
+.filter-section {
+  .p-dropdown {
+    min-width: 120px;
+  }
+
+  .p-calendar {
+    min-width: 100px;
+  }
+}
+
+// Primary dropdown width optimization
+::ng-deep app-primary-dropdown {
+  display: block;
+  
+  span.relative {
+    width: 100%;
+    display: block;
+    position: relative;
+  }
+  
+  select.primary-select__control {
+    width: 100% !important;
+    min-width: 20rem !important;
+    max-width: none !important;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    cursor: pointer;
+    pointer-events: auto !important;
+    
+    &:focus {
+      outline: none;
+    }
+    
+    option {
+      white-space: normal;
+      padding: 0.5rem;
+      cursor: pointer;
+    }
+  }
+  
+  // Ensure chevron doesn't block clicks
+  .primary-select__chevron {
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+// View mode toggle styling
+.view-toggle {
+  .p-button {
+    padding: 0.5rem;
+    border-radius: 0;
+
+    &:first-child {
+      border-top-left-radius: 6px;
+      border-bottom-left-radius: 6px;
+    }
+
+    &:last-child {
+      border-top-right-radius: 6px;
+      border-bottom-right-radius: 6px;
+    }
+  }
+}
+
+// List view specific styling
+.post-list-item {
+  transition: all 0.3s ease;
+  border: 1px solid var(--surface-300, #e5e7eb);
+  margin-bottom: 0.75rem;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    border-color: var(--surface-400, #d1d5db);
+  }
+
+  &.post-list-item-border {
+    border-bottom: 1px solid var(--surface-300, #e5e7eb);
+  }
+}
+
+// Pin indicator styling
+.pin-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  background: var(--primary-color);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .board-container {
+    padding: 1rem;
+  }
+
+  .filter-section {
+    .flex {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .p-dropdown,
+    .p-calendar {
+      width: 100%;
+    }
+  }
+}
+
+// Custom styling for post cards in grid
+::ng-deep app-post-card {
+  .custom-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .card-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-text {
+      flex: 1;
+    }
+  }
+}
+
+// Action buttons styling
+::ng-deep .p-button-rounded.p-button-text {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  padding: 0 !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  color: var(--text-color) !important;
+  transition: all 0.2s ease;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  &:hover {
+    background: rgba(255, 255, 255, 1) !important;
+    color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    transform: scale(1.05);
+  }
+
+  i, .pi {
+    font-size: 1rem !important;
+    display: inline-block !important;
+    transition: transform 0.3s ease;
+  }
+
+  // Pinned state - rotate icon and add background
+  &.pinned-button {
+    background: var(--primary-color) !important;
+    color: white !important;
+    border-color: var(--primary-color) !important;
+
+    &:hover {
+      background: var(--primary-600, var(--primary-color)) !important;
+      color: white !important;
+    }
+
+    i, .pi {
+      transform: rotate(-45deg);
+    }
+  }
+
+  // Liked state - red heart
+  &.liked-button {
+    i, .pi {
+      color: #ef4444 !important;
+      animation: heartBeat 0.3s ease-in-out;
+    }
+
+    &:hover {
+      transform: scale(1.1);
+      
+      i, .pi {
+        color: #dc2626 !important;
+      }
+    }
+  }
+}
+
+// Heart beat animation for like button
+@keyframes heartBeat {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.2); }
+  50% { transform: scale(1); }
+  75% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+// Author initials circle for grid view
+.author-initials-circle {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border: 2px solid white;
+}
+
+// List view action buttons container - ensure all items are centered
+.list-view-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+
+  // Ensure all buttons have consistent sizing
+  ::ng-deep button.p-button {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+// Author initials circle for list view - in the same row with action buttons
+.author-initials-circle-list {
+  position: relative;
+  width: 2.5rem;
+  height: 2.5rem;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  border-radius: 50%;
+  background: var(--primary-color, #14b8a6);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.75rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  border: 2px solid white;
+  flex-shrink: 0;
+  margin: 0;
+}
+

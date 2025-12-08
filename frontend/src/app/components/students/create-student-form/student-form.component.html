@@ -15,6 +15,7 @@
           [contacts]="model.contacts || []"
           [siblingAttending]="model.siblingAttending || []"
           [isEditMode]="isEditMode"
+          [dateOfBirth]="model.dateOfBirth"
           (contactsChange)="onContactsChange($event)"
           (siblingAttendingChange)="onSiblingAttendingChange($event)">
         </app-contacts>
@@ -55,12 +56,9 @@
 
     <!-- Submit Button -->
     <div class="flex justify-content-end gap-2 mt-3">
-      <button 
-        type="button" 
-        class="p-button p-button-outlined"
-        (click)="onSubmit()">
+      <app-outline-button (click)="onSubmit()" [borderColor]="'var(--primary-color)'">
         {{ submitButtonLabel }}
-      </button>
+      </app-outline-button>
     </div>
   </form>
 </div> 

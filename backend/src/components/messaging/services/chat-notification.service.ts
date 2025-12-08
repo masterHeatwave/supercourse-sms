@@ -42,18 +42,12 @@ export class ChatNotificationService {
   
     // ✅ Use ONLY the user room (user is already joined via authenticate)
     const userRoom = `user-${userId}`;
-    
-    console.log(`📢 Emitting 'newNotification' to room: ${userRoom}`, {
-      notificationId: payload._id,
-      title: payload.title
-    });
   
     // ✅ Emit to user room ONCE
     this.io.to(userRoom).emit('newNotification', payload);
     
     // ✅ Log room info for debugging
     const roomClients = this.io.sockets.adapter.rooms.get(userRoom)?.size || 0;
-    console.log(`👥 Room ${userRoom} has ${roomClients} client(s)`);
     
     if (roomClients === 0) {
       console.warn(`⚠️ No clients in room ${userRoom} - user may be offline or not authenticated`);
@@ -104,7 +98,6 @@ export class ChatNotificationService {
     messageContent: string
   ): Promise<IChatNotification[]> {
     try {
-      console.log(`📨 Creating message notification - Sender: ${senderId}, Recipients: ${recipientIds.join(', ')}`);
 
       if (!mongoose.Types.ObjectId.isValid(senderId)) {
         throw new ErrorResponse(`Invalid senderId format: ${senderId}`, StatusCodes.BAD_REQUEST);
@@ -157,7 +150,6 @@ export class ChatNotificationService {
         });
       }
 
-      console.log(`🎉 Created ${notifications.length} notifications successfully`);
       return notifications;
     } catch (error: any) {
       console.error('❌ Error in createMessageNotificationsWithMuteCheck:', error);
@@ -374,7 +366,6 @@ export class ChatNotificationService {
    */
   async createWelcomeNotification(userId: string): Promise<IChatNotification> {
     try {
-      console.log('🎉 Creating welcome notification for user:', userId);
       const notification = await this.createNotification({
         userId,
         type: NotificationType.SYSTEM,

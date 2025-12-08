@@ -6,11 +6,12 @@ import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import { DataService } from '../../services/data.service';
 import { LoadingComponent } from '../loading/loading.component';
-import { WarningDialogComponent } from '../dialogs/warning-dialog/warning-dialog.component';
-import { InfoDialogComponent } from '../dialogs/info-dialog/info-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
+import { InfoDialogComponent } from '@components/dialogs/info-dialog/info-dialog.component';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-footer',
@@ -23,7 +24,8 @@ import { Subscription } from 'rxjs';
     LoadingComponent,
     WarningDialogComponent,
     InfoDialogComponent,
-    CommonModule
+    CommonModule,
+    TranslateModule
   ],
   templateUrl: './footer.component.html',
   styleUrl: './footer.component.scss'
@@ -108,7 +110,7 @@ export class FooterComponent {
 
   onInfoClose() {
     this.isInfoDialogVisible = false;
-    this.router.navigate(['/dashboard/custom-activities']);
+    this.router.navigate(['/dashboard/resources/custom-activities']);
   }
 
   dialogClick(): void {

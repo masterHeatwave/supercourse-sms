@@ -40,6 +40,7 @@ export interface IAuthState {
   currentRoleId?: string | null;
   currentRoleTitle?: string | null;
   isRefreshingToken: boolean;
+  hasShownSessionExpiredMessage: boolean;
   impersonation?: {
     active: boolean;
     original: {

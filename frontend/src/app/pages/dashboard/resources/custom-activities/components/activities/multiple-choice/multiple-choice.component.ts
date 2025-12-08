@@ -8,12 +8,13 @@ import { INITIAL_QUESTION } from '../../../Constants';
 import { DataService } from '../../../services/data.service';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
-import { WarningDialogComponent } from '../../dialogs/warning-dialog/warning-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'multiple-choice-activity',
   standalone: true,
-  imports: [QuestionCardComponent, DragDropModule, CommonModule, DialogModule, ButtonModule, WarningDialogComponent],
+  imports: [QuestionCardComponent, DragDropModule, CommonModule, DialogModule, ButtonModule, WarningDialogComponent, TranslateModule],
   templateUrl: './multiple-choice.component.html',
   styleUrl: './multiple-choice.component.scss'
 })
@@ -25,7 +26,7 @@ export class MultipleChoiceComponent {
   isWarningDialogVisible: boolean = false;
   warningMessage: string = '';
 
-  constructor(private dataService: DataService, private zone: NgZone) {
+  constructor(private dataService: DataService, private translate: TranslateService) {
     this.dataService.getQuestions().subscribe((questions: Question[]) => {
       this.questions = questions;
     });
@@ -69,7 +70,7 @@ export class MultipleChoiceComponent {
       this.questions = [...this.questions];
       this.dataService.setData('questions', this.questions);
     } else {
-      this.warningMessage = 'The least amount of questions must be one.';
+      this.warningMessage = this.translate.instant('customActivities.the_least_amount_of_questions_must_be_one'); //'The least amount of questions must be one.';
       this.isWarningDialogVisible = true;
     }
   }

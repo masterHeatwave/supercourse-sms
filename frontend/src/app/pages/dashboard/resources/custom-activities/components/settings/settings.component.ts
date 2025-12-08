@@ -13,11 +13,12 @@ import { DataService } from '../../services/data.service';
 import { CheckboxModule } from 'primeng/checkbox';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CheckboxModule, FormsModule, CommonModule],
+  imports: [CheckboxModule, FormsModule, CommonModule, TranslateModule],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss'
 })

@@ -1,0 +1,8 @@
+:host ::ng-deep .p-float-label {
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+}
+
+:host ::ng-deep .p-float-label label {
+    margin: -10px 5px -10px 5px !important;
+}

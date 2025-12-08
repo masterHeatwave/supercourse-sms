@@ -9,7 +9,7 @@ import { PrimeIcons } from 'primeng/api';
 import { LABELS } from '../../../../Constants';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
-import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { QuestionControllerComponent } from '../question-controller/question-controller.component';
 

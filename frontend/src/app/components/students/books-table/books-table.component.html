@@ -1,13 +1,39 @@
 <div class="books-table-container">
-  <app-primary-table 
-    [data]="tableData" 
-    [columns]="columns"
-    [showActions]="false"
-    (editRow)="handleEdit($event)"
-    (deleteRow)="handleDelete($event)">
-    
-    <ng-template #titleTemplate let-item="item">
-      <div>{{ item.title.value }}</div>
-    </ng-template>
-  </app-primary-table>
-</div> 
+  <!-- Loading state -->
+  <div *ngIf="loading" class="loading-container">
+    <p>Loading inventory data...</p>
+  </div>
+  
+  <!-- Error state -->
+  <div *ngIf="error && !loading" class="error-container">
+    <p class="error-message">{{ error }}</p>
+    <button (click)="loadInventoryData()" class="retry-button">Retry</button>
+  </div>
+  
+  <!-- Data table -->
+  <div *ngIf="!loading && !error && inventoryData.length > 0">
+    <app-primary-table 
+      [data]="tableData" 
+      [columns]="columns"
+      [showActions]="false"
+      (editRow)="handleEdit($event)"
+      (deleteRow)="handleDelete($event)">
+      
+      <ng-template #titleTemplate let-item="item">
+        <div class="title-cell">
+          <strong>{{ item.title.value }}</strong>
+        </div>
+      </ng-template>
+    </app-primary-table>
+  </div>
+  
+  <!-- No data message -->
+  <div *ngIf="!loading && !error && inventoryData.length === 0" class="no-data-container">
+    <div class="empty-state">
+      <div class="empty-icon">
+        <i class="pi pi-book" style="font-size: 3rem; color: #ccc;"></i>
+      </div>
+      <h3 class="empty-title">No Books Found</h3>
+      <p class="empty-message">This student hasn't been assigned any books yet.</p>
+    </div>
+  </div>

@@ -26,11 +26,13 @@ const seedTenantMoodVideos = async (tenantId: string) => {
 const seedMoods = async () => {
   await seedTenantMoods('supercourse');
   await seedTenantMoods('piedpiper');
+  await seedTenantMoods('lexis-fls');
 };
 
 const seedMoodVideos = async () => {
   await seedTenantMoodVideos('supercourse');
   await seedTenantMoodVideos('piedpiper');
+  await seedTenantMoodVideos('lexis-fls');
 };
 
 export { seedTenantMoods, seedTenantMoodVideos, seedMoodVideos };

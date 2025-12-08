@@ -6,22 +6,24 @@ import { initializeSocket } from '@config/socket';
 import { logger } from '@utils/logger';
 import { seedDatabase } from '@config/seeder';
 import { setupMessagingSocket } from '@components/messaging/messaging.routes';
+import { startPostScheduler } from './jobs/postScheduler';
 
 const startServer = async () => {
   try {
     await connectDB();
-    
+
     const PORT = config.PORT;
     const server = http.createServer(app);
-    
+
     const io = initializeSocket(server);
     setupMessagingSocket(io);
-    
+
     server.listen(PORT, () => {
       logger.info(`Server is listening on port ${PORT}`);
     });
-    
+
     await seedDatabase();
+    startPostScheduler();
 
     process.on('unhandledRejection', (error: Error) => {
       logger.error('Unhandled Rejection:', error);

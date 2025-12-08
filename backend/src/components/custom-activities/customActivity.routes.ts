@@ -16,8 +16,8 @@ const fileUploadMiddleware = fileUpload({
 
 router
   .route('/')
-  .get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT]), customActivityController.getActivities)
-  .post(authorize([Role.TEACHER, Role.STUDENT, Role.ADMIN, Role.MANAGER]), customActivityController.saveActivity);
+  .get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), customActivityController.getActivities)
+  .post(authorize([Role.TEACHER, Role.ADMIN, Role.MANAGER]), customActivityController.saveActivity);
 
 router
   .route('/saveImage')
@@ -41,40 +41,36 @@ router
 
 router
   .route('/:activityId')
-  .get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT]), customActivityController.getActivityById)
-  .put(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT]), customActivityController.updateActivity)
-  .delete(
-    authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT]),
-    customActivityController.deleteActivityById
-  );
+  .get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), customActivityController.getActivityById)
+  .put(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), customActivityController.updateActivity)
+  .patch(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), customActivityController.updateActivityPlays)
+  .delete(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), customActivityController.deleteActivityById);
 
 router
   .route('/user/:userId/')
+  .get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), customActivityController.getCustomActivitiesByUserID);
+
+router
+  .route('/user/:userId/tag/:tag')
   .get(
-    authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT]),
-    customActivityController.getCustomActivitiesByUserID
+    authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]),
+    customActivityController.getSinglePlayerActivitiesByUserIdTag
   );
 
 router
   .route('/public-activities/:userId')
   .get(
-    authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT]),
+    authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]),
     customActivityController.getPublicActivitiesExcludingUserId
   );
 
 router
   .route('/duplicate/:activityId')
-  .post(
-    authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT]),
-    customActivityController.duplicateActivityById
-  );
+  .post(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), customActivityController.duplicateActivityById);
 
 router
   .route('/duplicate-public/:activityId/user/:userId')
-  .post(
-    authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT]),
-    customActivityController.duplicatePublicActivityById
-  );
+  .post(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), customActivityController.duplicatePublicActivityById);
 
 router
   .route('/student-activities/user/:userId')
@@ -83,6 +79,45 @@ router
     customActivityController.getStudentActivities
   );
 
-//videos
+router
+  .route('/student-activity/user/:userId/activity/:activityId')
+  .get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT]), customActivityController.getStudentActivity);
+
+router
+  .route('/assigned-activities')
+  .get(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), customActivityController.getAssignedActivities);
+
+router
+  .route('/assigned-activities/create/activity/:activityId')
+  .post(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), customActivityController.createAssignedActivity);
+
+router
+  .route('/assigned-activities/update-status/:activityId/:studentId')
+  .patch(
+    authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT]),
+    customActivityController.updateAssignedActivityStatus
+  );
+
+router
+  .route('/assigned-activities-add-students/activity/:activityId')
+  .patch(authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), customActivityController.addStudentsToAssignedActivity);
+
+router
+  .route('/assigned-activities-remove-students/activity/:activityId')
+  .patch(
+    authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]),
+    customActivityController.removeStudentsFromAssignedActivity
+  );
+
+router
+  .route('/task-answers/:assignmentId/:studentId/:customActivityId')
+  .get(
+    authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT]),
+    customActivityController.getAssignedTaskAnswers
+  )
+  .patch(
+    authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT]),
+    customActivityController.updateAssignedTaskAnswers
+  );
 
 export default router;

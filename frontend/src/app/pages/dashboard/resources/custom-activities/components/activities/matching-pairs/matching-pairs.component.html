@@ -1,13 +1,6 @@
-<div
-  cdkDropList
-  [cdkDropListData]="questions"
-  (cdkDropListDropped)="drop($event)"
->
-  <label class="head-label">Pairs</label>
-  <div
-    *ngFor="let question of questions; let i = index; trackBy: trackByIndex"
-    cdkDrag
-  >
+<div cdkDropList [cdkDropListData]="questions" (cdkDropListDropped)="drop($event)">
+  <label class="head-label">{{ 'customActivities.pairs' | translate }}</label>
+  <div *ngFor="let question of questions; let i = index; trackBy: trackByIndex" cdkDrag>
     <matching-pairs-card
       [questionNumber]="i + 1"
       [answers]="question.answers"
@@ -17,10 +10,6 @@
     >
     </matching-pairs-card>
   </div>
-  <label (click)="addPair()">+Add pair</label>
-  <app-warning-dialog
-    [warningMessage]="warningMessage"
-    [isDialogVisible]="isWarningDialogVisible"
-    (onClose)="isWarningDialogVisible = false"
-  />
+  <label (click)="addPair()">+{{ 'customActivities.add_a_pair' | translate }}</label>
+  <app-warning-dialog [warningMessage]="warningMessage" [isDialogVisible]="isWarningDialogVisible" (onClose)="isWarningDialogVisible = false" />
 </div>

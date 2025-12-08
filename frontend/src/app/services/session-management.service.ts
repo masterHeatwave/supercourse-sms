@@ -11,6 +11,12 @@ import {
   GetSessionsPreviewDay,
   GetSessionsPreview200Data
 } from '@gen-api/schemas';
+import { 
+  SESSION_MODES, 
+  getSessionModeOptions, 
+  convertModeToApiFormat, 
+  convertModeFromApiFormat 
+} from '../utils/session-modes.util';
 
 // Extended Session interface to handle recurring session fields that may not be in generated types yet
 export interface ExtendedSession extends Session {
@@ -103,38 +109,53 @@ export class SessionManagementService {
     { label: '21:00', value: '21:00' }
   ];
 
-  readonly DURATIONS = [
-    { label: '30 min', value: 0.5 },
-    { label: '45 min', value: 0.75 },
-    { label: '1 hour', value: 1 },
-    { label: '1.5 hours', value: 1.5 },
-    { label: '2 hours', value: 2 },
-    { label: '2.5 hours', value: 2.5 },
-    { label: '3 hours', value: 3 },
-    { label: '3.5 hours', value: 3.5 },
-    { label: '4 hours', value: 4 },
-    { label: '4.5 hours', value: 4.5 },
-    { label: '5 hours', value: 5 },
-    { label: '5.5 hours', value: 5.5 },
-    { label: '6 hours', value: 6 }
-  ];
+  readonly DURATIONS = (() => {
+    const durations = [];
+    // Generate durations every 5 minutes from 5 min to 3 hours
+    for (let minutes = 5; minutes <= 180; minutes += 5) {
+      const hours = minutes / 60;
+      let label: string;
+      
+      if (minutes < 60) {
+        label = `${minutes} min`;
+      } else if (minutes === 60) {
+        label = '1 hour';
+      } else {
+        const wholeHours = Math.floor(hours);
+        const remainingMinutes = minutes % 60;
+        if (remainingMinutes === 0) {
+          label = `${wholeHours} hour${wholeHours > 1 ? 's' : ''}`;
+        } else {
+          label = `${wholeHours} hour${wholeHours > 1 ? 's' : ''} ${remainingMinutes} min`;
+        }
+      }
+      
+      durations.push({ label, value: hours });
+    }
+    return durations;
+  })();
 
-  readonly MODES = [
-    { label: 'In-person', value: 'in_person' },
-    { label: 'Online', value: 'online' },
-    { label: 'Hybrid', value: 'hybrid' }
-  ];
+  // Use centralized mode configuration
+  readonly MODES = getSessionModeOptions();
 
   /**
    * Validate session data client-side
    */
   validateSession(sessionData: SessionFormData): SessionValidationError | null {
-    // Check required fields
-    if (!sessionData.day || !sessionData.startTime || !sessionData.duration ||
-        !sessionData.dateRange?.[0] || !sessionData.dateRange?.[1] || !sessionData.classroom) {
+    // Check required fields (mode is required, classroom is always optional)
+    const missingFields: string[] = [];
+    
+    if (!sessionData.day) missingFields.push('Day');
+    if (!sessionData.startTime) missingFields.push('Start Time');
+    if (!sessionData.duration) missingFields.push('Duration');
+    if (!sessionData.dateRange?.[0] || !sessionData.dateRange?.[1]) missingFields.push('Date Range');
+    if (!sessionData.mode) missingFields.push('Mode'); // Mode is required
+    
+    
+    if (missingFields.length > 0) {
       return {
         type: 'VALIDATION_ERROR',
-        message: 'Please fill in all required fields (Day, Start Time, Duration, Date Range, Classroom).',
+        message: `Please fill in all required fields (${missingFields.join(', ')}).`,
         field: 'required_fields'
       };
     }
@@ -219,15 +240,8 @@ export class SessionManagementService {
    * Transform form data to API format
    */
   transformToApiFormat(sessionData: SessionFormData, taxiId: string): PostSessionsBody {
-    // Convert UI mode values to API format
-    const uiMode: string = sessionData.mode || '';
-    let apiMode: PostSessionsBodyMode = 'in_person'; // Default
-    if (uiMode) {
-      const normalized = uiMode.replace(/-/g, '_');
-      if (['in_person', 'online', 'hybrid'].includes(normalized)) {
-        apiMode = normalized as PostSessionsBodyMode;
-      }
-    }
+    // Use centralized mode conversion
+    const apiMode = convertModeToApiFormat(sessionData.mode);
 
     // Map UI day values to API enum
     const apiDay: PostSessionsBodyDay | undefined = sessionData.day ?
@@ -236,9 +250,9 @@ export class SessionManagementService {
     // Calculate start and end dates for the recurring period
     const [startDate, endDate] = sessionData.dateRange;
 
-    return {
+    // Build API data object
+    const apiData: any = {
       taxi: taxiId,
-      classroom: sessionData.classroom || '674ef35b831f5b2a65bc3f47', // Use selected or fallback
       students: sessionData.students || [],
       teachers: sessionData.teachers || [],
       academic_period: sessionData.academicPeriod || '',
@@ -251,6 +265,14 @@ export class SessionManagementService {
       start_date: this.formatDateAsLocal(startDate),
       end_date: this.formatDateAsLocal(endDate)
     };
+
+    // Only include classroom if provided and not empty
+    // Classroom is optional for all modes
+    if (sessionData.classroom && sessionData.classroom.trim() !== '') {
+      apiData.classroom = sessionData.classroom;
+    }
+
+    return apiData as PostSessionsBody;
   }
 
   /**
@@ -271,15 +293,6 @@ export class SessionManagementService {
    * Transform API data to form format
    */
   transformFromApiFormat(session: ExtendedSession): SessionFormData {
-    console.log('Transforming session from API:', {
-      id: session.id,
-      start_time: session.start_time,
-      day: session.day,
-      duration: session.duration,
-      frequency: session.frequency,
-      start_date: session.start_date,
-      end_date: session.end_date
-    });
 
     // Extract day from start_date or use the day field if available
     const startDate = new Date(session.start_date);
@@ -309,17 +322,13 @@ export class SessionManagementService {
       const durationMs = endDate.getTime() - startDate.getTime();
       const durationHours = durationMs / (1000 * 60 * 60); // Convert ms to hours
       duration = Math.max(0.5, durationHours); // Minimum 0.5 hours
-      console.log(`Duration not in API, calculated from dates: ${durationHours} hours`);
     }
-
-    console.log(`Final duration: ${duration} hours`);
 
     // Calculate date range (use the actual dates from the session)
     const dateRange: [Date, Date] = [startDate, endDate];
 
-    // Handle mode conversion from API to UI format
-    const apiMode = (session.mode ?? '').toString().toLowerCase();
-    const uiMode = apiMode ? apiMode.replace(/_/g, '-') : '';
+    // Handle mode - use centralized conversion
+    const mode = convertModeFromApiFormat(session.mode);
 
     // Handle classroom - it can be a populated object or just an ID string
     let classroomId = '';
@@ -341,6 +350,22 @@ export class SessionManagementService {
       }
     }
 
+    // Handle students - they can be populated objects or just ID strings
+    const studentIds = session.students?.map((student: any) => {
+      if (typeof student === 'object' && student !== null) {
+        return student.id || student._id || '';
+      }
+      return student;
+    }).filter(Boolean) || [];
+
+    // Handle teachers - they can be populated objects or just ID strings
+    const teacherIds = session.teachers?.map((teacher: any) => {
+      if (typeof teacher === 'object' && teacher !== null) {
+        return teacher.id || teacher._id || '';
+      }
+      return teacher;
+    }).filter(Boolean) || [];
+
     return {
       id: session.id,
       day: day || 'monday',
@@ -348,10 +373,10 @@ export class SessionManagementService {
       duration,
       dateRange,
       frequencyValue: session.frequency || 1,
-      mode: uiMode,
+      mode: mode,
       classroom: classroomId,
-      students: session.students || [],
-      teachers: session.teachers || [],
+      students: studentIds,
+      teachers: teacherIds,
       academicPeriod: academicPeriodId
     };
   }
@@ -398,7 +423,9 @@ export class SessionManagementService {
    * Delete sessions by taxi ID
    */
   deleteSessionsByTaxi(taxiId: string): Observable<boolean> {
-    return this.sessionsService.getSessions({ taxi: taxiId }).pipe(
+    // Get parent sessions (not recurring instances) by explicitly setting include_instances to 'false'
+    // This ensures we delete the parent sessions which will cascade delete all recurring instances
+    return this.sessionsService.getSessions({ taxi: taxiId, include_instances: 'false' } as any).pipe(
       switchMap((response) => {
         const existingSessions: Session[] = (response?.data?.results ?? response?.data ?? []) as Session[];
         const deleteIds = existingSessions.map((s: Session) => s.id);
@@ -420,7 +447,10 @@ export class SessionManagementService {
           switchMap(() => of(true))
         );
       }),
-      catchError(() => of(false))
+      catchError((error) => {
+        console.error('Failed to delete sessions by taxi:', error);
+        return of(false);
+      })
     );
   }
 
@@ -429,7 +459,9 @@ export class SessionManagementService {
    */
   updateBulkSessions(sessionsData: SessionFormData[], taxiId: string): Observable<BulkSessionResult> {
     return this.deleteSessionsByTaxi(taxiId).pipe(
-      switchMap(() => this.createBulkSessions(sessionsData, taxiId))
+      switchMap(() => {
+        return this.createBulkSessions(sessionsData, taxiId);
+      })
     );
   }
 }

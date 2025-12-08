@@ -6,7 +6,7 @@
 >
   <p-card>
     <ng-template pTemplate="header">
-      <label class="header-label">Freetext</label>
+      <label class="header-label">{{ 'customActivities.freetext' | translate }}</label>
       <img alt="Typing activities" src="/assets/images/custom-activities/typing.png" />
     </ng-template>
     <div class="radioGroup">
@@ -19,7 +19,7 @@
           inputId="activityType1"
           (onClick)="radioButtonClick($event)"
         />
-        <label for="activityType1" class="ml-2">{{ constants.FILL_IN_THE_BLANKS_TEXT }}</label>
+        <label for="activityType1" class="ml-2">{{ 'customActivities.fill_in_the_gaps.label' | translate }}</label>
       </div>
       <div [style]="{ display: 'flex', marginBottom: '10px' }">
         <p-radioButton
@@ -30,7 +30,7 @@
           inputId="activityType2"
           (onClick)="radioButtonClick($event)"
         />
-        <label for="activityType2" class="ml-2">{{ constants.CLOZE_TEXT }}</label>
+        <label for="activityType2" class="ml-2">{{ 'customActivities.cloze.label' | translate }}</label>
       </div>
       <div [style]="{ display: 'flex', marginBottom: '0px' }">
         <p-radioButton
@@ -41,14 +41,14 @@
           inputId="activityType3"
           (onClick)="radioButtonClick($event)"
         />
-        <label for="activityType3" class="ml-2">{{ constants.LETTER_HUNT_TEXT }}</label>
+        <label for="activityType3" class="ml-2">{{ 'customActivities.letter_hunt.label' | translate }}</label>
       </div>
     </div>
   </p-card>
 
   <p-card>
     <ng-template pTemplate="header">
-      <label class="header-label">Drag and drop</label>
+      <label class="header-label">{{ 'customActivities.drag_and_drop' | translate }}</label>
       <img alt="Card" src="/assets/images/custom-activities/drag.png" />
     </ng-template>
     <div class="radioGroup">
@@ -61,7 +61,7 @@
           inputId="activityType4"
           (onClick)="radioButtonClick($event)"
         />
-        <label for="activityType4" class="ml-2">{{ constants.MATCHING_PAIRS_TEXT }}</label>
+        <label for="activityType4" class="ml-2">{{ 'customActivities.matching_pairs.label' | translate }}</label>
       </div>
 
       <div [style]="{ display: 'flex', marginBottom: '10px' }">
@@ -73,7 +73,7 @@
           inputId="activityType5"
           (onClick)="radioButtonClick($event)"
         />
-        <label for="activityType5" class="ml-2">{{ constants.GROUP_SORT_TEXT }}</label>
+        <label for="activityType5" class="ml-2">{{ 'customActivities.group_sort.label' | translate }}</label>
       </div>
 
       <div [style]="{ display: 'flex', marginBottom: '10px' }">
@@ -85,14 +85,14 @@
           inputId="activityType6"
           (onClick)="radioButtonClick($event)"
         />
-        <label for="activityType6" class="ml-2">{{ constants.WORD_ORDER_TEXT }}</label>
+        <label for="activityType6" class="ml-2">{{ 'customActivities.word_order.label' | translate }}</label>
       </div>
     </div>
   </p-card>
 
   <p-card>
     <ng-template pTemplate="header">
-      <label class="header-label">Multiple choice</label>
+      <label class="header-label">{{ 'customActivities.multiple_choice' | translate }}</label>
       <img alt="Card" src="/assets/images/custom-activities/choose.png" />
     </ng-template>
     <div class="radioGroup">
@@ -105,7 +105,7 @@
           inputId="activityType7"
           (onClick)="radioButtonClick($event)"
         />
-        <label for="activityType7" class="ml-2">{{ constants.MULTIPLE_CHOICE_QUIZ_TEXT }}</label>
+        <label for="activityType7" class="ml-2">{{ 'customActivities.multiple_choice_quiz.label' | translate }}</label>
       </div>
       <div [style]="{ display: 'flex', marginBottom: '10px' }">
         <p-radioButton
@@ -116,7 +116,7 @@
           inputId="activityType8"
           (onClick)="radioButtonClick($event)"
         />
-        <label for="activityType8" class="ml-2">{{ constants.MEMORY_MATCHING_PAIRS_TEXT }}</label>
+        <label for="activityType8" class="ml-2">{{ 'customActivities.memory_matching_pairs.label' | translate }}</label>
       </div>
     </div>
   </p-card>

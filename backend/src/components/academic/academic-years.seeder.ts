@@ -17,24 +17,25 @@ const seedTenantAcademicYears = async (tenantId: string) => {
       }
 
       // Create multiple academic years
+      // The 2024-2025 year is marked as manually active since it contains the current date
       const academicYears = [
         {
           name: '2023-2024',
           start_date: new Date('2023-09-01'),
           end_date: new Date('2024-08-31'),
-          is_current: false,
+          is_manual_active: false,
         },
         {
           name: '2024-2025',
           start_date: new Date('2024-09-01'),
           end_date: new Date('2025-08-31'),
-          is_current: true, // Mark this as the current year
+          is_manual_active: true, // Mark this as manually active (contains current date)
         },
         {
           name: '2025-2026',
           start_date: new Date('2025-09-01'),
           end_date: new Date('2026-08-31'),
-          is_current: false,
+          is_manual_active: false,
         },
       ];
 
@@ -54,7 +55,6 @@ const seedTenantAcademicYears = async (tenantId: string) => {
 
 const seedAcademicYears = async () => {
   await seedTenantAcademicYears('supercourse');
-  await seedTenantAcademicYears('piedpiper');
 };
 
 export { seedTenantAcademicYears };

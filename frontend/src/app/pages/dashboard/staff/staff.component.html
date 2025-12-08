@@ -30,35 +30,55 @@
 
 <ng-container *ngIf="staff$ | async as staff">
   <div class="flex flex-column gap-4 px-4">
-    <div class="flex justify-content-end mb-3 mt-3">
-      <p-button icon="pi pi-plus" styleClass="p-button-text border-circle" (onClick)="navigateToCreate()"> </p-button>
-      <p-button icon="pi pi-download" styleClass="p-button-text border-circle ml-2" (onClick)="downloadExcel()"> </p-button>
-      <p-button
-        [icon]="(viewMode$ | async) === 'list' ? 'pi pi-th-large' : 'pi pi-list'"
-        styleClass="p-button-text border-circle ml-2"
-        (onClick)="toggleViewMode()"
-      >
-      </p-button>
-    </div>
-    <div class="card position-relative">
-      <!-- Add spinner with overlay when loading -->
-      <app-spinner *ngIf="isLoading" [overlay]="true"></app-spinner>
+    <!-- Show empty state if no staff -->
+    <ng-container *ngIf="!isLoading && totalRecords === 0; else staffTable">
+      <div class="flex flex-column align-items-center justify-content-center py-8">
+        <div class="text-center mb-4">
+          <i class="pi pi-users text-6xl text-300 mb-3"></i>
+          <h2 class="text-2xl font-bold text-700 mb-2">{{ 'staff.empty.title' | translate }}</h2>
+          <p class="text-600 mb-4">{{ 'staff.empty.message' | translate }}</p>
+        </div>
+        <p-button 
+          [label]="'staff.empty.add_staff' | translate" 
+          icon="pi pi-plus" 
+          (onClick)="navigateToCreate()"
+          styleClass="p-button-lg">
+        </p-button>
+      </div>
+    </ng-container>
 
-      <app-primary-table
-        [data]="staff"
-        [columns]="tableColumns"
-        [rows]="10"
-        [totalRecords]="totalRecords"
-        [viewMode]="(viewMode$ | async) || 'list'"
-        (pageChange)="onPageChange($event)"
-        (rowsPerPageChange)="onRowsPerPageChange($event)"
-        (rowSelect)="onStaffSelect($event)"
-        (editRow)="onEditStaff($event)"
-        (viewRow)="onStaffSelect($event)"
-        (deleteRow)="onDeleteStaff($event)"
-        [dataKey]="'id'"
-      >
-      </app-primary-table>
-    </div>
+    <!-- Show table if staff exists -->
+    <ng-template #staffTable>
+      <div class="flex justify-content-end mb-3 mt-3">
+        <p-button icon="pi pi-plus" styleClass="p-button-text border-circle" (onClick)="navigateToCreate()"> </p-button>
+        <p-button icon="pi pi-download" styleClass="p-button-text border-circle ml-2" (onClick)="downloadExcel()"> </p-button>
+        <p-button
+          [icon]="(viewMode$ | async) === 'list' ? 'pi pi-th-large' : 'pi pi-list'"
+          styleClass="p-button-text border-circle ml-2"
+          (onClick)="toggleViewMode()"
+        >
+        </p-button>
+      </div>
+      <div class="card position-relative">
+        <!-- Add spinner with overlay when loading -->
+        <app-spinner *ngIf="isLoading" [overlay]="true"></app-spinner>
+
+        <app-primary-table
+          [data]="staff"
+          [columns]="tableColumns"
+          [rows]="10"
+          [totalRecords]="totalRecords"
+          [viewMode]="(viewMode$ | async) || 'list'"
+          (pageChange)="onPageChange($event)"
+          (rowsPerPageChange)="onRowsPerPageChange($event)"
+          (rowSelect)="onStaffSelect($event)"
+          (editRow)="onEditStaff($event)"
+          (viewRow)="onStaffSelect($event)"
+          (deleteRow)="onDeleteStaff($event)"
+          [dataKey]="'id'"
+        >
+        </app-primary-table>
+      </div>
+    </ng-template>
   </div>
 </ng-container>

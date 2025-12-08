@@ -4,11 +4,12 @@ import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import * as Constants from '../../Constants';
 import { CustomActivitiesService } from '@gen-api/custom-activities/custom-activities.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-preview-view',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslateModule],
   templateUrl: './preview-view.component.html',
   styleUrl: './preview-view.component.scss'
 })
@@ -75,38 +76,73 @@ export class PreviewViewComponent {
     ]
   };
 
-  message: string = 'Loading activity...';
+  message: string = this.translate.instant('customActivities.loading_activity');
   isLoading: boolean = true;
+  hasError: boolean = false;
 
-  activityTypeTextMap = {
-    [Constants.CLOZE_VALUE]: Constants.CLOZE_TEXT,
-    [Constants.FILL_IN_THE_BLANKS_VALUE]: Constants.FILL_IN_THE_BLANKS_TEXT,
-    [Constants.GROUP_SORT_VALUE]: Constants.GROUP_SORT_TEXT,
-    [Constants.LETTER_HUNT_VALUE]: Constants.LETTER_HUNT_TEXT,
-    [Constants.MATCHING_PAIRS_VALUE]: Constants.MATCHING_PAIRS_TEXT,
-    [Constants.MEMORY_MATCHING_PAIRS_VALUE]: Constants.MEMORY_MATCHING_PAIRS_TEXT,
-    [Constants.MULTIPLE_CHOICE_QUIZ_VALUE]: Constants.MULTIPLE_CHOICE_QUIZ_TEXT,
-    [Constants.WORD_ORDER_VALUE]: Constants.WORD_ORDER_TEXT
-  };
+  constructor(private route: ActivatedRoute, private customActivityService: CustomActivitiesService, private translate: TranslateService) {
+    this.message = this.translate.instant('customActivities.loading_activity');
+    this.buildActivityTypeTextMap();
+    this.buildActivitySettingsTextMap();
+    this.translate.onLangChange.subscribe(() => {
+      this.buildActivityTypeTextMap();
+      this.buildActivitySettingsTextMap();
+      this.renderActivity();
+    });
+  } //, private activityDataService: ActivityDataService) {}
 
-  activitySettingsTextMap: { [key: string]: string } = {
-    [Constants.ALLOW_EXTRA_POINTS_FOR_QUICK_RESPONSES_OPTION_VALUE]: Constants.ALLOW_EXTRA_POINTS_FOR_QUICK_RESPONSES_OPTION_TEXT,
-    [Constants.ANSWERS_ARE_CASE_SENSITIVE_AND_ALLOW_HYPHENATION_OPTION_VALUE]: Constants.ANSWERS_ARE_CASE_SENSITIVE_AND_ALLOW_HYPHENATION_OPTION_TEXT,
-    [Constants.REQUIRE_HYPHENS_TO_MATCH_VALUE]: Constants.REQUIRE_HYPHENS_TO_MATCH_TEXT,
-    [Constants.MATCH_CAPITAL_LETTERS_EXACTLY_VALUE]: Constants.MATCH_CAPITAL_LETTERS_EXACTLY_TEXT,
-    [Constants.ANSWERS_ARE_CASE_SENSITIVE_OPTION_VALUE]: Constants.ANSWERS_ARE_CASE_SENSITIVE_OPTION_TEXT,
-    [Constants.DISPLAY_ALL_ITEMS_FROM_THE_START_OPTION_VALUE]: Constants.DISPLAY_ALL_ITEMS_FROM_THE_START_OPTION_TEXT,
-    [Constants.EACH_SENTENCE_APPEARS_IN_A_SEPARATE_PAGE_OPTION_VALUE]: Constants.EACH_SENTENCE_APPEARS_IN_A_SEPARATE_PAGE_OPTION_TEXT,
-    [Constants.HIDE_MATCHED_CARDS_OPTION_VALUE]: Constants.HIDE_MATCHED_CARDS_OPTION_TEXT,
-    [Constants.HIDE_MATCHED_PAIRS_OPTION_VALUE]: Constants.HIDE_MATCHED_PAIRS_OPTION_TEXT,
-    [Constants.NUMBER_ITEMS_OPTION_VALUE]: Constants.NUMBER_ITEMS_OPTION_TEXT,
-    [Constants.NUMBER_THE_BACK_OF_THE_CARDS_OPTION_VALUE]: Constants.NUMBER_THE_BACK_OF_THE_CARDS_OPTION_TEXT,
-    [Constants.NUMBER_THE_PAIRS_OPTION_VALUE]: Constants.NUMBER_THE_PAIRS_OPTION_TEXT,
-    [Constants.PUBLIC_OPTION_VALUE]: Constants.PUBLIC_OPTION_TEXT,
-    [Constants.RANDOMIZE_ANSWERS_OPTION_VALUE]: Constants.RANDOMIZE_ANSWERS_OPTION_TEXT,
-    [Constants.RANDOMIZE_ITEMS_OPTION_VALUE]: Constants.RANDOMIZE_ITEMS_OPTION_TEXT,
-    [Constants.SHOW_ANAGRAMS_OPTION_VALUE]: Constants.SHOW_ANAGRAMS_OPTION_TEXT
-  };
+  buildActivityTypeTextMap() {
+    this.activityTypeTextMap = {
+      [Constants.CLOZE_VALUE]: this.translate.instant(`customActivities.${Constants.CLOZE_VALUE}.label`), //Constants.CLOZE_TEXT,
+      [Constants.FILL_IN_THE_BLANKS_VALUE]: this.translate.instant(`customActivities.${Constants.FILL_IN_THE_BLANKS_VALUE}.label`), //Constants.FILL_IN_THE_BLANKS_TEXT,
+      [Constants.GROUP_SORT_VALUE]: this.translate.instant(`customActivities.${Constants.GROUP_SORT_VALUE}.label`), //Constants.GROUP_SORT_TEXT,
+      [Constants.LETTER_HUNT_VALUE]: this.translate.instant(`customActivities.${Constants.LETTER_HUNT_VALUE}.label`), //Constants.LETTER_HUNT_TEXT,
+      [Constants.MATCHING_PAIRS_VALUE]: this.translate.instant(`customActivities.${Constants.MATCHING_PAIRS_VALUE}.label`), //Constants.MATCHING_PAIRS_TEXT,
+      [Constants.MEMORY_MATCHING_PAIRS_VALUE]: this.translate.instant(`customActivities.${Constants.MEMORY_MATCHING_PAIRS_VALUE}.label`), //Constants.MEMORY_MATCHING_PAIRS_TEXT,
+      [Constants.MULTIPLE_CHOICE_QUIZ_VALUE]: this.translate.instant(`customActivities.${Constants.MULTIPLE_CHOICE_QUIZ_VALUE}.label`), //Constants.MULTIPLE_CHOICE_QUIZ_TEXT,
+      [Constants.WORD_ORDER_VALUE]: this.translate.instant(`customActivities.${Constants.WORD_ORDER_VALUE}.label`) //Constants.WORD_ORDER_TEXT
+    };
+  }
+
+  buildActivitySettingsTextMap() {
+    this.activitySettingsTextMap = {
+      [Constants.ALLOW_EXTRA_POINTS_FOR_QUICK_RESPONSES_OPTION_VALUE]: this.translate.instant(
+        `customActivities.settings.${Constants.ALLOW_EXTRA_POINTS_FOR_QUICK_RESPONSES_OPTION_VALUE}`
+      ), //Constants.ALLOW_EXTRA_POINTS_FOR_QUICK_RESPONSES_OPTION_TEXT,
+      [Constants.ANSWERS_ARE_CASE_SENSITIVE_AND_ALLOW_HYPHENATION_OPTION_VALUE]: this.translate.instant(
+        `customActivities.settings.${Constants.ANSWERS_ARE_CASE_SENSITIVE_AND_ALLOW_HYPHENATION_OPTION_VALUE}`
+      ), //Constants.ANSWERS_ARE_CASE_SENSITIVE_AND_ALLOW_HYPHENATION_OPTION_TEXT,
+      [Constants.REQUIRE_HYPHENS_TO_MATCH_VALUE]: this.translate.instant(`customActivities.settings.${Constants.REQUIRE_HYPHENS_TO_MATCH_VALUE}`), //Constants.REQUIRE_HYPHENS_TO_MATCH_TEXT,
+      [Constants.MATCH_CAPITAL_LETTERS_EXACTLY_VALUE]: this.translate.instant(
+        `customActivities.settings.${Constants.MATCH_CAPITAL_LETTERS_EXACTLY_VALUE}`
+      ), //Constants.MATCH_CAPITAL_LETTERS_EXACTLY_TEXT,
+      [Constants.ANSWERS_ARE_CASE_SENSITIVE_OPTION_VALUE]: this.translate.instant(
+        `customActivities.settings.${Constants.ANSWERS_ARE_CASE_SENSITIVE_OPTION_VALUE}`
+      ), //Constants.ANSWERS_ARE_CASE_SENSITIVE_OPTION_TEXT,
+      [Constants.DISPLAY_ALL_ITEMS_FROM_THE_START_OPTION_VALUE]: this.translate.instant(
+        `customActivities.settings.${Constants.DISPLAY_ALL_ITEMS_FROM_THE_START_OPTION_VALUE}`
+      ), //Constants.DISPLAY_ALL_ITEMS_FROM_THE_START_OPTION_TEXT,
+      [Constants.DISPLAY_ANSWERS_VALUE]: this.translate.instant(`customActivities.settings.${Constants.DISPLAY_ANSWERS_VALUE}`), //Constants.DISPLAY_ANSWERS_TEXT,
+      [Constants.EACH_SENTENCE_APPEARS_IN_A_SEPARATE_PAGE_OPTION_VALUE]: this.translate.instant(
+        `customActivities.settings.${Constants.EACH_SENTENCE_APPEARS_IN_A_SEPARATE_PAGE_OPTION_VALUE}`
+      ), //Constants.EACH_SENTENCE_APPEARS_IN_A_SEPARATE_PAGE_OPTION_TEXT,
+      [Constants.HIDE_MATCHED_CARDS_OPTION_VALUE]: this.translate.instant(`customActivities.settings.${Constants.HIDE_MATCHED_CARDS_OPTION_VALUE}`), //Constants.HIDE_MATCHED_CARDS_OPTION_TEXT,
+      [Constants.HIDE_MATCHED_PAIRS_OPTION_VALUE]: this.translate.instant(`customActivities.settings.${Constants.HIDE_MATCHED_PAIRS_OPTION_VALUE}`), //Constants.HIDE_MATCHED_PAIRS_OPTION_TEXT,
+      [Constants.NUMBER_ITEMS_OPTION_VALUE]: this.translate.instant(`customActivities.settings.${Constants.NUMBER_ITEMS_OPTION_VALUE}`), //Constants.NUMBER_ITEMS_OPTION_TEXT,
+      [Constants.NUMBER_THE_BACK_OF_THE_CARDS_OPTION_VALUE]: this.translate.instant(
+        `customActivities.settings.${Constants.NUMBER_THE_BACK_OF_THE_CARDS_OPTION_VALUE}`
+      ), //Constants.NUMBER_THE_BACK_OF_THE_CARDS_OPTION_TEXT,
+      [Constants.NUMBER_THE_PAIRS_OPTION_VALUE]: this.translate.instant(`customActivities.settings.${Constants.NUMBER_THE_PAIRS_OPTION_VALUE}`), //Constants.NUMBER_THE_PAIRS_OPTION_TEXT,
+      [Constants.PUBLIC_OPTION_VALUE]: this.translate.instant(`customActivities.settings.${Constants.PUBLIC_OPTION_VALUE}`), //Constants.PUBLIC_OPTION_TEXT,
+      [Constants.RANDOMIZE_ANSWERS_OPTION_VALUE]: this.translate.instant(`customActivities.settings.${Constants.RANDOMIZE_ANSWERS_OPTION_VALUE}`), //Constants.RANDOMIZE_ANSWERS_OPTION_TEXT,
+      [Constants.RANDOMIZE_ITEMS_OPTION_VALUE]: this.translate.instant(`customActivities.settings.${Constants.RANDOMIZE_ITEMS_OPTION_VALUE}`), //Constants.RANDOMIZE_ITEMS_OPTION_TEXT,
+      [Constants.SHOW_ANAGRAMS_OPTION_VALUE]: this.translate.instant(`customActivities.settings.${Constants.SHOW_ANAGRAMS_OPTION_VALUE}`) //Constants.SHOW_ANAGRAMS_OPTION_TEXT
+    };
+  }
+
+  activityTypeTextMap = {};
+
+  activitySettingsTextMap: { [key: string]: string } = {};
 
   get activityTypeText(): string {
     return this.activityTypeTextMap[this.activityData.activityType as keyof typeof this.activityTypeTextMap];
@@ -138,16 +174,16 @@ export class PreviewViewComponent {
     return array;
   }
 
-  constructor(private route: ActivatedRoute, private customActivityService: CustomActivitiesService) {} //, private activityDataService: ActivityDataService) {}
-
   ngOnInit(): void {
     this.id = this.route.snapshot.paramMap.get('id')!;
     this.fetchActivityData();
   }
 
   renderActivity(): void {
+    console.log('Rendeding activity', this.activityData);
     switch (this.activityData.activityType) {
       case Constants.CLOZE_VALUE:
+        console.log('Rendeding cloze');
         this.renderCloze();
         break;
       case Constants.FILL_IN_THE_BLANKS_VALUE:
@@ -177,7 +213,10 @@ export class PreviewViewComponent {
   renderCloze(): void {
     let div = document.createElement('div');
     let label = document.createElement('label');
-    label.innerHTML = '<p><u>Text</u></p>';
+    label.innerHTML = `<p><u>${this.translate.instant('customActivities.text')}</u></p>`;
+    /*this.translate.get('customActivities.text').subscribe((translated) => {
+      label.innerHTML = `<p><u>${translated}</u></p>`;
+    });*/
     this.activityData.questions.forEach((question) => {
       label.innerHTML += question.document.replace(/#@/g, '');
       label.innerHTML += '<p>';
@@ -207,7 +246,7 @@ export class PreviewViewComponent {
   renderFillInTheGaps() {
     let div = document.createElement('div');
     let label = document.createElement('label');
-    label.innerHTML = '<p><u>Sentences</u></p>';
+    label.innerHTML = `<p><u>${this.translate.instant('customActivities.sentences')}</u></p>`;
     div.appendChild(label);
     this.activityData.questions.forEach((question, index) => {
       label.innerHTML += index + 1 + '. ' + question.document.replace(/#@/g, '');
@@ -244,9 +283,9 @@ export class PreviewViewComponent {
     let div = document.createElement('div');
     let label1 = document.createElement('label');
     let label2 = document.createElement('label');
-    label1.innerHTML = '<p><u>Groups</u></p>';
+    label1.innerHTML = `<p><u>${this.translate.instant('customActivities.groups')}</u></p>`;
     label1.innerHTML += '<p>';
-    label2.innerHTML = '<p><u>Items</u></p>';
+    label2.innerHTML = `<p><u>${this.translate.instant('customActivities.items')}</u></p>`;
     label2.innerHTML += '<p>';
     div.appendChild(label1);
     div.appendChild(label2);
@@ -303,7 +342,7 @@ export class PreviewViewComponent {
     let div = document.createElement('div');
     let label1 = document.createElement('label');
     let label2 = document.createElement('label');
-    label1.innerHTML = '<p><u>Words</u></p>';
+    label1.innerHTML = `<p><u>${this.translate.instant('customActivities.words')}</u></p>`;
     div.appendChild(label1);
     div.appendChild(label2);
     let shuffledArray = [...this.activityData.questions];
@@ -334,7 +373,7 @@ export class PreviewViewComponent {
   renderMatchingPairs() {
     let div = document.createElement('div');
     let label = document.createElement('label');
-    label.innerHTML = '<p><u>Pairs</u></p>';
+    label.innerHTML = `<p><u>${this.translate.instant('customActivities.pairs')}</u></p>`;
     div.appendChild(label);
     let questions = [...this.activityData.questions];
     let answers = [];
@@ -373,7 +412,7 @@ export class PreviewViewComponent {
   renderMemoryMatchingPairs() {
     let div = document.createElement('div');
     let label = document.createElement('label');
-    label.innerHTML = '<p><u>Pairs</u></p>';
+    label.innerHTML = `<p><u>${this.translate.instant('customActivities.pairs')}</u></p>`;
     div.appendChild(label);
     let questions = [...this.activityData.questions];
     let answers = [];
@@ -412,7 +451,7 @@ export class PreviewViewComponent {
     let div = document.createElement('div');
     let label1 = document.createElement('label');
     let label2 = document.createElement('label');
-    label1.innerHTML = '<p><u>Questions</u></p>';
+    label1.innerHTML = `<p><u>${this.translate.instant('customActivities.questions')}</u></p>`;
     div.appendChild(label1);
     div.appendChild(label2);
     this.activityData.questions.forEach((question, index) => {
@@ -457,7 +496,8 @@ export class PreviewViewComponent {
 
   renderInDom(element: HTMLElement): void {
     const container = document.getElementById('activity-container');
-    if (container && container.children.length === 0) {
+    if (container) {
+      container.innerHTML = '';
       container.appendChild(element);
     }
   }
@@ -465,7 +505,7 @@ export class PreviewViewComponent {
   renderWordOrder() {
     let div = document.createElement('div');
     let label = document.createElement('label');
-    label.innerHTML = '<p><u>Text</u></p><p>';
+    label.innerHTML = `<p><u>${this.translate.instant('customActivities.text')}</u></p><p>`;
     this.activityData.questions.forEach((question, index) => {
       question.answers.forEach((answer) => {
         let words = answer.answerText.split('#@'); //.join(' ').split(' ');
@@ -501,11 +541,15 @@ export class PreviewViewComponent {
 
           setTimeout(() => this.renderActivity());
         } else {
-          this.message = 'There was an error loading the activity. Please try again.';
+          this.isLoading = false;
+          this.hasError = true;
+          this.message = this.translate.instant('customActivities.error_loading_activity'); //'There was an error loading the activity. Please try again.';
         }
       },
       error: (err) => {
-        this.message = 'There was an error loading the activity. Please try again.';
+        this.isLoading = false;
+        this.hasError = true;
+        this.message = this.translate.instant('customActivities.error_loading_activity'); //'There was an error loading the activity. Please try again.';
         console.error('Error fetching item:', err);
       }
     });

@@ -130,15 +130,34 @@ export class StaffFormDataService {
         staffData[key] = value;
       }
     }
-    // Handle date formatting
+    // Handle date formatting - map startDate to registration_date for API
     else if (key === 'startDate' && value) {
       try {
         const dateValue = new Date(value.toString());
-        staffData[key] = dateValue.toISOString();
+        if (isNaN(dateValue.getTime())) {
+          throw new Error('Invalid date');
+        }
+        
+        // Format date as YYYY-MM-DDTHH:mm:ss.sssZ to avoid timezone issues
+        // Get the date components in local timezone to preserve the selected date
+        const year = dateValue.getFullYear();
+        const month = String(dateValue.getMonth() + 1).padStart(2, '0');
+        const day = String(dateValue.getDate()).padStart(2, '0');
+        // Create ISO datetime string with UTC midnight to preserve the date
+        // This ensures the date part (YYYY-MM-DD) is preserved regardless of timezone
+        const dateString = `${year}-${month}-${day}T00:00:00.000Z`;
+        
+        // Map startDate to registration_date for the API
+        staffData['registration_date'] = dateString;
+        // Also keep startDate for backward compatibility if needed
+        staffData[key] = dateString;
       } catch (e) {
         // If value is a File, value.toString() is '[object File]'. new Date() on that is Invalid Date.
         this.loggingService.warn(`Could not parse startDate ('${value}') as a valid date. Assigning as is.`, e);
-        if (typeof value === 'string') staffData[key] = value; // Only assign if it's a string already
+        if (typeof value === 'string') {
+          staffData['registration_date'] = value;
+          staffData[key] = value; // Only assign if it's a string already
+        }
         // else, if it was a File, do not assign it to startDate which expects string
       }
     }
@@ -211,6 +230,12 @@ export class StaffFormDataService {
         mappedData[field] = staffData[field];
       }
     });
+
+    // Clean up: if registration_date is present, remove startDate to avoid confusion
+    // (registration_date is the canonical field, startDate is just the form field name)
+    if (mappedData.registration_date) {
+      delete mappedData.startDate;
+    }
 
     return mappedData as IStaffApiData;
   }

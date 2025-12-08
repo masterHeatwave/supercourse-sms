@@ -25,7 +25,7 @@ const SessionSchema: Schema<ISession> = new mongoose.Schema(
     classroom: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Classroom',
-      required: [true, 'Please add a classroom'],
+      required: false, // Optional - required only when mode is not 'online'
     },
     students: [
       {
@@ -51,10 +51,6 @@ const SessionSchema: Schema<ISession> = new mongoose.Schema(
     is_recurring: {
       type: Boolean,
       default: false,
-    },
-    parent_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Session',
     },
     room: {
       type: String,

@@ -5,29 +5,18 @@ import { Answer } from '../../../../../types';
 import { CommonModule } from '@angular/common';
 import { PrimeIcons } from 'primeng/api';
 import { INITIAL_ANSWERS, LABELS } from '../../../../../Constants';
-import {
-  CdkDragDrop,
-  moveItemInArray,
-  DragDropModule,
-} from '@angular/cdk/drag-drop';
+import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
-import { WarningDialogComponent } from '../../../../dialogs/warning-dialog/warning-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'multiple-choice-question-card',
   standalone: true,
-  imports: [
-    QuestionComponent,
-    AnswerComponent,
-    CommonModule,
-    DragDropModule,
-    DialogModule,
-    ButtonModule,
-    WarningDialogComponent,
-  ],
+  imports: [QuestionComponent, AnswerComponent, CommonModule, DragDropModule, DialogModule, ButtonModule, WarningDialogComponent, TranslateModule],
   templateUrl: './question-card.component.html',
-  styleUrl: './question-card.component.scss',
+  styleUrl: './question-card.component.scss'
 })
 export class QuestionCardComponent {
   @Input() questionNumber: number = 1;
@@ -36,21 +25,18 @@ export class QuestionCardComponent {
   @Input() questionText: string = '';
   @Input() answers: Answer[] = JSON.parse(JSON.stringify(INITIAL_ANSWERS));
 
-  @Output() answersChanged: EventEmitter<Array<Answer>> = new EventEmitter<
-    Array<Answer>
-  >();
-  @Output() questionTextChanged: EventEmitter<string> =
-    new EventEmitter<string>();
-  @Output() questionTTSTextChanged: EventEmitter<string> =
-    new EventEmitter<string>();
-  @Output() questionImageURLChanged: EventEmitter<string> =
-    new EventEmitter<string>();
+  @Output() answersChanged: EventEmitter<Array<Answer>> = new EventEmitter<Array<Answer>>();
+  @Output() questionTextChanged: EventEmitter<string> = new EventEmitter<string>();
+  @Output() questionTTSTextChanged: EventEmitter<string> = new EventEmitter<string>();
+  @Output() questionImageURLChanged: EventEmitter<string> = new EventEmitter<string>();
   @Output() deleteClicked: EventEmitter<void> = new EventEmitter<void>();
 
   primeIcons = PrimeIcons;
   labels: Array<string> = LABELS;
   isWarningDialogVisible: boolean = false;
   warningMessage: string = '';
+
+  constructor(private translate: TranslateService) {}
 
   rearrangeLabels() {
     for (let i = 0; i < this.answers.length; i++) {
@@ -65,7 +51,7 @@ export class QuestionCardComponent {
       this.rearrangeLabels();
       this.answersChanged.emit(this.answers);
     } else {
-      this.warningMessage = 'The least amount of answers must be two.';
+      this.warningMessage = this.translate.instant('customActivities.least_amount_of_answers_two'); //'The least amount of answers must be two.';
       this.isWarningDialogVisible = true;
     }
   }
@@ -117,7 +103,7 @@ export class QuestionCardComponent {
         isCorrect: false,
         imageURL: '',
         TTSText: '',
-        answerText: '',
+        answerText: ''
       };
       this.answers.push(newAnswer);
     }

@@ -30,15 +30,25 @@ import seedMoods, {
   seedTenantMoods,
   seedTenantMoodVideos,
 } from '@components/wellness-center/mood.seeder';
-import seedEbookBookmarks, { seedTenantEbookBookmarks } from '@components/bookmarks/bookmark.seeder';
-import seedCustomActivities, { seedTenantCustomActivity } from '@components/custom-activities/customActivity.seeder';
+// import seedEbookBookmarks, { seedTenantEbookBookmarks } from '@components/bookmarks/bookmark.seeder';
+import seedCustomActivities, {
+  seedTenantCustomActivity,
+  seedAssignedCustomActivities,
+  seedTenantAssignedCustomActivity,
+} from '@components/custom-activities/customActivity.seeder';
+import seedEbookBookmarks, { seedTenantEbookBookmarks } from '@components/ebooks/bookmarks/bookmark.seeder';
+import seedEbookNotes, { seedTenantEbookNotes } from '@components/ebooks/notes/note.seeder';
+import seedStorage, { seedTenantStorage } from '@components/storage/storage.seeder';
 
 /**
  * Seeds all tenant-specific data for a new customer/tenant
  * This function is called when a new school/customer is created
  * Note: This function assumes it's called within a tenant context
  */
-export const seedNewTenant = async (tenantId: string) => {
+export const seedNewTenant = async (
+  tenantId: string,
+  options: { skipAcademic?: boolean; skipUsers?: boolean } = {}
+) => {
   try {
     logger.info(`Starting comprehensive seeding process for new tenant: ${tenantId}`);
 
@@ -50,14 +60,21 @@ export const seedNewTenant = async (tenantId: string) => {
     await new Promise((resolve) => setTimeout(resolve, 500)); // Brief delay for dependencies
 
     // Seed academic structure before users so assignment hooks can work properly
-    await seedTenantAcademicYears(tenantId);
-    await seedTenantAcademicPeriods(tenantId);
-
-    // Add a brief delay to ensure academic data is fully committed
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (!options.skipAcademic) {
+      await seedTenantAcademicYears(tenantId);
+      await seedTenantAcademicPeriods(tenantId);
+      // Add a brief delay to ensure academic data is fully committed
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } else {
+      logger.info(`[${tenantId}] Skipping academic seeding (years/periods) by configuration`);
+    }
 
     // Now seed users - the assignment hooks will work because academic years/periods exist
-    await seedTenantUsers(tenantId);
+    if (!options.skipUsers) {
+      await seedTenantUsers(tenantId);
+    } else {
+      logger.info(`[${tenantId}] Skipping user seeding by configuration`);
+    }
 
     await seedTenantClassrooms(tenantId);
     await seedTenantTaxis(tenantId);
@@ -71,8 +88,11 @@ export const seedNewTenant = async (tenantId: string) => {
     await seedTenantAssignmentsForStudents(tenantId);
     await seedTenantMoods(tenantId);
     await seedTenantMoodVideos(tenantId);
-    await seedTenantEbookBookmarks(tenantId);
     await seedTenantCustomActivity(tenantId);
+    await seedTenantEbookBookmarks(tenantId);
+    await seedTenantEbookNotes(tenantId);
+    await seedTenantStorage(tenantId);
+    await seedTenantAssignedCustomActivity(tenantId);
 
     // Final step: Sync all staff academic assignments now that everything is seeded
     logger.info(`[${tenantId}] Starting final sync of staff academic assignments...`);
@@ -99,12 +119,15 @@ export const seedNewTenant = async (tenantId: string) => {
  * Seeds all tenant-specific data for a new customer/tenant with its own context
  * This function creates its own tenant context
  */
-export const seedNewTenantWithContext = async (tenantId: string) => {
+export const seedNewTenantWithContext = async (
+  tenantId: string,
+  options: { skipAcademic?: boolean; skipUsers?: boolean } = {}
+) => {
   try {
     logger.info(`Starting seeding process for new tenant: ${tenantId}`);
 
     await requestContextLocalStorage.run(tenantId, async () => {
-      await seedNewTenant(tenantId);
+      await seedNewTenant(tenantId, options);
     });
 
     logger.info(`Database seeding completed successfully for tenant: ${tenantId}`);
@@ -140,8 +163,11 @@ export const seedDatabase = async () => {
     await seedAssignmentsForStudents();
     await seedMoods();
     await seedMoodVideos();
-    await seedEbookBookmarks();
     await seedCustomActivities();
+    await seedEbookBookmarks();
+    await seedEbookNotes();
+    await seedStorage();
+    await seedAssignedCustomActivities();
 
     // Final step: Sync all staff academic assignments for all tenants
     await syncAllStaffAssignmentsAllTenants();

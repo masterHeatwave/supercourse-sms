@@ -8,20 +8,15 @@ export const BaseActivitySchema = z
     playerMode: z.string(),
     playerModeString: z.string(),
     title: z.string(),
-    description: z.string().optional(),
+    description: z.string(),
     template: z.string(),
     templateURL: z.string(),
     userId: z.string(),
     cefr: z.string(),
-    tags: z
-      .array(
-        z.object({
-          label: z.string(),
-          value: z.string(),
-        })
-      )
-      .optional(),
-    settings: z.record(z.boolean()).optional(),
+    plays: z.number(),
+    totalDuration: z.number(),
+    tags: z.array(z.string()),
+    settings: z.record(z.boolean()),
     questions: z.array(z.any()).nonempty({ message: 'Questions array cannot be empty' }),
   })
   .openapi({
@@ -257,4 +252,45 @@ export const CustomActivitySchema = z
   .openapi({
     title: 'Create Custom Activity',
     description: 'A union of all possible activity types validated by the activityType discriminator key',
+  });
+
+export const AssignedStudentSchema = z.object({
+  studentId: z.string(),
+  completed: z.boolean().optional().default(false),
+});
+
+export const AssignedBaseActivitySchema = BaseActivitySchema.extend({
+  students: z.array(AssignedStudentSchema).nonempty(),
+});
+
+export const AssignedCustomActivitySchema = z
+  .discriminatedUnion('activityType', [
+    ClozeActivitySchema.extend({
+      students: z.array(AssignedStudentSchema).nonempty(),
+    }),
+    FillInTheGapsActivitySchema.extend({
+      students: z.array(AssignedStudentSchema).nonempty(),
+    }),
+    GroupSortActivitySchema.extend({
+      students: z.array(AssignedStudentSchema).nonempty(),
+    }),
+    LetterHuntActivitySchema.extend({
+      students: z.array(AssignedStudentSchema).nonempty(),
+    }),
+    MatchingPairsActivitySchema.extend({
+      students: z.array(AssignedStudentSchema).nonempty(),
+    }),
+    MemoryMatchingPairsActivitySchema.extend({
+      students: z.array(AssignedStudentSchema).nonempty(),
+    }),
+    MultipleChoiceQuizActivitySchema.extend({
+      students: z.array(AssignedStudentSchema).nonempty(),
+    }),
+    WordOrderActivitySchema.extend({
+      students: z.array(AssignedStudentSchema).nonempty(),
+    }),
+  ])
+  .openapi({
+    title: 'Create Assigned Custom Activity',
+    description: 'Assigned custom activity with students array (each student has studentId + completed).',
   });

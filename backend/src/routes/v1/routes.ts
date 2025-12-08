@@ -24,12 +24,20 @@ import messagingRouter from '@components/messaging/messaging.routes';
 import assignmentStaffRouter from '@components/assignments/assignment-staff.routes';
 import assignmentStudentRouter from '@components/assignments/assignment-student.routes';
 import moodRouter from '@components/wellness-center/mood.routes';
-import ebooksBookmarkRouter from '@components/bookmarks/bookmark.routes';
+// import ebooksBookmarkRouter from '@components/bookmarks/bookmark.routes';
 import customActivitiesRouter from '@components/custom-activities/customActivity.routes';
+import ebooksBookmarkRouter from '@components/ebooks/bookmarks/bookmark.routes';
+import ebooksNoteRouter from '@components/ebooks/notes/note.routes';
+import publicRouter from './public.routes';
+import storageRouter from '@components/storage/storage.routes';
+import chatbotRouter from '@components/chatbot/chatbot.routes';
 
 export const mainRouter = express.Router();
 
-// Public API endpoints
+// Public API endpoints (no authentication required)
+mainRouter.use('/public', publicRouter);
+
+// Authentication and user management
 mainRouter.use('/auth', authRouter);
 mainRouter.use('/users', userRouter);
 mainRouter.use('/errors', errorRouter);
@@ -79,8 +87,15 @@ mainRouter.use('/assignments/student', assignmentStudentRouter);
 // Wellness and mood management endpoints
 mainRouter.use('/moods', moodRouter);
 
-// Ebook endpoints
-mainRouter.use('/bookmarks', ebooksBookmarkRouter);
-
 //custom activities endpoints
 mainRouter.use('/custom-activities', customActivitiesRouter);
+
+//Ebook endpoints
+mainRouter.use('/ebooks/bookmarks', ebooksBookmarkRouter);
+mainRouter.use('/ebooks/notes', ebooksNoteRouter);
+
+// Storage
+mainRouter.use('/storage', storageRouter);
+
+//Chatbot endpoints
+mainRouter.use('/chatbot', chatbotRouter);

@@ -1,0 +1,121 @@
+<div class="profile-view-container">
+  <p-toast></p-toast>
+
+  <!-- Hidden file input -->
+  <input
+    #fileInput
+    type="file"
+    accept="image/*"
+    (change)="onFileSelected($event)"
+    style="display: none;"
+  />
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state p-4 text-center">
+    <i class="pi pi-spin pi-spinner text-2xl text-primary mb-3"></i>
+    <p class="text-600">{{ 'account.profile.loading' | translate }}</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state p-4 text-center">
+    <i class="pi pi-exclamation-triangle text-2xl text-orange-500 mb-3"></i>
+    <p class="text-600 mb-3">{{ 'account.profile.error' | translate }}</p>
+    <p-button
+      label="{{ 'common.retry' | translate }}"
+      icon="pi pi-refresh"
+      styleClass="p-button-outlined"
+      (click)="onRetry()">
+    </p-button>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!loading && !error">
+    <!-- Header -->
+    <div class="flex align-items-center gap-3 mb-4">
+      <div class="profile-icon-wrapper relative" (click)="triggerFileInput()">
+        <div class="profile-icon cursor-pointer">
+          <img *ngIf="userProfile.avatar; else iconFallback"
+               [src]="userProfile.avatar"
+               alt="Profile Picture"
+               class="profile-avatar w-5rem h-5rem object-cover border-circle">
+          <ng-template #iconFallback>
+            <div class="avatar-fallback w-5rem h-5rem border-circle flex align-items-center justify-content-center bg-primary">
+              <span class="text-white text-3xl font-bold">{{ userProfile.firstName.charAt(0) }}{{ userProfile.lastName.charAt(0) }}</span>
+            </div>
+          </ng-template>
+        </div>
+
+        <!-- Upload overlay -->
+        <div class="upload-overlay absolute top-0 left-0 w-full h-full border-circle flex align-items-center justify-content-center">
+          <i class="pi pi-camera text-white text-2xl" *ngIf="!uploadingImage"></i>
+          <i class="pi pi-spin pi-spinner text-white text-2xl" *ngIf="uploadingImage"></i>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-semibold text-900 m-0">{{ userProfile.firstName }} {{ userProfile.lastName }}</h2>
+        <p class="text-sm text-600 m-0">{{ userProfile.role }}</p>
+      </div>
+    </div>
+
+    <!-- Profile Information Card -->
+    <p-card>
+      <ng-template pTemplate="header">
+        <div class="p-3">
+          <h3 class="text-xl font-semibold text-900 m-0">{{ 'account.profile.personalInfo' | translate }}</h3>
+        </div>
+      </ng-template>
+      
+      <div class="grid">
+        <div class="col-12 md:col-6">
+          <div class="field-display mb-4">
+            <label class="text-600 text-sm font-semibold mb-2 block">{{ 'account.profile.firstName' | translate }}</label>
+            <p class="text-900 m-0">{{ userProfile.firstName }}</p>
+          </div>
+        </div>
+        
+        <div class="col-12 md:col-6">
+          <div class="field-display mb-4">
+            <label class="text-600 text-sm font-semibold mb-2 block">{{ 'account.profile.lastName' | translate }}</label>
+            <p class="text-900 m-0">{{ userProfile.lastName }}</p>
+          </div>
+        </div>
+        
+        <div class="col-12 md:col-6">
+          <div class="field-display mb-4">
+            <label class="text-600 text-sm font-semibold mb-2 block">{{ 'account.profile.email' | translate }}</label>
+            <p class="text-900 m-0">
+              <i class="pi pi-envelope mr-2 text-primary"></i>
+              {{ userProfile.email }}
+            </p>
+          </div>
+        </div>
+        
+        <div class="col-12 md:col-6" *ngIf="userProfile.phone">
+          <div class="field-display mb-4">
+            <label class="text-600 text-sm font-semibold mb-2 block">{{ 'account.profile.phone' | translate }}</label>
+            <p class="text-900 m-0">
+              <i class="pi pi-phone mr-2 text-primary"></i>
+              {{ userProfile.phone }}
+            </p>
+          </div>
+        </div>
+        
+        <div class="col-12 md:col-6" *ngIf="userProfile.role">
+          <div class="field-display mb-4">
+            <label class="text-600 text-sm font-semibold mb-2 block">{{ 'account.profile.role' | translate }}</label>
+            <p class="text-900 m-0">{{ userProfile.role }}</p>
+          </div>
+        </div>
+        
+        <div class="col-12 md:col-6" *ngIf="userProfile.department">
+          <div class="field-display mb-4">
+            <label class="text-600 text-sm font-semibold mb-2 block">{{ 'account.profile.department' | translate }}</label>
+            <p class="text-900 m-0">{{ userProfile.department }}</p>
+          </div>
+        </div>
+      </div>
+    </p-card>
+  </div>
+</div>
+

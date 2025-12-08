@@ -85,7 +85,7 @@
   </p-dialog>
 
   <!-- Event Details Dialog -->
-  <p-dialog [(visible)]="showDetailsDialog" [modal]="true" [draggable]="false" [closable]="true" [dismissableMask]="true" [style]="{width: '650px'}" [header]="selectedEvent?.title || ('calendar.details.event' | translate)">
+  <p-dialog [(visible)]="showDetailsDialog" [modal]="true" [draggable]="false" [closable]="true" [dismissableMask]="true" [style]="{width: '650px'}" [header]="selectedEvent?.title || ('calendar.details.event' | translate)" styleClass="event-details-dialog">
     <div class="details-grid" *ngIf="selectedEvent">
       <div class="details-row">
         <i class="pi pi-map-marker details-icon"></i>
@@ -148,6 +148,31 @@
         <p-button [label]="'calendar.details.edit' | translate" icon="pi pi-pencil" styleClass="p-button-outlined"></p-button>
         <p-button [label]="'calendar.details.delete' | translate" icon="pi pi-trash" styleClass="p-button-danger p-button-outlined"></p-button>
       </div>
+    </div>
+  </p-dialog>
+
+  <!-- Download Format Dialog -->
+  <p-dialog [(visible)]="showDownloadDialog" [modal]="true" [draggable]="false" [closable]="true" [dismissableMask]="true" [style]="{width: '450px'}" [header]="'calendar.export.title' | translate">
+    <div class="export-format-selection">
+      <p class="export-description">{{ 'calendar.export.select_format' | translate }}</p>
+
+      <div class="format-options">
+        <div *ngFor="let format of exportFormats" class="format-option" [class.selected]="selectedExportFormat === format.value" (click)="selectedExportFormat = format.value">
+          <p-radioButton [name]="'exportFormat'" [value]="format.value" [(ngModel)]="selectedExportFormat" [inputId]="format.value"></p-radioButton>
+          <label [for]="format.value" class="format-label">
+            <div class="format-header">
+              <i [class]="format.icon"></i>
+              <span class="format-name">{{ format.label }}</span>
+            </div>
+            <span class="format-desc">{{ format.description | translate }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-actions">
+      <p-button [label]="'common.cancel' | translate" icon="pi pi-times" styleClass="p-button-text" (onClick)="showDownloadDialog = false"></p-button>
+      <p-button [label]="'calendar.toolbar.download' | translate" icon="pi pi-download" (onClick)="confirmDownload()"></p-button>
     </div>
   </p-dialog>
 </div>

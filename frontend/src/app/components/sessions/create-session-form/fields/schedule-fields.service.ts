@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { FormlyFieldConfig } from '@ngx-formly/core';
+import { getSessionModeOptions } from '../../../../utils/session-modes.util';
 
 @Injectable({ providedIn: 'root' })
 export class SessionScheduleFieldsService {
@@ -46,11 +47,10 @@ export class SessionScheduleFieldsService {
     { label: '08:30', value: '510' },
   ];
 
+  // Use centralized mode configuration
   private modes = [
     { label: 'Mode', value: '' },
-    { label: 'In-person', value: 'in-person' },
-    { label: 'Online', value: 'online' },
-    { label: 'Hybrid', value: 'hybrid' }
+    ...getSessionModeOptions()
   ];
 
   private days = [
@@ -121,7 +121,7 @@ export class SessionScheduleFieldsService {
               required: true,
               selectOptions: this.modes.slice(1),
               placeholder: 'Mode',
-              defaultValue: 'in-person'
+              defaultValue: 'in_person'
             }
           },
           {

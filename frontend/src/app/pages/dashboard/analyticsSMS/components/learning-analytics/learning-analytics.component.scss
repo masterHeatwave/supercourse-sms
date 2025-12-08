@@ -1,0 +1,124 @@
+.main-div {
+  display: flex;
+  flex-wrap: wrap !important;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+i {
+  font-size: 2rem;
+}
+
+.black-label {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.icon-label-div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  border: 1px solid #afc8b2;
+  border-radius: 10px;
+  align-items: center;
+  justify-content: center;
+  height: 320px;
+  aspect-ratio: 1;
+  padding: 20px;
+  label {
+    font-size: 22px;
+    //font-weight: bold;
+    color: #498351;
+    text-align: center;
+    margin: 5px;
+  }
+}
+
+.card-div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  width: 49%;
+  gap: 20px !important;
+}
+
+.line-chart-container {
+  //display: flex;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  width: 49%;
+  min-width: 320px;
+  margin: 20px;
+  margin-left: 0;
+  border: 2px solid #afc8b2;
+  border-radius: 10px;
+  background-color: white;
+}
+
+.chart-container {
+  width: 49%;
+  min-width: 320px;
+  margin: 20px;
+  margin-left: 0;
+  border: 2px solid #afc8b2;
+  border-radius: 10px;
+  background-color: white;
+}
+
+.table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.table-header,
+.table-row {
+  display: table-row;
+}
+
+.table-row {
+  cursor: pointer;
+}
+
+.table-row:hover {
+  background-color: #f0f0f0; /* subtle hover effect */
+}
+
+.table-header div {
+  font-weight: bold;
+  background: #186b23;
+  color: white;
+}
+
+.table-header div,
+.table-row div {
+  display: table-cell;
+  padding: 8px;
+  border: 1px solid #ddd;
+}
+
+.table-row:nth-child(even) {
+  background: #ccd3cc;
+}
+
+.table-row:nth-child(odd) {
+  background: #e7ebe8;
+}
+
+:host ::ng-deep {
+  .p-dialog {
+    button {
+      width: 40px;
+      height: 40px;
+      //background-color: red;
+    }
+  }
+}

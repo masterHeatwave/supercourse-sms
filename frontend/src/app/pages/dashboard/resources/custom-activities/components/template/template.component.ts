@@ -4,11 +4,12 @@ import { DropdownModule } from 'primeng/dropdown';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-template',
   standalone: true,
-  imports: [DropdownModule, FormsModule, CommonModule],
+  imports: [DropdownModule, FormsModule, CommonModule, TranslateModule],
   templateUrl: './template.component.html',
   styleUrl: './template.component.scss'
 })

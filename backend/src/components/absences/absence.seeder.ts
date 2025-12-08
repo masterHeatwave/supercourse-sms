@@ -120,7 +120,6 @@ const seedTenantAbsences = async (tenantId: string) => {
 
 const seedAbsences = async () => {
   await seedTenantAbsences('supercourse');
-  await seedTenantAbsences('piedpiper');
 };
 
 export { seedTenantAbsences };

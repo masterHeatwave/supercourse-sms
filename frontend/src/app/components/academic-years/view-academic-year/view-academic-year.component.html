@@ -2,24 +2,14 @@
   <!-- Title -->
   <div class="flex justify-content-between align-items-center mb-4">
     <h2 class="text-2xl font-semibold text-900 m-0">{{ academicYear.name }}</h2>
-    <div class="flex gap-2">
-      <app-outline-button
-        [borderColor]="'var(--primary-color)'"
-        [textColor]="'var(--primary-color)'"
-        [hoverBackgroundColor]="'var(--primary-color)'"
-        [hoverTextColor]="'white'"
-        (click)="edit()">
-        Edit
-      </app-outline-button>
-      <app-outline-button
-        [borderColor]="'#dc3545'"
-        [textColor]="'#dc3545'"
-        [hoverBackgroundColor]="'#dc3545'"
-        [hoverTextColor]="'white'"
-        (click)="delete()">
-        Delete
-      </app-outline-button>
-    </div>
+    <app-outline-button
+      [borderColor]="'#dc3545'"
+      [textColor]="'#dc3545'"
+      [hoverBackgroundColor]="'#dc3545'"
+      [hoverTextColor]="'white'"
+      (click)="delete()">
+      Delete
+    </app-outline-button>
   </div>
 
   <!-- Dates + Notes section (transparent) -->

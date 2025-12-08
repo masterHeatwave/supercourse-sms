@@ -1,0 +1,80 @@
+<p-toast></p-toast>
+<div class="p-4">
+  <div class="flex align-items-center justify-content-between mb-3">
+    <button 
+      pButton 
+      type="button" 
+      [label]="'common.back' | translate" 
+      icon="pi pi-arrow-left" 
+      class="p-button-text" 
+      (click)="onCancel()"
+    ></button>
+    <h2 class="m-0 text-2xl font-bold text-primary">
+      {{ 'common.edit' | translate }} {{ 'board.title' | translate }}
+    </h2>
+  </div>
+
+  <div *ngIf="loading" class="flex justify-content-center p-5">
+    <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
+  </div>
+
+  <form *ngIf="!loading && form" [formGroup]="form" (ngSubmit)="onSubmit()" class="custom-card p-4">
+    <div class="flex flex-column gap-3">
+      <div>
+        <label class="text-sm text-700 mb-1 block">
+          {{ 'board.create.fields.title' | translate }} <span class="text-red-500">*</span>
+        </label>
+        <input 
+          pInputText 
+          type="text" 
+          formControlName="title" 
+          class="w-full"
+          [class.ng-invalid]="hasError('title')"
+        />
+        <small *ngIf="hasError('title')" class="p-error block mt-1">
+          {{ getErrorMessage('title') }}
+        </small>
+      </div>
+
+      <div>
+        <label class="text-sm text-700 mb-1 block">
+          {{ 'board.create.fields.content' | translate }} <span class="text-red-500">*</span>
+        </label>
+        <p-editor 
+          formControlName="content" 
+          [style]="{ height: '300px' }"
+        ></p-editor>
+        <small *ngIf="hasError('content')" class="p-error block mt-1">
+          {{ getErrorMessage('content') }}
+        </small>
+      </div>
+
+      <div class="flex align-items-center gap-2">
+        <p-checkbox 
+          inputId="pinPost" 
+          binary="true" 
+          formControlName="pinPost"
+        ></p-checkbox>
+        <label for="pinPost">{{ 'board.create.options.pin' | translate }}</label>
+      </div>
+
+      <div class="flex gap-2">
+        <button 
+          pButton 
+          type="submit" 
+          [label]="'common.save' | translate" 
+          [disabled]="saving || form.invalid"
+          [loading]="saving"
+        ></button>
+        <button 
+          pButton 
+          type="button" 
+          [label]="'common.cancel' | translate" 
+          class="p-button-secondary p-button-outlined" 
+          (click)="onCancel()"
+        ></button>
+      </div>
+    </div>
+  </form>
+</div>
+

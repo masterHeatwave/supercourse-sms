@@ -36,7 +36,11 @@ const paginatedMessagesResponse = z.object({
   }),
 });
 const attachmentResponse = z.object({ success: z.boolean(), attachment: AttachmentSchema });
-const attachmentsListResponse = z.object({ success: z.boolean(), count: z.number(), attachments: z.array(AttachmentSchema) });
+const attachmentsListResponse = z.object({
+  success: z.boolean(),
+  count: z.number(),
+  attachments: z.array(AttachmentSchema),
+});
 const uploadAttachmentsResponse = z.object({
   success: z.boolean(),
   message: z.string(),
@@ -90,7 +94,7 @@ export const messagingOpenApi = {
         },
       },
     },
-    
+
     '/messaging/chats/{chatId}/reset-unread': {
       post: {
         tags: ['Messaging'],
@@ -115,9 +119,17 @@ export const messagingOpenApi = {
           },
         },
         responses: {
-          '200': { 
+          '200': {
             description: 'Unread count reset successfully',
-            content: { 'application/json': { schema: z.object({ success: z.boolean(), message: z.string(), data: z.object({ chatId: z.string(), userId: z.string() }) }) } },
+            content: {
+              'application/json': {
+                schema: z.object({
+                  success: z.boolean(),
+                  message: z.string(),
+                  data: z.object({ chatId: z.string(), userId: z.string() }),
+                }),
+              },
+            },
           },
           '400': { description: 'Invalid input' },
           '401': { description: 'Unauthorized' },
@@ -127,86 +139,90 @@ export const messagingOpenApi = {
     },
 
     '/messaging/chats/{chatId}': {
-    get: {
-      tags: ['Messaging'],
-      summary: 'Get chat by ID',
-      description: 'Retrieve details of a specific chat by ID',
-      security: [{ AuthHeader: [], CustomerSlug: [] }],
-      parameters: [
-        {
-          name: 'chatId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-          description: 'Chat ID',
-        } as ParameterObject,
-      ],
-      responses: {
-        '200': {
-          description: 'Chat retrieved successfully',
-          content: { 'application/json': { schema: chatResponse } },
+      get: {
+        tags: ['Messaging'],
+        summary: 'Get chat by ID',
+        description: 'Retrieve details of a specific chat by ID',
+        security: [{ AuthHeader: [], CustomerSlug: [] }],
+        parameters: [
+          {
+            name: 'chatId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Chat ID',
+          } as ParameterObject,
+        ],
+        responses: {
+          '200': {
+            description: 'Chat retrieved successfully',
+            content: { 'application/json': { schema: chatResponse } },
+          },
+          '401': { description: 'Unauthorized' },
+          '404': { description: 'Chat not found' },
         },
-        '401': { description: 'Unauthorized' },
-        '404': { description: 'Chat not found' },
       },
-    },
-    patch: {
-      tags: ['Messaging'],
-      summary: 'Update chat',
-      description: 'Update chat settings (user-specific or global)',
-      security: [{ AuthHeader: [], CustomerSlug: [] }],
-      parameters: [
-        {
-          name: 'chatId',
-          in: 'path',
+      patch: {
+        tags: ['Messaging'],
+        summary: 'Update chat',
+        description: 'Update chat settings (user-specific or global)',
+        security: [{ AuthHeader: [], CustomerSlug: [] }],
+        parameters: [
+          {
+            name: 'chatId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Chat ID',
+          } as ParameterObject,
+        ],
+        requestBody: {
           required: true,
-          schema: { type: 'string' },
-          description: 'Chat ID',
-        } as ParameterObject,
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: updateChatSchema,
+          content: {
+            'application/json': {
+              schema: updateChatSchema,
+            },
           },
         },
-      },
-      responses: {
-        '200': {
-          description: 'Chat updated successfully',
-          content: { 'application/json': { schema: chatResponse } },
+        responses: {
+          '200': {
+            description: 'Chat updated successfully',
+            content: { 'application/json': { schema: chatResponse } },
+          },
+          '400': { description: 'Invalid input' },
+          '401': { description: 'Unauthorized' },
+          '404': { description: 'Chat not found' },
         },
-        '400': { description: 'Invalid input' },
-        '401': { description: 'Unauthorized' },
-        '404': { description: 'Chat not found' },
+      },
+      delete: {
+        tags: ['Messaging'],
+        summary: 'Delete chat',
+        description: 'Delete a chat and all its messages',
+        security: [{ AuthHeader: [], CustomerSlug: [] }],
+        parameters: [
+          {
+            name: 'chatId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Chat ID',
+          } as ParameterObject,
+        ],
+        responses: {
+          '200': {
+            description: 'Chat deleted successfully',
+            content: {
+              'application/json': {
+                schema: z.object({ success: z.boolean(), message: z.string(), data: z.object({ chatId: z.string() }) }),
+              },
+            },
+          },
+          '400': { description: 'Invalid chat ID' },
+          '401': { description: 'Unauthorized' },
+          '404': { description: 'Chat not found' },
+        },
       },
     },
-    delete: {
-      tags: ['Messaging'],
-      summary: 'Delete chat',
-      description: 'Delete a chat and all its messages',
-      security: [{ AuthHeader: [], CustomerSlug: [] }],
-      parameters: [
-        {
-          name: 'chatId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-          description: 'Chat ID',
-        } as ParameterObject,
-      ],
-      responses: {
-        '200': { 
-          description: 'Chat deleted successfully',
-          content: { 'application/json': { schema: z.object({ success: z.boolean(), message: z.string(), data: z.object({ chatId: z.string() }) }) } },
-        },
-        '400': { description: 'Invalid chat ID' },
-        '401': { description: 'Unauthorized' },
-        '404': { description: 'Chat not found' },
-      },
-    },
-  },
 
     '/messaging/chats': {
       get: {
@@ -238,9 +254,9 @@ export const messagingOpenApi = {
         summary: 'Create chat',
         description: 'Create a new chat (direct or group)',
         security: [{ AuthHeader: [], CustomerSlug: [] }],
-        requestBody: { 
+        requestBody: {
           required: true,
-          content: { 'application/json': { schema: createChatSchema } } 
+          content: { 'application/json': { schema: createChatSchema } },
         },
         responses: {
           '201': {
@@ -282,9 +298,17 @@ export const messagingOpenApi = {
           },
         },
         responses: {
-          '200': { 
+          '200': {
             description: 'Chat marked as read',
-            content: { 'application/json': { schema: z.object({ success: z.boolean(), message: z.string(), data: z.object({ updatedCount: z.number() }) }) } },
+            content: {
+              'application/json': {
+                schema: z.object({
+                  success: z.boolean(),
+                  message: z.string(),
+                  data: z.object({ updatedCount: z.number() }),
+                }),
+              },
+            },
           },
           '400': { description: 'Invalid input' },
           '401': { description: 'Unauthorized' },
@@ -372,9 +396,9 @@ export const messagingOpenApi = {
         summary: 'Send message',
         description: 'Send a new message to a chat',
         security: [{ AuthHeader: [], CustomerSlug: [] }],
-        requestBody: { 
+        requestBody: {
           required: true,
-          content: { 'application/json': { schema: sendMessageSchema } } 
+          content: { 'application/json': { schema: sendMessageSchema } },
         },
         responses: {
           '201': {
@@ -442,9 +466,17 @@ export const messagingOpenApi = {
           },
         },
         responses: {
-          '200': { 
+          '200': {
             description: 'Message marked as delivered',
-            content: { 'application/json': { schema: z.object({ success: z.boolean(), message: z.string(), data: z.object({ messageId: z.string(), deliveredTo: z.array(z.any()) }) }) } },
+            content: {
+              'application/json': {
+                schema: z.object({
+                  success: z.boolean(),
+                  message: z.string(),
+                  data: z.object({ messageId: z.string(), deliveredTo: z.array(z.any()) }),
+                }),
+              },
+            },
           },
           '400': { description: 'Invalid input' },
           '401': { description: 'Unauthorized' },
@@ -477,9 +509,17 @@ export const messagingOpenApi = {
           },
         },
         responses: {
-          '200': { 
+          '200': {
             description: 'Read status updated',
-            content: { 'application/json': { schema: z.object({ success: z.boolean(), message: z.string(), data: z.object({ messageId: z.string(), readBy: z.array(z.any()) }) }) } },
+            content: {
+              'application/json': {
+                schema: z.object({
+                  success: z.boolean(),
+                  message: z.string(),
+                  data: z.object({ messageId: z.string(), readBy: z.array(z.any()) }),
+                }),
+              },
+            },
           },
           '400': { description: 'Invalid input' },
           '401': { description: 'Unauthorized' },
@@ -504,9 +544,17 @@ export const messagingOpenApi = {
           } as ParameterObject,
         ],
         responses: {
-          '200': { 
+          '200': {
             description: 'Message deleted successfully',
-            content: { 'application/json': { schema: z.object({ success: z.boolean(), message: z.string(), data: z.object({ messageId: z.string(), chatId: z.string() }) }) } },
+            content: {
+              'application/json': {
+                schema: z.object({
+                  success: z.boolean(),
+                  message: z.string(),
+                  data: z.object({ messageId: z.string(), chatId: z.string() }),
+                }),
+              },
+            },
           },
           '401': { description: 'Unauthorized' },
           '403': { description: 'Forbidden - only sender can delete' },
@@ -543,9 +591,24 @@ export const messagingOpenApi = {
           } as ParameterObject,
         ],
         responses: {
-          '200': { 
+          '200': {
             description: 'Incoming messages retrieved successfully',
-            content: { 'application/json': { schema: z.object({ success: z.boolean(), data: z.object({ messages: z.array(MessageSchema), pagination: z.object({ page: z.number(), limit: z.number(), hasMore: z.boolean(), total: z.number() }) }) }) } },
+            content: {
+              'application/json': {
+                schema: z.object({
+                  success: z.boolean(),
+                  data: z.object({
+                    messages: z.array(MessageSchema),
+                    pagination: z.object({
+                      page: z.number(),
+                      limit: z.number(),
+                      hasMore: z.boolean(),
+                      total: z.number(),
+                    }),
+                  }),
+                }),
+              },
+            },
           },
           '401': { description: 'Unauthorized' },
           '404': { description: 'User not found' },
@@ -581,9 +644,24 @@ export const messagingOpenApi = {
           } as ParameterObject,
         ],
         responses: {
-          '200': { 
+          '200': {
             description: 'Sent messages retrieved successfully',
-            content: { 'application/json': { schema: z.object({ success: z.boolean(), data: z.object({ messages: z.array(MessageSchema), pagination: z.object({ page: z.number(), limit: z.number(), hasMore: z.boolean(), total: z.number() }) }) }) } },
+            content: {
+              'application/json': {
+                schema: z.object({
+                  success: z.boolean(),
+                  data: z.object({
+                    messages: z.array(MessageSchema),
+                    pagination: z.object({
+                      page: z.number(),
+                      limit: z.number(),
+                      hasMore: z.boolean(),
+                      total: z.number(),
+                    }),
+                  }),
+                }),
+              },
+            },
           },
           '401': { description: 'Unauthorized' },
           '404': { description: 'User not found' },
@@ -607,9 +685,9 @@ export const messagingOpenApi = {
             description: 'Message ID',
           } as ParameterObject,
         ],
-        requestBody: { 
+        requestBody: {
           required: true,
-          content: { 'application/json': { schema: addReactionSchema } } 
+          content: { 'application/json': { schema: addReactionSchema } },
         },
         responses: {
           '201': {
@@ -654,7 +732,7 @@ export const messagingOpenApi = {
     },
 
     // ==================== ATTACHMENT ENDPOINTS ====================
-        '/messaging/attachments/upload': {
+    '/messaging/attachments/upload': {
       post: {
         tags: ['Messaging'],
         summary: 'Upload attachments',
@@ -665,10 +743,10 @@ export const messagingOpenApi = {
           content: {
             'multipart/form-data': {
               schema: {
-                type: 'object' as const,  
+                type: 'object' as const,
                 properties: {
                   files: {
-                    type: 'array' as const,  
+                    type: 'array' as const,
                     items: { type: 'string' as const, format: 'binary' as const },
                     description: 'Files to upload',
                   },
@@ -790,7 +868,7 @@ export const messagingOpenApi = {
           } as ParameterObject,
         ],
         responses: {
-          '200': { 
+          '200': {
             description: 'Attachment deleted successfully',
             content: { 'application/json': { schema: z.object({ success: z.boolean(), message: z.string() }) } },
           },
@@ -998,7 +1076,9 @@ export const messagingOpenApi = {
         responses: {
           '201': {
             description: 'System notifications created successfully',
-            content: { 'application/json': { schema: z.object({ success: z.boolean(), data: z.array(ChatNotificationSchema) }) } },
+            content: {
+              'application/json': { schema: z.object({ success: z.boolean(), data: z.array(ChatNotificationSchema) }) },
+            },
           },
           '400': { description: 'Invalid input' },
           '401': { description: 'Unauthorized' },
@@ -1007,50 +1087,50 @@ export const messagingOpenApi = {
       },
     },
     '/messaging/notifications/type/{type}': {
-  get: {
-    tags: ['Messaging'],
-    summary: 'Get notifications by type',
-    description: 'Get notifications filtered by type with pagination',
-    security: [{ AuthHeader: [], CustomerSlug: [] }],
-    parameters: [
-      {
-        name: 'type',
-        in: 'path',
-        required: true,
-        schema: { 
-          type: 'string',
-          enum: ['message', 'mention', 'system', 'chat_invite', 'user_online', 'user_offline']
-        },
-        description: 'Notification type',
-      } as ParameterObject,
-      {
-        name: 'page',
-        in: 'query',
-        schema: { type: 'number', default: 1 },
-        description: 'Page number',
-      } as ParameterObject,
-      {
-        name: 'limit',
-        in: 'query',
-        schema: { type: 'number', default: 10 },
-        description: 'Number of notifications per page',
-      } as ParameterObject,
-    ],
-    responses: {
-      '200': {
-        description: 'Notifications retrieved successfully',
-        content: { 
-          'application/json': { 
-            schema: z.object({
-              success: z.boolean(),
-              notifications: z.array(ChatNotificationSchema),
-              totalCount: z.number(),
-              currentPage: z.number(),
-              totalPages: z.number()
-            })
-          } 
-        },
-      },
+      get: {
+        tags: ['Messaging'],
+        summary: 'Get notifications by type',
+        description: 'Get notifications filtered by type with pagination',
+        security: [{ AuthHeader: [], CustomerSlug: [] }],
+        parameters: [
+          {
+            name: 'type',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              enum: ['message', 'mention', 'system', 'chat_invite', 'user_online', 'user_offline'],
+            },
+            description: 'Notification type',
+          } as ParameterObject,
+          {
+            name: 'page',
+            in: 'query',
+            schema: { type: 'number', default: 1 },
+            description: 'Page number',
+          } as ParameterObject,
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'number', default: 10 },
+            description: 'Number of notifications per page',
+          } as ParameterObject,
+        ],
+        responses: {
+          '200': {
+            description: 'Notifications retrieved successfully',
+            content: {
+              'application/json': {
+                schema: z.object({
+                  success: z.boolean(),
+                  notifications: z.array(ChatNotificationSchema),
+                  totalCount: z.number(),
+                  currentPage: z.number(),
+                  totalPages: z.number(),
+                }),
+              },
+            },
+          },
           '401': { description: 'Unauthorized' },
         },
       },

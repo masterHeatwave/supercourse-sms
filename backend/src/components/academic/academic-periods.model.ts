@@ -44,6 +44,24 @@ AcademicPeriodSchema.virtual('sessions', {
   foreignField: 'academic_period',
 });
 
+/**
+ * Pre-save hook to compute is_active based on date range
+ * Sets is_active = true only if current date falls within the period's start_date and end_date
+ */
+AcademicPeriodSchema.pre('save', function (next) {
+  const now = new Date();
+  const startDate = new Date(this.start_date);
+  const endDate = new Date(this.end_date);
+
+  // Reset time parts to compare dates only
+  now.setHours(0, 0, 0, 0);
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(0, 0, 0, 0);
+
+  this.is_active = startDate <= now && now <= endDate;
+  next();
+});
+
 AcademicPeriodSchema.plugin(toJson);
 AcademicPeriodSchema.plugin(advancedResultsPlugin);
 AcademicPeriodSchema.plugin(createdBy);

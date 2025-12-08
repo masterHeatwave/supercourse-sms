@@ -5,9 +5,9 @@ export interface IStudentFormData {
     // Personal info
     firstname: string;
     lastname: string;
-    username: string;
     email: string;
     phone: string;
+    optionalPhone?: string;
     mobile?: string;
   
     // Address info
@@ -43,6 +43,11 @@ export interface IStudentFormData {
     facebook?: string;
     twitter?: string;
     linkedin?: string;
+  
+    // Health information
+    hasAllergies?: boolean;
+    healthDetails?: string;
+    generalNotes?: string;
   
       contacts?: IContact[];
   siblingAttending?: string[];

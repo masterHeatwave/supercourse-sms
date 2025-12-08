@@ -38,15 +38,15 @@ export class CustomActivityController {
     try {
       const activities = await this.customActivityService.getActivities();
 
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.OK,
         success: true,
         data: activities,
       });
     } catch (error: any) {
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.BAD_REQUEST,
-        success: true,
+        success: false,
         data: {
           error: {
             message: error.message,
@@ -61,15 +61,38 @@ export class CustomActivityController {
       const { activityId } = req.params;
       const activity = await this.customActivityService.getActivityById(activityId);
 
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.OK,
         success: true,
         data: activity,
       });
     } catch (error: any) {
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.BAD_REQUEST,
+        success: false,
+        data: {
+          error: {
+            message: error.message,
+          },
+        },
+      });
+    }
+  });
+
+  getSinglePlayerActivitiesByUserIdTag = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    try {
+      const { userId, tag } = req.params;
+      const activity = await this.customActivityService.getSinglePlayerActivitiesByUserIdTag(userId, tag);
+
+      return jsonResponse(res, {
+        status: StatusCodes.OK,
         success: true,
+        data: activity,
+      });
+    } catch (error: any) {
+      return jsonResponse(res, {
+        status: StatusCodes.BAD_REQUEST,
+        success: false,
         data: {
           error: {
             message: error.message,
@@ -84,15 +107,15 @@ export class CustomActivityController {
       const activityObject = req.body;
       const response = await this.customActivityService.saveActivity(activityObject);
 
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.OK,
         success: true,
         data: response,
       });
     } catch (error: any) {
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.BAD_REQUEST,
-        success: true,
+        success: false,
         data: {
           error: {
             message: error.message,
@@ -109,15 +132,15 @@ export class CustomActivityController {
 
       const response = await this.customActivityService.updateActivity(activityId, activityObject);
 
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.OK,
         success: true,
         data: response,
       });
     } catch (error: any) {
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.BAD_REQUEST,
-        success: true,
+        success: false,
         data: {
           error: {
             message: error.message,
@@ -132,15 +155,15 @@ export class CustomActivityController {
       const { activityId } = req.params;
       const response = await this.customActivityService.deleteActivityById(activityId);
 
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.OK,
         success: true,
         data: response,
       });
     } catch (error: any) {
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.BAD_REQUEST,
-        success: true,
+        success: false,
         data: {
           error: {
             message: error.message,
@@ -155,15 +178,15 @@ export class CustomActivityController {
       const { userId } = req.params;
       const activities = await this.customActivityService.getCustomActivitiesByUserID(userId);
 
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.OK,
         success: true,
         data: activities,
       });
     } catch (error: any) {
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.BAD_REQUEST,
-        success: true,
+        success: false,
         data: {
           error: {
             message: error.message,
@@ -178,15 +201,15 @@ export class CustomActivityController {
       const { userId } = req.params;
       const activities = await this.customActivityService.getPublicActivitiesExcludingUserId(userId);
 
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.OK,
         success: true,
         data: activities,
       });
     } catch (error: any) {
-      jsonResponse(res, {
-        status: StatusCodes.BAD_REQUEST,
-        success: true,
+      return jsonResponse(res, {
+        status: error.status || StatusCodes.BAD_REQUEST,
+        success: false,
         data: {
           error: {
             message: error.message,
@@ -201,15 +224,15 @@ export class CustomActivityController {
       const { activityId } = req.params;
       const response = await this.customActivityService.duplicateActivityById(activityId);
 
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.OK,
         success: true,
         data: response,
       });
     } catch (error: any) {
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.BAD_REQUEST,
-        success: true,
+        success: false,
         data: {
           error: {
             message: error.message,
@@ -224,15 +247,15 @@ export class CustomActivityController {
       const { activityId, userId } = req.params;
       const response = await this.customActivityService.duplicatePublicActivityById(activityId, userId);
 
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.OK,
         success: true,
         data: response,
       });
     } catch (error: any) {
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.BAD_REQUEST,
-        success: true,
+        success: false,
         data: {
           error: {
             message: error.message,
@@ -244,18 +267,246 @@ export class CustomActivityController {
 
   getStudentActivities = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     try {
-      const { activityId } = req.params;
-      const activities = await this.customActivityService.getStudentActivities(activityId);
+      const { userId } = req.params;
+      const activities = await this.customActivityService.getStudentActivities(userId);
 
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.OK,
         success: true,
         data: activities,
       });
     } catch (error: any) {
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.BAD_REQUEST,
+        success: false,
+        data: {
+          error: {
+            message: error.message,
+          },
+        },
+      });
+    }
+  });
+
+  getStudentActivity = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    try {
+      const { userId, activityId } = req.params;
+      const activities = await this.customActivityService.getStudentActivity(userId, activityId);
+
+      return jsonResponse(res, {
+        status: StatusCodes.OK,
         success: true,
+        data: activities,
+      });
+    } catch (error: any) {
+      return jsonResponse(res, {
+        status: StatusCodes.BAD_REQUEST,
+        success: false,
+        data: {
+          error: {
+            message: error.message,
+          },
+        },
+      });
+    }
+  });
+
+  getAssignedActivities = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    try {
+      const activities = await this.customActivityService.getAssignedActivities();
+
+      return jsonResponse(res, {
+        status: StatusCodes.OK,
+        success: true,
+        data: activities,
+      });
+    } catch (error: any) {
+      return jsonResponse(res, {
+        status: StatusCodes.BAD_REQUEST,
+        success: false,
+        data: {
+          error: {
+            message: error.message,
+          },
+        },
+      });
+    }
+  });
+
+  createAssignedActivity = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    try {
+      const { activityId } = req.params;
+      const { students, classId, assignmentBundle } = req.body;
+      const activity = await this.customActivityService.createAssignedActivity(
+        activityId,
+        students,
+        classId,
+        assignmentBundle
+      );
+
+      return jsonResponse(res, {
+        status: StatusCodes.OK,
+        success: true,
+        data: activity,
+      });
+    } catch (error: any) {
+      return jsonResponse(res, {
+        status: StatusCodes.BAD_REQUEST,
+        success: false,
+        data: {
+          error: {
+            message: error.message,
+          },
+        },
+      });
+    }
+  });
+
+  addStudentsToAssignedActivity = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    try {
+      const { activityId } = req.params;
+      const { students } = req.body;
+      const activity = await this.customActivityService.addStudentsToAssignedActivity(activityId, students);
+
+      return jsonResponse(res, {
+        status: StatusCodes.OK,
+        success: true,
+        data: activity,
+      });
+    } catch (error: any) {
+      return jsonResponse(res, {
+        status: StatusCodes.BAD_REQUEST,
+        success: false,
+        data: {
+          error: {
+            message: error.message,
+          },
+        },
+      });
+    }
+  });
+
+  removeStudentsFromAssignedActivity = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    try {
+      const { activityId } = req.params;
+      const students = req.body;
+      const activity = await this.customActivityService.removeStudentsFromAssignedActivity(activityId, students);
+
+      return jsonResponse(res, {
+        status: StatusCodes.OK,
+        success: true,
+        data: activity,
+      });
+    } catch (error: any) {
+      return jsonResponse(res, {
+        status: StatusCodes.BAD_REQUEST,
+        success: false,
+        data: {
+          error: {
+            message: error.message,
+          },
+        },
+      });
+    }
+  });
+
+  updateAssignedActivityStatus = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    try {
+      const { activityId, studentId } = req.params;
+      const { status } = req.body;
+      const activity = await this.customActivityService.updateAssignedActivityStatus(activityId, studentId, status);
+
+      return jsonResponse(res, {
+        status: StatusCodes.OK,
+        success: true,
+        data: activity,
+      });
+    } catch (error: any) {
+      return jsonResponse(res, {
+        status: StatusCodes.BAD_REQUEST,
+        success: false,
+        data: {
+          error: {
+            message: error.message,
+          },
+        },
+      });
+    }
+  });
+
+  updateAssignedTaskAnswers = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    try {
+      const { assignmentId, studentId, customActivityId } = req.params;
+      const answers = req.body;
+      const activity = await this.customActivityService.updateAssignedTaskAnswers(
+        assignmentId,
+        studentId,
+        customActivityId,
+        answers
+      );
+
+      return jsonResponse(res, {
+        status: StatusCodes.OK,
+        success: true,
+        data: activity,
+      });
+    } catch (error: any) {
+      return jsonResponse(res, {
+        status: StatusCodes.BAD_REQUEST,
+        success: false,
+        data: {
+          error: {
+            message: error.message,
+          },
+        },
+      });
+    }
+  });
+
+  updateActivityPlays = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    console.log('PATCHING PLAYS of PARAMS', req.params);
+    console.log('PATCHING PLAYS of BODY', req.body);
+    try {
+      const { activityId } = req.params;
+      const { duration } = req.body;
+      const activity = await this.customActivityService.updateActivityPlays(activityId, duration);
+
+      return jsonResponse(res, {
+        status: StatusCodes.OK,
+        success: true,
+        data: activity,
+      });
+    } catch (error: any) {
+      return jsonResponse(res, {
+        status: StatusCodes.BAD_REQUEST,
+        success: false,
+        data: {
+          error: {
+            message: error.message,
+          },
+        },
+      });
+    }
+  });
+
+  getAssignedTaskAnswers = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    try {
+      const { assignmentId, studentId, customActivityId } = req.params;
+      const answers = await this.customActivityService.getAssignedTaskAnswers(
+        assignmentId,
+        studentId,
+        customActivityId
+      );
+
+      return jsonResponse(res, {
+        status: StatusCodes.OK,
+        success: true,
+        data: answers,
+      });
+    } catch (error: any) {
+      return jsonResponse(res, {
+        status: StatusCodes.BAD_REQUEST,
+        success: false,
         data: {
           error: {
             message: error.message,
@@ -316,7 +567,7 @@ export class CustomActivityController {
         message: 'File uploaded successfully',
       });
     } catch (error) {
-      logger.error(`Error uploading file: ${error}`);
+      //logger.error(`Error uploading file: ${error}`);
       return jsonResponse(res, {
         status: StatusCodes.INTERNAL_SERVER_ERROR,
         message: 'An error occurred while uploading file',
@@ -348,19 +599,20 @@ export class CustomActivityController {
 
       // Security: only allow deletion inside custom-activities folder
       const basePath = path.join(process.cwd(), 'public/media/custom-activities');
+
       if (!fullPath.startsWith(basePath)) {
-        return res.status(403).json({ success: false, message: 'Unauthorized file path' });
+        return jsonResponse(res, { status: StatusCodes.FORBIDDEN, success: false, message: 'Unauthorized file path' });
       }
 
       await fs.remove(fullPath);
 
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.OK,
         success: true,
         message: 'File deleted successfully',
       });
     } catch (err) {
-      jsonResponse(res, {
+      return jsonResponse(res, {
         status: StatusCodes.BAD_REQUEST,
         success: false,
         data: {
@@ -388,14 +640,11 @@ export class CustomActivityController {
         response.data && response.data.length > 0 ? (response.data[0].url ?? null) : null;
 
       if (imagesData) {
-        res.status(200).json({
-          success: true,
-          imagesData,
-        });
+        return jsonResponse(res, { status: StatusCodes.OK, success: true, data: { imagesData } });
       } else {
-        res.status(200).json({
+        return jsonResponse(res, {
+          status: StatusCodes.OK,
           success: false,
-          messageType: 'info',
           message: 'No images were generated based on the provided prompt.',
         });
       }
@@ -406,11 +655,11 @@ export class CustomActivityController {
         console.error(error.message);
       }
 
-      res.status(500).json({
+      return jsonResponse(res, {
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
         success: false,
-        messageType: 'error',
         message: 'An error occurred while generating images.',
-        error: error.message || 'Unknown error',
+        data: { error: error.message },
       });
     }
   });
@@ -425,16 +674,16 @@ export class CustomActivityController {
       });
 
       if (data.photos.length > 0) {
-        res.status(200).json({
+        return jsonResponse(res, {
+          status: StatusCodes.OK,
           success: true,
-          imagesData: data.photos,
-          restData: data,
+          data: { imagesData: data.photos, restData: data },
         });
       } else {
-        res.status(200).json({
+        return jsonResponse(res, {
+          status: StatusCodes.OK,
           success: false,
-          message: 'No images were found.\nPlease try searching again.',
-          messageType: 'info',
+          message: 'No images were found. Please try searching again.',
         });
       }
     } catch (error: any) {
@@ -444,10 +693,10 @@ export class CustomActivityController {
         console.error(`Error: ${error.message}`);
       }
 
-      res.status(400).json({
+      return jsonResponse(res, {
+        status: StatusCodes.BAD_REQUEST,
         success: false,
         message: error.message,
-        messageType: 'error',
       });
     }
   });

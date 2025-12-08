@@ -5,5 +5,6 @@ export enum Role {
   MANAGER = 'MANAGER',
   TEACHER = 'TEACHER',
   STUDENT = 'STUDENT',
-  PARENT = 'PARENT',
+  PARENT = 'PARENT', // Legacy alias for PARENT_GUARDIAN
+  PARENT_GUARDIAN = 'PARENT_GUARDIAN',
 }

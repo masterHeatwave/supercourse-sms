@@ -674,12 +674,165 @@ export const usersOpenApi = {
         },
       },
     },
+    '/users/teachers/me/students': {
+      get: {
+        tags: ['Users'],
+        summary: 'Get all students for authenticated teacher',
+        description:
+          'Returns all students enrolled in sessions where the authenticated teacher is assigned. Only accessible by teachers.',
+        security: [{ AuthHeader: [], CustomerSlug: [] }],
+        parameters: [
+          {
+            name: 'is_active',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Filter by active status',
+          } as ParameterObject,
+          {
+            name: 'archived',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Filter by archived status',
+          } as ParameterObject,
+          {
+            name: 'branch',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Filter by branch ID. If not provided, returns all students',
+          } as ParameterObject,
+          {
+            name: 'page',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Page number for pagination',
+          } as ParameterObject,
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Number of items per page',
+          } as ParameterObject,
+          {
+            name: 'sort',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Sort field and direction (e.g., "createdAt:desc")',
+          } as ParameterObject,
+        ],
+        responses: {
+          '200': {
+            description: 'List of students retrieved successfully',
+            content: {
+              'application/json': {
+                schema: PaginatedResponseSchema,
+              },
+            },
+          },
+          '403': {
+            description: 'Forbidden - Only teachers can access this endpoint',
+            content: {
+              'application/json': {
+                schema: ErrorResponseSchema,
+              },
+            },
+          },
+        },
+      },
+    },
+    '/users/teachers/{teacherId}/students': {
+      get: {
+        tags: ['Users'],
+        summary: 'Get all students for a specific teacher',
+        description:
+          'Returns all students enrolled in sessions where the specified teacher is assigned. Admins and Managers can query any teacher. Teachers can only query their own students.',
+        security: [{ AuthHeader: [], CustomerSlug: [] }],
+        parameters: [
+          {
+            name: 'teacherId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Teacher ID',
+          } as ParameterObject,
+          {
+            name: 'is_active',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Filter by active status',
+          } as ParameterObject,
+          {
+            name: 'archived',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Filter by archived status',
+          } as ParameterObject,
+          {
+            name: 'branch',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Filter by branch ID. If not provided, returns all students',
+          } as ParameterObject,
+          {
+            name: 'page',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Page number for pagination',
+          } as ParameterObject,
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Number of items per page',
+          } as ParameterObject,
+          {
+            name: 'sort',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Sort field and direction (e.g., "createdAt:desc")',
+          } as ParameterObject,
+        ],
+        responses: {
+          '200': {
+            description: 'List of students retrieved successfully',
+            content: {
+              'application/json': {
+                schema: PaginatedResponseSchema,
+              },
+            },
+          },
+          '400': {
+            description: 'Bad Request - Teacher ID is required or user is not a teacher',
+            content: {
+              'application/json': {
+                schema: ErrorResponseSchema,
+              },
+            },
+          },
+          '403': {
+            description: 'Forbidden - Teachers can only access their own students',
+            content: {
+              'application/json': {
+                schema: ErrorResponseSchema,
+              },
+            },
+          },
+          '404': {
+            description: 'Teacher not found',
+            content: {
+              'application/json': {
+                schema: ErrorResponseSchema,
+              },
+            },
+          },
+        },
+      },
+    },
     '/internal/schools': {
       post: {
         tags: ['Internal'],
-        summary: 'Create School (Customer, Branch, User)',
+        summary: 'Create School (Customer, Optional Branch, User)',
         description:
-          'Internally creates a main customer, a branch customer linked to it, and an admin user for the branch.',
+          'Internally creates a main customer, optionally a branch customer linked to it, and an admin user.',
         security: [{ ApiKey: [] }],
         requestBody: {
           required: true,
@@ -691,7 +844,7 @@ export const usersOpenApi = {
         },
         responses: {
           '201': {
-            description: 'School, branch, and user created successfully',
+            description: 'School and user created successfully (branch created if provided)',
             content: {
               'application/json': {
                 schema: InternalCreateSchoolResponseSchema,

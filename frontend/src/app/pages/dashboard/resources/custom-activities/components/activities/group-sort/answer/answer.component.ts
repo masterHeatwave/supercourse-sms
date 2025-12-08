@@ -2,7 +2,6 @@ import {
   Component,
   ElementRef,
   EventEmitter,
-  inject,
   Input,
   OnChanges,
   Output,
@@ -21,7 +20,8 @@ import { DividerModule } from 'primeng/divider';
 import { ImageModule } from 'primeng/image';
 import { CommonModule } from '@angular/common';
 import { ImageSelectorComponent } from '../../../image-selector/image-selector.component';
-import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'group-sort-answer',
@@ -38,6 +38,7 @@ import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-
     CommonModule,
     ImageSelectorComponent,
     WarningDialogComponent,
+    TranslateModule
   ],
   templateUrl: './answer.component.html',
   styleUrl: './answer.component.scss',
@@ -63,9 +64,7 @@ export class AnswerComponent implements OnChanges {
   @ViewChild('lastSoundElementRef', { static: false })
   lastSoundElementRef!: ElementRef<HTMLElement>;
 
-  constructor() {}
-  
-  loadingService = inject(LoadingService);
+  constructor(private loadingService: LoadingService) {}
 
   ngOnInit(): void {
     this.loadingService.isLoading$.subscribe(

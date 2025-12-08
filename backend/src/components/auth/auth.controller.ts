@@ -142,7 +142,11 @@ const impersonateStudent = asyncHandler(async (req: Request, res: Response, _nex
   const studentId = req.params.id;
 
   // Verify student exists
-  const student = await usersService.querySingle(studentId, IUserType.STUDENT);
+  const reqUser = req.user as any;
+  const isAdmin = reqUser?.roles?.some((role: any) => role.title === 'ADMIN');
+  const includeInactive = isAdmin;
+
+  const student = await usersService.querySingle(studentId, IUserType.STUDENT, includeInactive);
   if (!student) {
     return jsonResponse(res, {
       status: StatusCodes.NOT_FOUND,
@@ -151,8 +155,16 @@ const impersonateStudent = asyncHandler(async (req: Request, res: Response, _nex
     });
   }
 
+  // Check if student is active (only for non-admin users)
+  if (!isAdmin && !student.is_active) {
+    return jsonResponse(res, {
+      status: StatusCodes.FORBIDDEN,
+      message: 'Cannot impersonate inactive student account',
+      success: false,
+    });
+  }
+
   // Verify that the authenticated user's email is one of the student's contact emails
-  const reqUser = req.user as any;
   const parentEmail = reqUser?.email;
   const linkedEmails: string[] = Array.isArray((student as any).contacts)
     ? (student as any).contacts.map((c: any) => c.email).filter(Boolean)

@@ -1,5 +1,5 @@
 //@import "../../../styles/variables";
-@import '../../styles//styles.scss';
+@import '../../styles/styles.scss';
 
 .delete-label {
   font-weight: 500;
@@ -63,6 +63,12 @@ label {
       margin: 0 !important;
       margin-left: 12px !important;
       text-align: center !important;
+      .p-button-label {
+        text-align: center;
+      }
+    }
+    span {
+      text-align: start;
     }
   }
 

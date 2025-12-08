@@ -7,7 +7,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { CommonModule } from '@angular/common';
 import { ClassesStudentsComponent } from '../classes-students/classes-students.component';
 import { OverviewComponent } from '../overview/overview.component';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TaxisService } from '@gen-api/taxis/taxis.service';
 import { SessionsService } from '@gen-api/sessions/sessions.service';
 import { UsersService } from '@gen-api/users/users.service';
@@ -15,6 +15,7 @@ import { Taxi, Session } from '@gen-api/schemas';
 import { SessionsComponent } from '../sessions/sessions.component';
 import { MessageService } from 'primeng/api';
 import { AttendanceComponent } from '../attendance/attendance.component';
+import { ResourcesComponent } from '../resources/resources.component';
 import { finalize } from 'rxjs/operators';
 import { SessionStatisticsUtil, SessionData } from '../../../utils/session-statistics.util';
 
@@ -63,7 +64,8 @@ interface Student {
     OverviewComponent,
     ClassesStudentsComponent,
     SessionsComponent,
-    AttendanceComponent
+    AttendanceComponent,
+    ResourcesComponent
   ],
   templateUrl: './single-class.component.html',
   styleUrl: './single-class.component.scss',
@@ -71,6 +73,7 @@ interface Student {
 })
 export class SingleClassComponent implements OnInit {
   #route = inject(ActivatedRoute);
+  #router = inject(Router);
   #taxisService = inject(TaxisService);
   #sessionsService = inject(SessionsService);
   #usersService = inject(UsersService);
@@ -80,7 +83,8 @@ export class SingleClassComponent implements OnInit {
   overviewInfo: OverviewInfo | null = null;
   students: Student[] = [];
   sessions: SessionData[] = [];
-  
+  upcomingSession: SessionData | null = null;
+
   loading = false;
   loadingStudents = false;
   loadingSessions = false;
@@ -88,9 +92,8 @@ export class SingleClassComponent implements OnInit {
   ngOnInit() {
     this.classId = this.#route.snapshot.paramMap.get('id');
     if (this.classId) {
-      this.loadClassData();
-      this.loadStudents();
-      this.loadSessions();
+      this.loadClassData();  // This loads class data AND students via mapTaxiToOverview
+      this.loadSessions();   // This loads sessions separately
     }
   }
 
@@ -117,15 +120,16 @@ export class SingleClassComponent implements OnInit {
     if (!this.classId) return;
     
     this.loadingStudents = true;
-    // For now, we'll use the taxi data to get students
-    // This will be updated when we have the taxi data
+    // Students are loaded from taxi data in mapTaxiToOverview
+    // This is called after getTaxisId completes, so just wait for that
   }
 
   loadSessions() {
     if (!this.classId) return;
-    
+
     this.loadingSessions = true;
-    this.#sessionsService.getSessions({ taxi: this.classId })
+    // Only show scheduled recurring sessions, exclude emergency/one-time sessions
+    this.#sessionsService.getSessions({ taxi: this.classId }, { params: { include_instances: 'only' } })
       .pipe(finalize(() => this.loadingSessions = false))
       .subscribe({
         next: (response: any) => {
@@ -134,10 +138,18 @@ export class SingleClassComponent implements OnInit {
               id: session.id,
               start_date: session.start_date,
               end_date: session.end_date,
+              start_time: session.start_time,
+              duration: session.duration,
+              is_cancelled: session.is_cancelled || false, // Default to false if not provided
+              taxi: session.taxi, // Include taxi data for title and branch
+              mode: session.mode, // Include mode for display
+              absences: session.absences || [], // Include absences
               classroom: session.classroom,
               teachers: session.teachers || [],
               students: session.students || []
             }));
+            // Find the upcoming session
+            this.findUpcomingSession();
             // Recalculate session statistics after sessions are loaded
             this.updateSessionStatistics();
           } else {
@@ -206,11 +218,11 @@ export class SingleClassComponent implements OnInit {
       creationDate: new Date(taxi.createdAt).toLocaleDateString(),
       lastUpdated: new Date(taxi.updatedAt).toLocaleDateString(),
       // sessionDuration will always be calculated as sum of all sessions
-      sessionDuration: 'Calculating...',
+      sessionDuration: '',
       // Use API data if available for sessions per week
       sessionsPerWeek: apiSessionStats?.sessionsPerWeek || 0,
       // totalHoursPerWeek will be calculated based on sessions per week
-      totalHoursPerWeek: 'Calculating...',
+      totalHoursPerWeek: '',
       weekTimetable: [], // Will be updated when sessions load
       notes: (taxi as any).notes || 'No notes available for this class.' // Try to get notes from API response
     };
@@ -298,6 +310,35 @@ export class SingleClassComponent implements OnInit {
     } catch (error) {
       console.error('Error calculating age:', error);
       return 'Invalid date';
+    }
+  }
+
+  /**
+   * Find the next upcoming or currently live session (not cancelled)
+   */
+  private findUpcomingSession() {
+    const now = new Date();
+
+    // Filter sessions that are upcoming or currently live (not cancelled)
+    const availableSessions = this.sessions
+      .filter(session => {
+        if (session.is_cancelled) return false;
+        const sessionStart = new Date(session.start_date);
+        const sessionEnd = new Date(session.end_date);
+        // Include if: session is in progress (live) OR session starts in the future
+        return sessionEnd > now || sessionStart > now;
+      })
+      .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+
+    this.upcomingSession = availableSessions.length > 0 ? availableSessions[0] : null;
+  }
+
+  /**
+   * Navigate to the upcoming session page
+   */
+  goToUpcomingSession() {
+    if (this.upcomingSession?.id) {
+      this.#router.navigate(['/dashboard/sessions', this.upcomingSession.id]);
     }
   }
 }

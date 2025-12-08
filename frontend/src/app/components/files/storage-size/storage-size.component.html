@@ -1,0 +1,15 @@
+<div>
+    <div class="col-fixed" style="width:250px">
+        <!-- @if(isLoading){
+        <p-skeleton height="1.1rem" />
+        }
+        @else  -->
+        @if(error){
+        <p>{{error}}</p>
+        }@else{
+        <div class="m-0 flex justify-content-end" style="color:#0071bb">
+            {{formatedData()}}
+        </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,139 @@
+<div class="icon-label-div">
+  <i class="pi pi-chart-line" style="font-size: 2rem"></i>
+  <label class="black-label">{{ 'analytics.student_engagement' | translate }}</label>
+</div>
+
+<div class="main-div">
+  <div class="card-div">
+    <div class="card">
+      <label style="font-weight: bolder">{{ 'analytics.attendance' | translate }}</label>
+      <i>{{ 'analytics.avg_number' | translate }}</i>
+      <label style="font-weight: bolder; font-size: 60px">{{ attendance * 100 }}%</label>
+    </div>
+
+    <div class="card">
+      <label style="font-weight: bolder">{{ 'analytics.highest_attendance_record' | translate }}</label>
+      <label>{{ highestAttendanceRecord }}</label>
+      <label style="font-weight: bolder">{{ 'analytics.lowest_attendance_record' | translate }}</label>
+      <label>{{ lowestAttendanceRecord }}</label>
+    </div>
+
+    <div class="card">
+      <label style="font-weight: bolder">{{ 'analytics.assignments_completed_on_time' | translate }}</label>
+      <label style="font-weight: bolder; font-size: 60px">{{ assignmentCompleted * 100 }}%</label>
+    </div>
+
+    <div class="card">
+      <span class="info-icon" style="align-self: flex-end; margin: 2px" id="infoButton" *ngIf="!showInfo" (click)="toggleInfo()">i </span>
+      <div class="info-box" *ngIf="showInfo">
+        <p>{{ 'analytics.popup_info' | translate }}</p>
+        <span class="info-icon" id="infoBoxButton" style="margin-right: -15px" (click)="toggleInfo()">i</span>
+      </div>
+      <label class="blue-label" style="font-weight: bolder">{{ 'analytics.most_engaged_class' | translate }}</label>
+      <label class="blue-label">{{ mostEngagedClass }} <span class="material-symbols-outlined">rocket_launch</span></label>
+      <label class="orange-label" style="font-weight: bolder">{{ 'analytics.least_engaged_class' | translate }}</label>
+      <label class="orange-label">{{ leastEngagedClass }} <span class="material-symbols-outlined">battery_android_1</span></label>
+    </div>
+  </div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; width: 100%">
+  <div style="width: 69%; min-width: 300px">
+    <div class="icon-label-div">
+      <i class="pi pi-sign-in" style="font-size: 1.7rem"></i>
+      <label class="black-label">{{ 'analytics.daily_logins' | translate }}</label>
+    </div>
+    <div style="display: flex; padding: 10px; height: 250px; background-color: white; border: 2px solid #afc8b2; border-radius: 10px; width: 100%">
+      <canvas baseChart [data]="dailyLoginsData" [options]="dailyLoginsOptions" [type]="'line'"> </canvas>
+    </div>
+  </div>
+
+  <div class="vertical-line"></div>
+
+  <div style="width: 29%; min-width: 300px">
+    <div class="icon-label-div">
+      <i class="pi pi-clock" style="font-size: 1.7rem"></i>
+      <label class="black-label">{{ 'analytics.daily_time_spent_minutes' | translate }}</label>
+    </div>
+    <div style="width: 100%; height: 250px">
+      <canvas baseChart [data]="dailyTimeSpentData" [options]="dailyTimeSpentOptions" [type]="'doughnut'"> </canvas>
+    </div>
+  </div>
+</div>
+
+<hr />
+
+<div style="display: flex; flex-wrap: wrap; width: 100%">
+  <div style="width: 49%; min-width: 300px">
+    <div>
+      <div class="icon-label-div">
+        <i class="pi pi-clock" style="font-size: 1.7rem"></i>
+        <label class="black-label">{{ 'analytics.weekly_time_spent' | translate }}</label>
+      </div>
+      <label>{{ 'analytics.weekly_average_duration_in_minutes' | translate }}</label>
+    </div>
+    <div style="width: 100%; height: 400px; padding: 10px; background-color: white; border: 2px solid #afc8b2; border-radius: 10px">
+      <canvas baseChart [data]="weeklyTimeSpentData" [options]="weeklyTimeSpentOptions" [type]="'bar'"> </canvas>
+    </div>
+  </div>
+  <div class="vertical-line"></div>
+  <div style="width: 49%; min-width: 300px">
+    <div class="icon-label-div">
+      <i class="pi pi-clock" style="font-size: 1.7rem"></i>
+      <label class="black-label">{{ 'analytics.weekly_time_spent_per_section' | translate }}</label>
+    </div>
+    <div style="width: 100%; height: 400px; background-color: white; border: 2px solid #afc8b2; border-radius: 10px">
+      <canvas baseChart [data]="weeklySectionData" [options]="weeklySectionOptions" [type]="'bar'"> </canvas>
+    </div>
+  </div>
+</div>
+
+<div class="main-div">
+  <div style="width: 49%">
+    <div class="icon-label-div">
+      <i class="pi pi-clock" style="font-size: 1.7rem"></i>
+      <label class="black-label">{{ 'analytics.student_time_spent_per_activity' | translate }}</label>
+    </div>
+    <!-- Bar Chart -->
+    <div style="width: 100%; height: 400px; background-color: white; border: 2px solid #afc8b2; border-radius: 10px">
+      <canvas baseChart [data]="barChartData" [options]="barChartOptions" chartType="bar" #barChart> </canvas>
+    </div>
+  </div>
+  <div style="width: 49%">
+    <!-- Top 5 Most Visited Sites -->
+    <div class="icon-label-div">
+      <i class="pi pi-trophy"></i>
+      <label class="black-label">{{ 'analytics.most_visited_assigned_interactive_activities' | translate }}</label>
+    </div>
+    <div class="table">
+      <div class="table-header">
+        <div>#</div>
+        <div>{{ 'analytics.interactive_activities' | translate }}</div>
+        <div>{{ 'analytics.time' | translate }}</div>
+        <div>{{ 'analytics.plays' | translate }}</div>
+      </div>
+      <div class="table-row" *ngFor="let row of customActivities; let i = index">
+        <div (click)="onGameRowClick(row)">{{ i + 1 }}</div>
+        <div (click)="onGameRowClick(row)">{{ row.title }}</div>
+        <div (click)="onGameRowClick(row)">{{ formatAvg(row) }}</div>
+        <div (click)="onGameRowClick(row)">{{ row.plays }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="icon-label-div">
+  <span class="material-symbols-outlined" style="color: red">bigtop_updates</span>
+  <label class="black-label">{{ 'analytics.live_data' | translate }}</label>
+</div>
+<div style="display: flex; flex-wrap: wrap; border: 2px solid #338d80; padding: 10px; justify-content: space-evenly">
+  <div class="div-with-right-border">
+    <label class="live-data-label" style="font-size: 35px">{{ onlineStudents }}</label>
+    <label class="live-data-label">{{ 'analytics.online_students' | translate }}</label>
+  </div>
+
+  <div class="div-with-right-border">
+    <label class="live-data-label" style="font-size: 35px">{{ onlineParents }}</label>
+    <label class="live-data-label">{{ 'analytics.online_parents' | translate }}</label>
+  </div>
+</div>

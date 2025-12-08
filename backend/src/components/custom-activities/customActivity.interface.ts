@@ -20,6 +20,12 @@ export interface ICustomActivity extends Document {
   of: Boolean;
   questions: any;
 }
+
+export interface IAssignedCustomActivity extends ICustomActivity {
+  students: Array<Object>;
+  classId: Schema.Types.ObjectId;
+  assignmentBundle: Schema.Types.String;
+}
 /*
 export interface IClozeActivity {
   questions: {

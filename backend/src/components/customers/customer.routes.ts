@@ -13,7 +13,7 @@ router
 
 router.get('/main', authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), customerController.getMainCustomer);
 
-router.put('/main', authorize([Role.ADMIN, Role.MANAGER]), customerController.updateMainCustomer);
+router.put('/main', authorize([Role.ADMIN]), customerController.updateMainCustomer);
 
 router
   .route('/:id')

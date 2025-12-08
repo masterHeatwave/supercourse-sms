@@ -221,6 +221,44 @@ export const academicOpenApi = {
         },
       },
     },
+    '/academic-years/selected': {
+      get: {
+        tags: ['Academic Years'],
+        summary: 'Get currently selected (from school settings) academic year',
+        description: 'Retrieve the currently selected academic year',
+        security: [{ AuthHeader: [], CustomerSlug: [] }],
+        responses: {
+          '200': {
+            description: 'Selected academic year details retrieved successfully',
+          },
+          '401': {
+            description: 'Unauthorized',
+          },
+          '404': {
+            description: 'No selected academic year found',
+          },
+        },
+      },
+    },
+    '/academic-years/status/dual': {
+      get: {
+        tags: ['Academic Years'],
+        summary: 'Get manually selected and currnet (ημερολογιακό) academic year together! (/current + /selected)',
+        description: 'Retrieve both the currently selected and the current (ημερολογιακό) academic year',
+        security: [{ AuthHeader: [], CustomerSlug: [] }],
+        responses: {
+          '200': {
+            description: 'Selected and current academic year details retrieved successfully',
+          },
+          '401': {
+            description: 'Unauthorized',
+          },
+          '404': {
+            description: 'No selected or current academic year found',
+          },
+        },
+      },
+    },
     '/academic-periods': {
       get: {
         tags: ['Academic Periods'],

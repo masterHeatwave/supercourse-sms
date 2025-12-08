@@ -5,7 +5,7 @@ export const academicYearCreateSchema = z
     name: z.string().min(1, 'Name is required'),
     start_date: z.coerce.date(),
     end_date: z.coerce.date(),
-    is_current: z.boolean().optional(),
+    is_manual_active: z.boolean().optional(),
     notes: z.string().optional(),
   })
   .refine((data) => data.start_date < data.end_date, {
@@ -18,7 +18,7 @@ export const academicYearUpdateSchema = z
     name: z.string().min(1, 'Name is required').optional(),
     start_date: z.coerce.date().optional(),
     end_date: z.coerce.date().optional(),
-    is_current: z.boolean().optional(),
+    is_manual_active: z.boolean().optional(),
     notes: z.string().optional(),
   })
   .refine(

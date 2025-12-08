@@ -1,0 +1,12 @@
+<div>
+    <p-breadcrumb class="max-w-full" [model]="items" [home]="home">
+        <ng-template pTemplate="item" let-item>
+            <span
+                [style]="(item === items[items.length-1]) ? 'cursor:pointer; font-weight:bold; color:#0071bb' : 'cursor:pointer'">{{item.label}}
+            </span>
+        </ng-template>
+    </p-breadcrumb>
+
+    <p-menu #menu [model]="collapsedItems" [popup]="true" />
+
+</div>

@@ -10,7 +10,9 @@
 <!-- Shared sidebar content template -->
 <ng-template #sidebarContent>
   <div class="sidebar-header">
-    <p-image src="assets/images/logo.svg" alt="Image" width="200px" />
+    <a routerLink="/dashboard">
+      <p-image src="assets/images/logo.svg" alt="Image" />
+    </a>
   </div>
   <div class="sidebar-content">
     <!-- Branch Selector dropdown -->

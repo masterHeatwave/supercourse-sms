@@ -13,6 +13,7 @@ import { Store } from '@ngrx/store';
 import { selectAuthState } from '@store/auth/auth.selectors';
 import { MoodsService } from '@gen-api/moods/moods.service';
 import { switchMap, tap } from 'rxjs';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'main-view',
@@ -26,7 +27,8 @@ import { switchMap, tap } from 'rxjs';
     MoodCalendarComponent,
     CalmTimeViewComponent,
     RelaxingMusicViewComponent,
-    MeditationViewComponent
+    MeditationViewComponent,
+    TranslateModule
   ],
   templateUrl: './main-view.component.html',
   styleUrl: './main-view.component.scss'
@@ -79,14 +81,12 @@ export class WellnessCenterComponent {
             next: (response2) => {
               const tempData = response2.data;
 
-              const commonData = this.classes.filter(classItem =>
-                tempData.some(tempItem => tempItem.id === classItem.id)
-              );
+              const commonData = this.classes.filter((classItem) => tempData.some((tempItem) => tempItem.id === classItem.id));
               this.uniqueClasses = commonData;
             }
-          })
+          });
         }
-      })
+      });
     });
   }
 
@@ -95,10 +95,9 @@ export class WellnessCenterComponent {
     this.moodService.getMoodsUserUserIdClassClassId(this.currentUserID, this.uniqueClass._id).subscribe({
       next: (response) => {
         this.moodData = response.data;
-        if(this.moodData.haveMoods){
+        if (this.moodData.haveMoods) {
           this.moods = this.moodData.moods;
-        }
-        else{
+        } else {
           this.moods = {};
         }
       }

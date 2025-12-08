@@ -1,0 +1,69 @@
+<div class="icon-label-div">
+  <i class="pi pi-chart-line" style="font-size: 2rem"></i>
+  <label class="black-label">{{ 'analytics.assignments' | translate }}</label>
+</div>
+
+<div class="main-div">
+  <div class="card-div">
+    <div class="card" style="width: 24%">
+      <label style="font-weight: bolder">{{ 'analytics.completed_assignments' | translate }}</label>
+      <label style="font-weight: bolder; font-size: 60px">{{ completedSessions * 100 }}%</label>
+    </div>
+
+    <div class="card" style="width: 24%">
+      <label style="font-weight: bolder">{{ 'analytics.assigned_tasks' | translate }}</label>
+      <label style="font-weight: bolder; font-size: 60px">{{ assignedTasks }}</label>
+    </div>
+
+    <div class="card" style="width: 49%">
+      <label style="font-weight: bolder">{{ 'analytics.assigned_tasks_per_class' | translate }}</label>
+      <!-- chart -->
+      <div style="width: 100%; height: 400px; padding: 10px; background-color: white; border: 2px solid #afc8b2; border-radius: 10px">
+        <canvas baseChart [data]="assignedTasksPerClass" [options]="assignedTasksPerClassOptions" [type]="'bar'"> </canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="icon-label-div">
+  <i class="pi pi-comments" style="font-size: 2rem"></i>
+  <label class="black-label">{{ 'analytics.feedback' | translate }}</label>
+</div>
+
+<div class="main-div">
+  <div class="card-div">
+    <div class="card" style="width: 24%">
+      <label style="font-weight: bolder">{{ 'analytics.feedback_offered' | translate }}</label>
+      <label style="font-weight: bolder; font-size: 60px">{{ feedbackOffered * 100 }}%</label>
+    </div>
+
+    <div class="card" style="width: 24%">
+      <label style="font-weight: bolder">{{ 'analytics.stickers_awarded' | translate }}</label>
+      <label style="font-weight: bolder; font-size: 60px">{{ stickersAwarded * 100 }}%</label>
+    </div>
+  </div>
+</div>
+
+<div class="icon-label-div">
+  <i class="pi pi-clock" style="font-size: 1.7rem"></i>
+  <label class="black-label">{{ 'analytics.time_you_spent_on_the_platform' | translate }}</label>
+  <input type="checkbox" id="myCheckbox" [(ngModel)]="checked" (ngModelChange)="onCheckboxClick()" />
+  <label for="myCheckbox">{{ 'analytics.exclude_session_time' | translate }}</label>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; margin: 5px; border: 2px solid #338d80; padding: 10px; justify-content: space-evenly">
+  <div class="div-with-right-border">
+    <label class="live-data-label">{{ 'analytics.daily' | translate }}</label>
+    <label class="green-label" style="font-size: 35px">{{ formatSeconds(totalDailyTimeSpent) }}</label>
+  </div>
+
+  <div class="div-with-right-border">
+    <label class="live-data-label">{{ 'analytics.weekly' | translate }}</label>
+    <label class="green-label" style="font-size: 35px">{{ formatSeconds(totalWeeklyTimeSpent) }}</label>
+  </div>
+
+  <div class="div-with-right-border">
+    <label class="live-data-label">{{ 'analytics.this_week' | translate }}</label>
+    <label class="green-label" style="font-size: 35px">{{ formatSeconds(totalThisWeekTimeSpent) }}</label>
+  </div>
+</div>

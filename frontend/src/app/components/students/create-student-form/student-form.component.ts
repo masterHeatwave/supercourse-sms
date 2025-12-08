@@ -24,9 +24,11 @@ import { IStudentFormData, IDocument } from '../../../interfaces/student.interfa
 import { environment } from '../../../../environments/environment';
 import { ContactsComponent } from './fields/contacts/contacts.component';
 import { LoggingService } from '../../../services/logging/logging.service';
-import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { FormValidationService, STUDENT_FIELD_LABELS, ValidationConfig } from '../../../services/validation/form-validation.service';
+import { MessageService } from 'primeng/api';
+import { isMinor } from '../../../utils/age-calculation.util';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-student-form',
@@ -70,6 +72,8 @@ export class StudentFormComponent implements OnInit, OnChanges {
   private personalInfoFieldsService = inject(PersonalInfoFieldsService);
   private loggingService = inject(LoggingService);
   private validationService = inject(FormValidationService);
+  private messageService = inject(MessageService);
+  private translateService = inject(TranslateService);
 
   form = new FormGroup({});
   model: IStudentFormData = {
@@ -77,9 +81,11 @@ export class StudentFormComponent implements OnInit, OnChanges {
     lastname: '',
     email: '',
     phone: '',
-    username: '',
     documents: [] as IDocument[],
-    dateOfBirth: new Date() // Set current date as default for new students
+    dateOfBirth: undefined, // No default date - user must select
+    hasAllergies: false, // Initialize health fields - default to off
+    healthDetails: '',
+    generalNotes: ''
   };
   personalInfoFields: FormlyFieldConfig[];
   linkedContactFields: FormlyFieldConfig[];
@@ -111,6 +117,11 @@ export class StudentFormComponent implements OnInit, OnChanges {
     setTimeout(() => {
       this.personalInfoFieldsService.setEditMode(this.isEditMode, this.studentData);
     }, 0);
+    
+    // Listen for form changes to update model
+    this.form.valueChanges.subscribe((value) => {
+      this.model = { ...this.model, ...value };
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -126,19 +137,21 @@ export class StudentFormComponent implements OnInit, OnChanges {
         this.model.dateOfBirth = new Date(this.studentData.dateOfBirth);
       }
       
-      // Convert createdAt to Date object for the date field
-      if (this.studentData.createdAt && typeof this.studentData.createdAt === 'string') {
+      // Prefer registration_date, fallback to createdAt for the date field (registration date)
+      // Explicitly set date field to avoid any conflicts with dateOfBirth
+      if (this.studentData.registration_date && typeof this.studentData.registration_date === 'string') {
+        this.model.date = new Date(this.studentData.registration_date);
+      } else if (this.studentData.createdAt && typeof this.studentData.createdAt === 'string') {
         this.model.date = new Date(this.studentData.createdAt);
+      } else {
+        // Clear date if neither registration_date nor createdAt is available
+        this.model.date = undefined;
       }
       
-      console.log('studentData', this.studentData);
-      console.log('model', this.model);
-      // Map created_at to the date field for edit mode (prioritize created_at over date)
-      if (this.studentData.createdAt && typeof this.studentData.createdAt === 'string') {
-        this.model.createdAt = new Date(this.studentData.createdAt);
-      } else if (this.studentData.createdAt && typeof this.studentData.createdAt === 'string') {
-        this.model.createdAt = new Date(this.studentData.createdAt);
-      }
+      // Ensure health fields are properly set
+      this.model.hasAllergies = this.studentData.hasAllergies || false;
+      this.model.healthDetails = this.studentData.healthDetails || '';
+      this.model.generalNotes = this.studentData.generalNotes || '';
 
       // Load existing documents if any
       if (this.studentData.documents && this.studentData.documents.length) {
@@ -151,10 +164,11 @@ export class StudentFormComponent implements OnInit, OnChanges {
         this.model.avatar = this.studentData.avatar;
       }
 
-      // Set date for existing student (createdAt)
-      if (this.studentData.createdAt) {
-        this.personalInfoFieldsService.updateDateField(this.studentData.createdAt);
-        this.model.date = this.studentData.createdAt;
+      // Set registration date for existing student (prefer registration_date, fallback to createdAt)
+      const registrationDate = this.studentData.registration_date || this.studentData.createdAt;
+      if (registrationDate) {
+        this.personalInfoFieldsService.updateDateField(registrationDate);
+        this.model.date = typeof registrationDate === 'string' ? new Date(registrationDate) : registrationDate;
       }
 
       // Update the form with the new model values
@@ -199,11 +213,17 @@ export class StudentFormComponent implements OnInit, OnChanges {
         this.model.avatar = this.studentData.avatar;
       }
 
-      // Set date for existing student (createdAt)
-      if (this.studentData.createdAt) {
-        this.personalInfoFieldsService.updateDateField(this.studentData.createdAt);
-        this.model.date = this.studentData.createdAt;
+      // Set registration date for existing student (prefer registration_date, fallback to createdAt)
+      const registrationDate = this.studentData.registration_date || this.studentData.createdAt;
+      if (registrationDate) {
+        this.personalInfoFieldsService.updateDateField(registrationDate);
+        this.model.date = typeof registrationDate === 'string' ? new Date(registrationDate) : registrationDate;
       }
+
+      // Ensure health fields are properly set in edit mode
+      this.model.hasAllergies = this.studentData.hasAllergies || false;
+      this.model.healthDetails = this.studentData.healthDetails || '';
+      this.model.generalNotes = this.studentData.generalNotes || '';
 
       // Update the form with the new model values
       this.form.patchValue(this.model);
@@ -211,18 +231,6 @@ export class StudentFormComponent implements OnInit, OnChanges {
       // Convert date strings to Date objects for calendar fields
       if (this.studentData.dateOfBirth && typeof this.studentData.dateOfBirth === 'string') {
         this.model.dateOfBirth = new Date(this.studentData.dateOfBirth);
-      }
-      
-      // Convert createdAt to Date object for the date field
-      if (this.studentData.createdAt && typeof this.studentData.createdAt === 'string') {
-        this.model.date = new Date(this.studentData.createdAt);
-      }
-      
-      // Map created_at to the date field for edit mode (prioritize created_at over date)
-      if (this.studentData.created_at && typeof this.studentData.created_at === 'string') {
-        this.model.createdAt = new Date(this.studentData.created_at);
-      } else if (this.studentData.createdAt && typeof this.studentData.createdAt === 'string') {
-        this.model.createdAt = new Date(this.studentData.createdAt);
       }
     }
 
@@ -236,10 +244,10 @@ export class StudentFormComponent implements OnInit, OnChanges {
       this.model.startDate = formattedDate;
     }
 
-    // Set current date for new students (not in edit mode)
+    // Set current date for new students (not in edit mode) - only for registration date
     if (!this.isEditMode) {
-      this.model.date = new Date(); // Only set current date for new students
-      this.model.dateOfBirth = new Date();
+      this.model.date = new Date(); // Only set current date for registration date
+      // dateOfBirth should remain undefined - user must select it
     }
   }
 
@@ -271,6 +279,43 @@ export class StudentFormComponent implements OnInit, OnChanges {
     if (this.contactsComponent) {
       this.contactsComponent.markAllContactsAsTouched();
       hasContactErrors = this.contactsComponent.hasValidationErrors();
+      
+      // Show specific message for minors without linked contacts
+      if (hasContactErrors && isMinor(this.model.dateOfBirth)) {
+        const contacts = this.model.contacts || [];
+        const hasNoContacts = contacts.length === 0 || contacts.every(c => !c.name && !c.phone && !c.email);
+        
+        if (hasNoContacts) {
+          this.messageService.add({
+            severity: 'error',
+            summary: this.translateService.instant('students.errors.linked_contact_required_title'),
+            detail: this.translateService.instant('students.errors.linked_contact_required'),
+            life: 5000
+          });
+        }
+      }
+    }
+
+    // Validate that student email is different from linked contact emails
+    const studentEmail = this.form.get('email')?.value || this.model.email;
+    const contacts = this.model.contacts || [];
+    const contactEmails = contacts
+      .map((c: any) => c.email?.toLowerCase().trim())
+      .filter((email: string) => email && email.length > 0);
+    
+    if (studentEmail && contactEmails.length > 0) {
+      const studentEmailLower = studentEmail.toLowerCase().trim();
+      const matchingContact = contactEmails.find((email: string) => email === studentEmailLower);
+      
+      if (matchingContact) {
+        this.messageService.add({
+          severity: 'error',
+          summary: this.translateService.instant('students.errors.email_validation_title'),
+          detail: this.translateService.instant('students.errors.email_must_differ_from_contacts'),
+          life: 5000
+        });
+        hasContactErrors = true;
+      }
     }
 
     if (!this.form.valid || hasContactErrors) {
@@ -281,7 +326,8 @@ export class StudentFormComponent implements OnInit, OnChanges {
     }
 
     try {
-      const formValues: { [key: string]: any } = { ...this.form.value };
+      // Use model values as the primary source, with form values as fallback
+      const formValues: { [key: string]: any } = { ...this.form.value, ...this.model };
       
       // Include contacts from the model since they're managed separately
       if (this.model.contacts && this.model.contacts.length > 0) {
@@ -292,6 +338,11 @@ export class StudentFormComponent implements OnInit, OnChanges {
       if (Array.isArray(this.model.siblingAttending) && this.model.siblingAttending.length > 0) {
         formValues['siblingAttending'] = this.model.siblingAttending.join(',');
       }
+
+      // Ensure health fields are included in the payload (use model values)
+      formValues['hasAllergies'] = this.model.hasAllergies !== undefined ? this.model.hasAllergies : false;
+      formValues['healthDetails'] = this.model.healthDetails || '';
+      formValues['generalNotes'] = this.model.generalNotes || '';
 
       // First, handle file uploads separately through the media API
       const uploadTasks: (Observable<string> | Observable<string[]>)[] = [];

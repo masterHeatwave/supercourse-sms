@@ -68,10 +68,9 @@ export class EditStudentComponent implements OnInit {
               _id: data._id,
               firstname: data.firstname,
               lastname: data.lastname,
-              username: data.username,
               email: data.email,
               phone: data.phone,
-              mobile: data.mobile,
+              optionalPhone: data.mobile, // Map API mobile to form optionalPhone field
               address: data.address,
               city: data.city,
               zipcode: data.zipcode,
@@ -80,7 +79,9 @@ export class EditStudentComponent implements OnInit {
               selectedBranches: studentBranchIds, // Student's current branch IDs
               status: data.is_active,
               dateOfBirth: data.birthday,
+              registration_date: data.registration_date, // Prefer registration_date
               createdAt: data.createdAt,
+              date: data.registration_date || data.createdAt, // Fallback chain for form field
               documents: data.documents || [],
               contacts: data.contacts || [],
               // siblingAttending can be string (comma-separated) or array; normalize to array for UI
@@ -133,10 +134,9 @@ export class EditStudentComponent implements OnInit {
       ...studentData,
       firstname: studentData.firstname,
       lastname: studentData.lastname,
-      username: studentData.username,
       email: studentData.email,
       phone: studentData.phone,
-      mobile: studentData.mobile,
+      mobile: studentData.optionalPhone || '', // Map form optionalPhone to API mobile
       address: studentData.address,
       city: studentData.city,
       zipcode: studentData.zipcode,
@@ -145,7 +145,7 @@ export class EditStudentComponent implements OnInit {
       branches: branches, // Use the mapped branches
       is_active: studentData.status,
       birthday: studentData.dateOfBirth,
-      created_at: studentData.date,
+      registration_date: studentData.date, // Map date field to registration_date
       documents: studentData.documents || [],
       contacts: studentData.contacts || [],
       // Only send siblingAttending if provided; backend expects comma-separated string

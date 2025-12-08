@@ -7,5 +7,10 @@ const router = express.Router();
 const materialsController = new MaterialsController();
 
 router.get('/assigned', authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER]), materialsController.getAssignedMaterials);
+router.get(
+  '/taxis/:taxiId',
+  authorize([Role.ADMIN, Role.MANAGER, Role.TEACHER, Role.STUDENT, Role.PARENT_GUARDIAN]),
+  materialsController.getMaterialsForTaxi
+);
 
 export default router;

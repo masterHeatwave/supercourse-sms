@@ -1,0 +1,321 @@
+<p-toast></p-toast>
+
+<div class="create-post-container p-4">
+
+  <form [formGroup]="postForm" (ngSubmit)="onSubmit()">
+    <div class="grid">
+      <!-- Row 1: New Post (Image + Title) | Recipients | Options -->
+      <!-- Left Column - New Post (Image + Title) -->
+      <div class="col-12 lg:col-6">
+        <div class="p-4 mb-4 flex-1">
+          <h2 class="text-2xl font-bold text-primary mb-3">{{ 'board.create.header' | translate }}</h2>
+
+          <!-- Image Upload -->
+          <div class="mb-4">
+            <div *ngIf="!imagePreview" class="image-upload-area">
+              <p-fileUpload 
+                mode="basic" 
+                name="demo" 
+                accept="image/*" 
+                [maxFileSize]="10000000" 
+                (onUpload)="onImageUpload($event)"
+                (onSelect)="onImageUpload($event)"
+                [chooseLabel]="'board.create.upload_image' | translate"
+                styleClass="w-full"
+              ></p-fileUpload>
+            </div>
+            
+            <!-- Image Preview -->
+            <div *ngIf="imagePreview" class="image-preview relative">
+              <img [src]="imagePreview" [alt]="'board.create.preview_alt' | translate" class="w-full h-12rem object-fit-cover border-round" />
+              <button 
+                type="button"
+                class="absolute top-0 right-0 m-2 p-button p-button-rounded p-button-danger p-button-sm"
+                (click)="onImageRemove()"
+              >
+                <i class="pi pi-times"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Title Field -->
+          <div class="mb-4">
+            <label for="title" class="block text-sm font-medium text-700 mb-2">
+              {{ 'board.create.fields.title' | translate }} <span class="text-red-500">*</span>
+            </label>
+            <input 
+              id="title"
+              type="text" 
+              pInputText 
+              formControlName="title"
+              [placeholder]="'board.create.placeholders.title' | translate"
+              class="w-full p-inputtext"
+              [class.ng-invalid]="hasError('title')"
+            />
+            <small *ngIf="hasError('title')" class="p-error block mt-1">
+              {{ getErrorMessage('title') }}
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Middle Column - Recipients -->
+      <div class="col-12 lg:col-3 flex flex-column">
+        <h3 class="text-lg font-bold text-primary mb-3">
+          {{ 'board.create.recipients.title' | translate }} <span class="text-red-500">*</span>
+        </h3>
+        <div class="custom-card recipients-container p-4 mb-4 flex-1">
+          <app-primary-nested-select
+            [options]="recipientsTree"
+            [(ngModel)]="selectedRecipients"
+            (ngModelChange)="onRecipientsChange($event)"
+            [ngModelOptions]="{standalone: true}"
+            [placeholder]="'board.create.recipients.placeholder' | translate"
+            [showClear]="true"
+            [filter]="true"
+            selectionMode="checkbox"
+            display="chip"
+            styleClass="w-full"
+          ></app-primary-nested-select>
+        </div>
+      </div>
+
+      <!-- Right Column - Options -->
+      <div class="col-12 lg:col-3 flex flex-column">
+        <h3 class="text-lg font-bold text-primary mb-3">{{ 'board.create.options.title' | translate }}</h3>
+        <div class="custom-card p-4 mb-4 flex-1">
+          <!-- Post Priority -->
+          <div class="mb-4">
+            <div class="p-3" style="background-color: var(--surface-200); border-radius: 20px;">
+              <label class="block text-base font-bold text-700 mb-2">{{ 'board.create.options.priority' | translate }}</label>
+              <div class="flex flex-column gap-2">
+                <div *ngFor="let option of priorityOptions" class="flex align-items-center">
+                  <p-radioButton 
+                    [inputId]="option.value" 
+                    [value]="option.value" 
+                    formControlName="priority"
+                  ></p-radioButton>
+                  <label [for]="option.value" class="ml-2 flex align-items-center">
+                    <i class="pi pi-circle-fill mr-1" [ngClass]="'text-' + option.color + '-500'"></i>
+                    {{ option.label | translate }}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pin Post -->
+          <div class="mb-4">
+            <div class="p-3" style="background-color: var(--surface-200); border-radius: 20px;">
+              <label class="block text-base font-bold text-700 mb-2">{{ 'board.create.options.pin' | translate }}</label>
+              <div class="flex flex-column gap-2">
+                <div *ngFor="let option of pinOptions" class="flex align-items-center">
+                  <p-radioButton 
+                    [inputId]="'pin_' + option.value" 
+                    [value]="option.value" 
+                    formControlName="pinPost"
+                  ></p-radioButton>
+                  <label [for]="'pin_' + option.value" class="ml-2">{{ option.label | translate }}</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Publish Post -->
+          <div class="mb-4">
+            <div class="p-3" style="background-color: var(--surface-200); border-radius: 20px;">
+              <label class="block text-base font-bold text-700 mb-2">{{ 'board.create.options.publish' | translate }}</label>
+              <div class="flex flex-column gap-2">
+                <div *ngFor="let option of publishOptions" class="flex align-items-center">
+                  <p-radioButton 
+                    [inputId]="'publish_' + option.value" 
+                    [value]="option.value" 
+                    formControlName="publishOption"
+                  ></p-radioButton>
+                  <label [for]="'publish_' + option.value" class="ml-2">{{ option.label | translate }}</label>
+                </div>
+              </div>
+              
+              <!-- Scheduled Date -->
+              <div *ngIf="postForm.get('publishOption')?.value === 'later'" class="mt-2">
+                <p-calendar 
+                  formControlName="scheduledDate"
+                  [showTime]="true"
+                  dateFormat="dd/mm/yy"
+                  [placeholder]="'board.create.placeholders.select_datetime' | translate"
+                  styleClass="w-full"
+                ></p-calendar>
+              </div>
+            </div>
+          </div>
+
+          <!-- Expiration Date -->
+          <div class="mb-4">
+            <div class="p-3" style="background-color: var(--surface-200); border-radius: 20px;">
+              <label class="block text-base font-bold text-700 mb-2">{{ 'board.create.options.expiration' | translate }}</label>
+              <p-calendar 
+                formControlName="expirationDate"
+                dateFormat="dd/mm/yy"
+                 [placeholder]="'board.create.placeholders.sample_date' | translate"
+                styleClass="w-full mb-3"
+              ></p-calendar>
+              
+              <!-- Allow Replies and Allow Reactions Checkboxes -->
+              <div class="flex flex-row gap-3">
+                <div class="flex align-items-center">
+                  <p-checkbox 
+                    [binary]="true"
+                    formControlName="allowReplies"
+                    inputId="allowReplies"
+                  ></p-checkbox>
+                  <label for="allowReplies" class="ml-2">{{ 'board.create.options.allow_replies' | translate }}</label>
+                </div>
+                
+                <div class="flex align-items-center">
+                  <p-checkbox 
+                    [binary]="true"
+                    formControlName="allowReactions"
+                    inputId="allowReactions"
+                  ></p-checkbox>
+                  <label for="allowReactions" class="ml-2">{{ 'board.create.options.allow_reactions' | translate }}</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Poll Section - Full Width -->
+      <div class="col-12">
+        <div class="p-4 mb-4">
+          <!-- Add New Poll Button -->
+          <div class="mb-4 poll-add-button-wrapper">
+            <app-outline-button 
+              [borderColor]="'var(--primary-color)'"
+              [textColor]="'var(--primary-color)'"
+              [hoverBackgroundColor]="'var(--primary-color)'"
+              [hoverTextColor]="'white'"
+              (click)="onAddNewPoll()"
+              type="button"
+              *ngIf="!showPollBuilder"
+            >
+              <span class="font-bold">{{ 'board.create.poll.add' | translate }}</span>
+            </app-outline-button>
+          </div>
+
+          <!-- Poll Builder -->
+          <div *ngIf="showPollBuilder" class="p-3 border-1 border-200 border-round bg-gray-50">
+            <h4 class="text-lg font-bold text-primary mb-3">{{ 'board.create.poll.title' | translate }}</h4>
+            
+            <!-- Poll Question -->
+            <div class="mb-3">
+              <label class="block text-sm font-medium text-700 mb-2">
+                {{ 'board.create.poll.question' | translate }} <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                pInputText 
+                formControlName="pollQuestion"
+                [placeholder]="'board.create.poll.question_placeholder' | translate"
+                class="w-full p-inputtext"
+              />
+            </div>
+
+            <!-- Poll Options -->
+            <div class="mb-3">
+              <label class="block text-sm font-medium text-700 mb-2">
+                {{ 'board.create.poll.options' | translate }} <span class="text-red-500">*</span>
+              </label>
+              <div *ngFor="let option of pollOptions; let i = index" class="flex align-items-center gap-2 mb-2">
+                <input 
+                  type="text" 
+                  pInputText 
+                  [(ngModel)]="option.text"
+                  [placeholder]="'board.create.poll.option_placeholder' | translate"
+                  class="flex-1 p-inputtext"
+                  [ngModelOptions]="{standalone: true}"
+                />
+                <p-button 
+                  severity="danger" 
+                  [outlined]="true"
+                  size="small"
+                  (onClick)="removePollOption(i)"
+                  [disabled]="pollOptions.length <= 2"
+                  type="button"
+                ></p-button>
+              </div>
+              <p-button 
+                [label]="'board.create.poll.add_option' | translate" 
+                severity="secondary" 
+                [outlined]="true"
+                size="small"
+                (onClick)="addPollOption()"
+                type="button"
+              ></p-button>
+            </div>
+
+            <!-- Close Poll Builder -->
+            <div class="flex justify-content-end poll-remove-button-wrapper">
+              <app-outline-button 
+                [borderColor]="'var(--red-500)'"
+                [textColor]="'var(--red-500)'"
+                [hoverBackgroundColor]="'var(--red-500)'"
+                [hoverTextColor]="'white'"
+                (click)="showPollBuilder = false; pollOptions = []"
+                type="button"
+              >
+                <span class="font-bold">{{ 'board.create.poll.remove' | translate }}</span>
+              </app-outline-button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Content Editor - Full Width -->
+      <div class="col-12">
+        <div class="custom-card p-4 mb-4 content-area">
+          <label for="content" class="block text-sm font-medium text-700 mb-2">
+            {{ 'board.create.fields.content' | translate }} <span class="text-red-500">*</span>
+          </label>
+          <p-editor 
+            formControlName="content"
+            [style]="{'height':'300px'}"
+            [placeholder]="'board.create.placeholders.editor' | translate"
+            [modules]="editorModules"
+          ></p-editor>
+          <small *ngIf="hasError('content')" class="p-error block mt-1">
+            {{ getErrorMessage('content') }}
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex gap-2 mt-4 justify-content-end">
+      <app-outline-button 
+        [borderColor]="'var(--red-500)'"
+        [textColor]="'var(--red-500)'"
+        [backgroundColor]="'white'"
+        [hoverBackgroundColor]="'var(--red-500)'"
+        [hoverTextColor]="'white'"
+        (click)="onCancel()"
+        type="button"
+      >
+        <span class="font-bold">{{ 'board.create.actions.cancel' | translate }}</span>
+      </app-outline-button>
+      
+      <app-outline-button 
+        [borderColor]="'var(--primary-color)'"
+        [textColor]="'var(--primary-color)'"
+        [backgroundColor]="'white'"
+        [hoverBackgroundColor]="'var(--primary-color)'"
+        [hoverTextColor]="'white'"
+        [loading]="isSubmitting"
+        type="submit"
+      >
+        <span class="font-bold">{{ 'board.create.actions.save' | translate }}</span>
+      </app-outline-button>
+    </div>
+  </form>
+</div>
+

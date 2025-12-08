@@ -1,0 +1,20 @@
+<div class="flex justify-content-end">
+
+    <p-button type="button" [disabled]="item.type === 'folder'" icon="pi pi-download" size="small" severity="primary" class="mr-2"
+        (click)="onDownloadClick(item); $event.stopPropagation()" (dblclick)="$event.stopPropagation()">
+    </p-button>
+
+    <p-button type="button" [disabled]="item.type === 'folder'" icon="pi pi-share-alt" size="small" severity="primary" class="mr-2"
+        (click)="onShareClick(item); $event.stopPropagation()" (dblclick)="$event.stopPropagation()">
+    </p-button>
+
+    @if(item.ownerId === userId()){
+    <p-button type="button" [disabled]="isDownloading || isDeleting" icon="pi pi-trash" size="small" severity="primary"
+        (click)="onDeleteClick(item); $event.stopPropagation()" (dblclick)="$event.stopPropagation()">
+    </p-button>
+    }
+    
+
+    <!-- <app-share-modal [(visible)]="displayShareModal" [file]="item"
+        (dblclick)="$event.stopPropagation()"></app-share-modal> -->
+</div>

@@ -1,0 +1,49 @@
+<p-dialog
+  header="Edit School Information"
+  [modal]="true"
+  [visible]="visible"
+  (onHide)="onDialogHide()"
+  (visibleChange)="onVisibilityChange($event)"
+  [dismissableMask]="false"
+  [closable]="!loading"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="p-fluid"
+  [style]="{ width: '800px' }"
+>
+  <div class="p-4">
+    <form [formGroup]="form" (ngSubmit)="onSave()">
+      <!-- School Information Card -->
+      <p-card styleClass="shadow-none mb-4">
+        <ng-template pTemplate="content">
+          <formly-form [form]="form" [fields]="fields" [model]="model"></formly-form>
+        </ng-template>
+      </p-card>
+    </form>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-content-end gap-2">
+      <app-outline-button
+        [borderColor]="'#6c757d'"
+        [textColor]="'#6c757d'"
+        [hoverBackgroundColor]="'#6c757d'"
+        [hoverTextColor]="'white'"
+        [disabled]="loading"
+        (click)="onCancel()">
+        Cancel
+      </app-outline-button>
+      <app-outline-button
+        [borderColor]="'var(--primary-color)'"
+        [textColor]="'var(--primary-color)'"
+        [hoverBackgroundColor]="'var(--primary-color)'"
+        [hoverTextColor]="'white'"
+        [loading]="loading"
+        [disabled]="!form.valid"
+        (click)="onSave()">
+        Save Changes
+      </app-outline-button>
+    </div>
+  </ng-template>
+</p-dialog>
+

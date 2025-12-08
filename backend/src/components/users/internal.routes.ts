@@ -9,5 +9,6 @@ router.use(verifyApiKey);
 
 router.post('/schools', internalController.createSchool);
 router.post('/branches', internalController.createBranch);
+router.put('/branches/primary', internalController.setPrimaryBranch);
 
 export default router;

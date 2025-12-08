@@ -1,0 +1,93 @@
+.black-label{
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.icon-label-div{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.main-div{
+    display: flex;
+    flex-wrap: wrap !important;
+    gap: 10px;
+    margin: 10px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card{
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    border: 1px solid #afc8b2;
+    border-radius: 10px;
+    align-items: center;
+    justify-content: center;
+    height: 320px;
+    aspect-ratio: 1;
+    padding: 20px;
+    label{
+        font-size: 22px;
+        //font-weight: bold;
+        color: #498351;
+        text-align: center;
+        margin: 5px;
+    }
+    label .material-symbols-outlined {
+        line-height: 1;
+        vertical-align: middle;
+    }
+}
+
+.blue-label{
+    color: #1c6486 !important;
+}
+
+.orange-label{
+    color: #ea7539 !important;
+}
+
+.card-div{
+    display: flex;
+    flex-wrap: wrap;
+    //justify-content: space-evenly;
+    gap: 20px;
+    width: 100%;
+    //width: 49%;
+    gap: 20px !important;
+}
+
+.div-with-right-border{
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    margin: 5px;
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #084f6a;
+}
+
+.vertical-line {
+  width: 2px; /* Set a very small width */
+  height: auto; /* Set the desired height */
+  background-color: #155f82; /* Set the color of the line */
+  margin: 0 auto; /* To center it horizontally if needed */
+}
+
+.live-data-label{
+    font-weight: bold;
+    font-size: 24px;
+    color: #0a769f;
+    vertical-align: middle;
+}
+
+.green-label{
+    font-weight: bold;
+    font-size: 24px;
+    color: #498351 !important;
+    vertical-align: middle;
+}

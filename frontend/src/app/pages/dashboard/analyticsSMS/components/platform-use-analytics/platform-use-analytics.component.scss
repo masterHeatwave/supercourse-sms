@@ -1,0 +1,58 @@
+i{
+    font-size: 1.7rem;
+}
+
+label{
+    font-weight: bold;
+    font-size: 22px;
+    margin: 10px;
+}
+
+span{
+    font-weight: bold;
+    font-size: 2rem;
+    color: red;
+}
+
+.icon-label-div{
+    display: flex;
+    align-items: center;
+}
+
+.live-data-label{
+    font-weight: bold;
+    font-size: 24px;
+    color: #0a769f;
+    vertical-align: middle;
+}
+
+.div-with-right-border{
+    display: flex;
+    //border: 2px solid #155f82;
+    //width: 20%;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #084f6a;
+}
+
+.div-without-border{
+    display: flex;
+    //border: 2px solid #155f82;
+    //width: 20%;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #084f6a;
+}
+
+hr {
+  border: 1px solid #155f82;
+  width: 100%;
+  height: 2px;
+}
+
+.vertical-line {
+  width: 2px; /* Set a very small width */
+  height: auto; /* Set the desired height */
+  background-color: #155f82; /* Set the color of the line */
+  margin: 0 auto; /* To center it horizontally if needed */
+}

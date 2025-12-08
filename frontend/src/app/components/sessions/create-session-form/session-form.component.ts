@@ -29,6 +29,7 @@ import { PrimaryDropdownComponent } from '@components/inputs/primary-dropdown/pr
 import { SessionScheduleFieldsService } from './fields/schedule-fields.service';
 import { SessionFormComponent as ReusableSessionFormComponent } from '@components/shared/session-form/session-form.component';
 import { SessionManagementService, SessionFormData } from '@services/session-management.service';
+import { convertModeToApiFormat, convertModeFromApiFormat } from '../../../utils/session-modes.util';
 
 @Component({
   selector: 'app-create-session-form',
@@ -126,7 +127,7 @@ export class SessionFormComponent implements OnInit, OnChanges {
         ? `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
         : '';
       const duration = start && end ? String(Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000))) : '';
-      const modeUi = typeof this.sessionData.mode === 'string' ? this.sessionData.mode.replace(/_/g, '-') : '';
+      const modeUi = convertModeFromApiFormat(this.sessionData.mode);
 
       this.model = {
         title: this.sessionData.title || '',
@@ -155,7 +156,7 @@ export class SessionFormComponent implements OnInit, OnChanges {
           startTime: this.sessionData.start_time || startTime,
           duration: this.sessionData.duration || 1,
           dateRange: start && end ? [start, end] : [new Date(), new Date()],
-          mode: modeUi || 'in-person',
+          mode: modeUi || 'in_person',
           classroom: this.resolveTaxiId(this.sessionData.classroom),
           frequencyValue: this.sessionData.frequency || 1,
           students: this.normalizeUserIds(this.sessionData.students),
@@ -395,11 +396,11 @@ export class SessionFormComponent implements OnInit, OnChanges {
     const updateData: PutSessionsIdBody = {
       id: sessionId,
       taxi: formValue.classes,
-      classroom: sessionData?.classroom || '',
+      classroom: sessionData?.classroom || undefined, // Classroom is optional
       students: formValue.students || [],
       teachers: formValue.teachers || [],
       academic_period: formValue.academicPeriod || '',
-      mode: sessionData?.mode?.replace(/-/g, '_') as any || 'in_person',
+      mode: convertModeToApiFormat(sessionData?.mode),
       day: sessionData?.day as any || 'monday',
       start_time: sessionData?.startTime || '09:00',
       duration: sessionData?.duration || 1,

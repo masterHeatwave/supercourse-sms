@@ -1,0 +1,52 @@
+.profile-view-container {
+  .loading-state,
+  .error-state {
+    border: 1px dashed var(--surface-border);
+    border-radius: var(--border-radius);
+    background: var(--surface-50);
+  }
+
+  .profile-icon-wrapper {
+    position: relative;
+    width: 5rem;
+    height: 5rem;
+
+    .profile-icon {
+      .profile-avatar {
+        border: 3px solid var(--surface-border);
+        transition: opacity 0.3s ease;
+      }
+
+      .avatar-fallback {
+        border: 3px solid var(--surface-border);
+        transition: opacity 0.3s ease;
+      }
+    }
+
+    .upload-overlay {
+      opacity: 0;
+      background: rgba(0, 0, 0, 0.5);
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    &:hover {
+      .upload-overlay {
+        opacity: 1;
+      }
+
+      .profile-avatar,
+      .avatar-fallback {
+        opacity: 0.8;
+      }
+    }
+  }
+
+  .field-display {
+    label {
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+}
+

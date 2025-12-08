@@ -1,6 +1,6 @@
 import 'zod-openapi/extend';
 import { z } from 'zod';
-import { PostStatus } from './post.interface';
+import { PostStatus, PostPriority } from './post.interface';
 
 export const PostSchema = z
   .object({
@@ -9,7 +9,35 @@ export const PostSchema = z
     content: z.string(),
     author: z.string(),
     tags: z.array(z.string()).optional(),
-    status: z.enum([PostStatus.DRAFT, PostStatus.PUBLISHED, PostStatus.ARCHIVED]),
+    status: z.enum([PostStatus.DRAFT, PostStatus.SCHEDULED, PostStatus.PUBLISHED, PostStatus.ARCHIVED]),
+    priority: z.enum([PostPriority.LOW, PostPriority.NORMAL, PostPriority.HIGH]).optional(),
+    pinned: z.boolean().optional(),
+    likedBy: z.array(z.string()).optional(),
+    recipients: z
+      .object({
+        branches: z.array(z.string()),
+        taxis: z.array(z.string()),
+        users: z.array(z.string()),
+      })
+      .optional(),
+    scheduled_at: z.string().optional(),
+    expires_at: z.string().optional(),
+    allow_reactions: z.boolean().optional(),
+    allow_replies: z.boolean().optional(),
+    poll: z
+      .object({
+        question: z.string(),
+        allowMultiple: z.boolean(),
+        options: z.array(
+          z.object({
+            id: z.string(),
+            text: z.string(),
+            voteCount: z.number(),
+          })
+        ),
+        closed_at: z.string().optional(),
+      })
+      .optional(),
     featured_image: z.string().optional(),
     published_at: z.string().optional(),
     createdAt: z.string(),
@@ -29,7 +57,35 @@ export const createPostSchema = z
     content: z.string().min(1, { message: 'Content is required' }),
     author: z.string().min(1, { message: 'Author is required' }),
     tags: z.array(z.string()).optional(),
-    status: z.enum([PostStatus.DRAFT, PostStatus.PUBLISHED, PostStatus.ARCHIVED]).optional(),
+    status: z.enum([PostStatus.DRAFT, PostStatus.SCHEDULED, PostStatus.PUBLISHED, PostStatus.ARCHIVED]).optional(),
+    priority: z.enum([PostPriority.LOW, PostPriority.NORMAL, PostPriority.HIGH]).optional(),
+    pinned: z.boolean().optional(),
+    likedBy: z.array(z.string()).optional(),
+    recipients: z
+      .object({
+        branches: z.array(z.string()),
+        taxis: z.array(z.string()),
+        users: z.array(z.string()),
+      })
+      .optional(),
+    scheduled_at: z.string().optional(),
+    expires_at: z.string().optional(),
+    allow_reactions: z.boolean().optional(),
+    allow_replies: z.boolean().optional(),
+    poll: z
+      .object({
+        question: z.string(),
+        allowMultiple: z.boolean(),
+        options: z.array(
+          z.object({
+            id: z.string(),
+            text: z.string(),
+            voteCount: z.number(),
+          })
+        ),
+        closed_at: z.string().optional(),
+      })
+      .optional(),
     featured_image: z.string().optional(),
   })
   .openapi({
@@ -48,7 +104,36 @@ export const updatePostSchema = z
     content: z.string().min(1, { message: 'Content is required' }).optional(),
     author: z.string().min(1, { message: 'Author is required' }).optional(),
     tags: z.array(z.string()).optional(),
-    status: z.enum([PostStatus.DRAFT, PostStatus.PUBLISHED, PostStatus.ARCHIVED]).optional(),
+    status: z.enum([PostStatus.DRAFT, PostStatus.SCHEDULED, PostStatus.PUBLISHED, PostStatus.ARCHIVED]).optional(),
+    priority: z.enum([PostPriority.LOW, PostPriority.NORMAL, PostPriority.HIGH]).optional(),
+    pinned: z.boolean().optional(),
+    likedBy: z.array(z.string()).optional(),
+    recipients: z
+      .object({
+        branches: z.array(z.string()),
+        taxis: z.array(z.string()),
+        users: z.array(z.string()),
+      })
+      .optional(),
+    scheduled_at: z.string().optional(),
+    expires_at: z.string().optional(),
+    allow_reactions: z.boolean().optional(),
+    allow_replies: z.boolean().optional(),
+    poll: z
+      .object({
+        question: z.string(),
+        allowMultiple: z.boolean(),
+        options: z.array(
+          z.object({
+            id: z.string(),
+            text: z.string(),
+            voteCount: z.number(),
+          })
+        ),
+        closed_at: z.string().optional(),
+      })
+      .nullable()
+      .optional(),
     featured_image: z.string().optional(),
   })
   .openapi({
@@ -59,7 +144,7 @@ export const updatePostSchema = z
 export const queryPostSchema = z
   .object({
     author: z.string().optional(),
-    status: z.enum([PostStatus.DRAFT, PostStatus.PUBLISHED, PostStatus.ARCHIVED]).optional(),
+    status: z.enum([PostStatus.DRAFT, PostStatus.SCHEDULED, PostStatus.PUBLISHED, PostStatus.ARCHIVED]).optional(),
     tag: z.string().optional(),
     search: z.string().optional(),
     from_date: z.string().optional(),

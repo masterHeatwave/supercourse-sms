@@ -11,22 +11,14 @@
   <label class="separator">|</label>
   <input
     type="text"
-    placeholder="Insert up to 7 words."
+    placeholder="{{ 'customActivities.word_order.placeholder' | translate }}"
     [(ngModel)]="answerText"
     cdkDragHandle
     [cdkDragHandleDisabled]="true"
     (input)="onInputChange($event)"
   />
   <!-- ^ (ngModelChange)="onInputChange($event)" -->
-  <i
-    class="pi pi-trash"
-    style="font-size: 1.5rem; margin-left: 10px"
-    (click)="onDeleteClick()"
-  ></i>
+  <i class="pi pi-trash" style="font-size: 1.5rem; margin-left: 10px" (click)="onDeleteClick()"></i>
 
-  <app-warning-dialog
-    [warningMessage]="warningMessage"
-    [isDialogVisible]="isWarningDialogVisible"
-    (onClose)="isWarningDialogVisible = false"
-  />
+  <app-warning-dialog [warningMessage]="warningMessage" [isDialogVisible]="isWarningDialogVisible" (onClose)="isWarningDialogVisible = false" />
 </div>

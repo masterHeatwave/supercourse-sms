@@ -19,6 +19,8 @@ import { IResponse, APIResponses } from '../../types';
 import { logger } from '@utils/logger';
 import RoleModel from '@components/roles/role.model';
 import { ErrorResponse } from '@utils/errorResponse';
+import { requestContextLocalStorage } from '@config/asyncLocalStorage';
+import Customer from '@components/customers/customer.model';
 
 const generateToken = (user: IUser) => {
   return jwt.sign({ id: user._id }, config.JWT_SECRET, { expiresIn: '1h' });
@@ -141,9 +143,11 @@ const verificationEmail = async (email: string) => {
   return randomHash;
 };
 
-const resetPasswordEmail = async (email: string) => {
+const resetPasswordEmail = async (email: string, tenantId?: string) => {
   const randomHash = Math.random().toString(36).substring(7);
-  await redisClient.set(`reset-password-hash-${randomHash}`, JSON.stringify(email));
+  // Store both email and tenantId in Redis
+  const resetData = { email, tenantId: tenantId || null };
+  await redisClient.set(`reset-password-hash-${randomHash}`, JSON.stringify(resetData));
   await sendPasswordResetEmail(randomHash, email);
 
   return randomHash;
@@ -170,9 +174,46 @@ const verifyEmail = async (params: VerifyEmailDto) => {
 };
 
 const forgotPassword = async (params: ForgotPasswordParams): Promise<boolean> => {
-  const user = await User.findOne({ email: params.email });
+  // Get current tenant context - the plugin will automatically use the right collection
+  let tenantId = requestContextLocalStorage.getStore();
+
+  let user: IUser | null = null;
+
+  if (tenantId) {
+    // If tenant context exists, search in that tenant's collection
+    user = await User.findOne({ email: params.email });
+  } else {
+    // No tenant context - try to find user across tenant collections
+    // First try base collection
+    user = await requestContextLocalStorage.run(undefined, async () => {
+      return await User.findOne({ email: params.email });
+    });
+
+    if (!user) {
+      // User not in base collection, try to find in tenant collections
+      // Get all customers to get their slugs (tenant IDs)
+      const customers = await Customer.find({}).select('slug').lean();
+      const customerSlugs = customers.map((c) => c.slug).filter(Boolean);
+
+      // Try each tenant collection
+      for (const slug of customerSlugs) {
+        const sanitizedSlug = slug.toLowerCase().replace(/[/."$ ]/g, '_');
+        user = await requestContextLocalStorage.run(sanitizedSlug, async () => {
+          return await User.findOne({ email: params.email });
+        });
+
+        if (user) {
+          tenantId = sanitizedSlug;
+          logger.info(`[forgotPassword] Found user in tenant collection: ${sanitizedSlug}`);
+          break;
+        }
+      }
+    }
+  }
+
   if (user) {
-    await resetPasswordEmail(user.email);
+    // Store the email and tenant ID in Redis
+    await resetPasswordEmail(user.email, tenantId);
     return true;
   }
   throw new Error(APIResponses.RESOURCE_NOT_FOUND);
@@ -185,22 +226,64 @@ const resetPassword = async (params: ResetPasswordParams): Promise<boolean> => {
     throw new Error(APIResponses.INVALID_TOKEN);
   }
 
-  const email = JSON.parse(savedToken);
+  const resetData = JSON.parse(savedToken);
+  // Handle both old format (just email string) and new format (object with email and tenantId)
+  const email = typeof resetData === 'string' ? resetData : resetData.email;
+  let tenantId = typeof resetData === 'string' ? undefined : resetData.tenantId;
+
   if (email !== params.email) {
     throw new Error(APIResponses.INVALID_TOKEN);
   }
 
-  const user = await User.findOne({ email });
+  // If tenantId is not available, try to find user across tenant collections
+  if (!tenantId) {
+    // First try base collection
+    const baseUser = await requestContextLocalStorage.run(undefined, async () => {
+      return await User.findOne({ email });
+    });
 
-  if (!user) {
-    throw new Error(APIResponses.RESOURCE_NOT_FOUND);
+    if (baseUser) {
+      tenantId = undefined; // User is in base collection
+    } else {
+      // User not in base collection, try to find in tenant collections
+      // Get all customers to get their slugs (tenant IDs)
+      const customers = await Customer.find({}).select('slug').lean();
+      const customerSlugs = customers.map((c) => c.slug).filter(Boolean);
+
+      // Try each tenant collection
+      for (const slug of customerSlugs) {
+        const sanitizedSlug = slug.toLowerCase().replace(/[/."$ ]/g, '_');
+        const foundUser = await requestContextLocalStorage.run(sanitizedSlug, async () => {
+          return await User.findOne({ email });
+        });
+
+        if (foundUser) {
+          tenantId = sanitizedSlug;
+          logger.info(`[resetPassword] Found user in tenant collection: ${sanitizedSlug}`);
+          break;
+        }
+      }
+    }
   }
 
-  user.passwordHash = bcrypt.hashSync(params.password, 10);
-  await user.save();
-  await redisClient.del(`reset-password-hash-${params.token}`);
+  // Set the tenant context from Redis or found tenant, then let the plugin handle collection selection
+  return await requestContextLocalStorage.run(tenantId, async () => {
+    const user = await User.findOne({ email });
 
-  return true;
+    logger.info(
+      `[resetPassword] Looking for email: ${email}, tenantId: ${tenantId || 'none'}, Found user: ${user ? user._id : 'null'}`
+    );
+
+    if (!user) {
+      throw new Error(APIResponses.RESOURCE_NOT_FOUND);
+    }
+
+    user.passwordHash = bcrypt.hashSync(params.password, 10);
+    await user.save();
+    await redisClient.del(`reset-password-hash-${params.token}`);
+
+    return true;
+  });
 };
 
 const validateResetToken = async (params: ValidateResetTokenParams) => {

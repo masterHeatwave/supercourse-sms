@@ -1,26 +1,21 @@
 <!-- primary-table.component.html -->
-<div *ngIf="viewMode === 'list'" class="table-container">
+<div *ngIf="viewMode === 'list'" class="table-container" #tableContainer>
   <p-table
     [value]="sortedData"
     [loading]="loading"
-    [paginator]="true"
+    [paginator]="false"
     [rows]="rows"
     [totalRecords]="totalRecords"
     [first]="first"
     [globalFilterFields]="globalFilterFields"
-    [showCurrentPageReport]="true"
-    currentPageReportTemplate="{{ 'pagination.current_page_report_template' | translate }}"
-    [rowsPerPageOptions]="[10, 25, 50]"
-    (onPage)="onPageChange($event)"
-    (onRowsPerPageChange)="onRowsPerPageChange($event)"
     (onRowSelect)="onRowSelect($event)"
     (onRowUnselect)="onRowUnselect($event)"
     (onSort)="onSortChange($event)"
     [selectionMode]="showActions && selectionEnabled ? 'single' : null"
     [scrollable]="true"
-    scrollHeight="calc(100vh - 200px)"
+    [scrollHeight]="getScrollHeight()"
     [virtualScroll]="useVirtualScroll"
-    [virtualScrollItemSize]="46"
+    [virtualScrollItemSize]="16"
     [lazy]="true"
     [resizableColumns]="true"
     [reorderableColumns]="true"
@@ -129,15 +124,36 @@
               (onClick)="onEditClick(rowData); $event.stopPropagation()"
             ></p-button>
             <p-button
+              *ngIf="!isArchived(rowData)"
               icon="pi pi-trash"
               styleClass="p-button-rounded p-button-text p-button-danger"
               (onClick)="onDeleteClick(rowData); $event.stopPropagation()"
+            ></p-button>
+            <p-button
+              *ngIf="isArchived(rowData)"
+              icon="pi pi-replay"
+              styleClass="p-button-rounded p-button-text p-button-success"
+              (onClick)="onRestoreClick(rowData); $event.stopPropagation()"
             ></p-button>
           </div>
         </td>
       </tr>
     </ng-template>
   </p-table>
+  
+  <!-- Custom Pagination -->
+  <p-paginator
+    #paginatorElement
+    [rows]="rows"
+    [totalRecords]="totalRecords"
+    [first]="first"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="{{ 'pagination.current_page_report_template' | translate }}"
+    [rowsPerPageOptions]="[10, 25, 50]"
+    (onPageChange)="onPageChange($event)"
+    (onRowsPerPageChange)="onRowsPerPageChange($event)"
+    class="custom-paginator">
+  </p-paginator>
 </div>
 
 <!-- Grid View -->
@@ -146,7 +162,7 @@
     <div *ngFor="let item of data" class="grid-item" (click)="onRowSelect({data: item})">
       <div class="grid-item-content">
         <!-- Profile Image Section -->
-        <div class="profile-section">
+        <div *ngIf="showProfileImage" class="profile-section">
           <div class="profile-image-container">
             <img 
               [src]="getProfileImageSrc(item)" 
@@ -157,56 +173,196 @@
           </div>
         </div>
 
-        <!-- Status Badge -->
-        <div class="status-section">
-          <div class="status-badge" [class.active]="item.is_active" [class.inactive]="!item.is_active">
+        <!-- Status Badge (only for non-class items) -->
+        <div *ngIf="!isClass(item)" class="status-section">
+          <div class="status-badge" 
+               [class.active]="item.is_active || item.studentStatus" 
+               [class.inactive]="!(item.is_active || item.studentStatus)">
             <div class="status-dot"></div>
-            <span class="status-text">{{ item.is_active ? ('table.active' | translate) : ('table.inactive' | translate) }}</span>
+            <span class="status-text">
+              {{ (item.is_active || item.studentStatus) ? ('table.active' | translate) : ('table.inactive' | translate) }}
+            </span>
           </div>
         </div>
 
         <!-- Key Information -->
         <div class="info-section">
-          <div class="info-item">
-            <i class="pi pi-user info-icon"></i>
-            <span class="info-label">{{ 'staff.table.name' | translate }}:</span>
-            <span class="info-value">{{ getDisplayName(item) }}</span>
+          <!-- Class-specific information -->
+          <ng-container *ngIf="isClass(item)">
+            <!-- Class Code (First Field) -->
+            <div *ngIf="item.code" class="info-item">
+              <i class="pi pi-id-card info-icon"></i>
+              <span class="info-label">{{ 'classes.table.code' | translate }}:</span>
+              <span class="info-value">{{ item.code }}</span>
+            </div>
+
+            <!-- Class Name -->
+            <div class="info-item">
+              <i class="pi pi-book info-icon"></i>
+              <span class="info-label">{{ 'classes.table.name' | translate }}:</span>
+              <span class="info-value">{{ item.model || item.name || 'N/A' }}</span>
+            </div>
+
+            <!-- Status -->
+            <div class="info-item">
+              <i class="pi pi-info-circle info-icon"></i>
+              <span class="info-label">{{ 'classes.table.status' | translate }}:</span>
+              <span class="info-value">{{ item.archived ? ('classes.table.archived' | translate) : ('classes.table.current' | translate) }}</span>
+            </div>
+
+            <!-- Level -->
+            <div *ngIf="item.level" class="info-item">
+              <i class="pi pi-graduation-cap info-icon"></i>
+              <span class="info-label">{{ 'classes.table.level' | translate }}:</span>
+              <span class="info-value">{{ item.level }}</span>
+            </div>
+
+            <!-- Subject -->
+            <div *ngIf="item.subject" class="info-item">
+              <i class="pi pi-bookmark info-icon"></i>
+              <span class="info-label">{{ 'classes.table.subject' | translate }}:</span>
+              <span class="info-value">{{ item.subject }}</span>
+            </div>
+
+            <!-- Teacher -->
+            <div *ngIf="item.driver" class="info-item">
+              <i class="pi pi-user info-icon"></i>
+              <span class="info-label">{{ 'classes.table.teacher' | translate }}:</span>
+              <span class="info-value">{{ item.driver }}</span>
+            </div>
+
+            <!-- Students -->
+            <div *ngIf="item.students" class="info-item">
+              <i class="pi pi-users info-icon"></i>
+              <span class="info-label">{{ 'classes.table.students' | translate }}:</span>
+              <span class="info-value">{{ item.students }}</span>
+            </div>
+
+            <!-- Sessions Per Week -->
+            <div *ngIf="item.sessionsPerWeek" class="info-item">
+              <i class="pi pi-calendar info-icon"></i>
+              <span class="info-label">{{ 'classes.table.sessions_per_week' | translate }}:</span>
+              <span class="info-value">{{ item.sessionsPerWeek }}</span>
+            </div>
+
+            <!-- Total Duration -->
+            <div *ngIf="item.totalDuration" class="info-item">
+              <i class="pi pi-clock info-icon"></i>
+              <span class="info-label">{{ 'classes.table.total_duration' | translate }}:</span>
+              <span class="info-value">{{ item.totalDuration }}</span>
+            </div>
+
+            <!-- Days -->
+            <div *ngIf="item.days" class="info-item">
+              <i class="pi pi-calendar-times info-icon"></i>
+              <span class="info-label">{{ 'classes.table.days' | translate }}:</span>
+              <span class="info-value">{{ item.days }}</span>
+            </div>
+          </ng-container>
+
+          <!-- Staff/Student/Contact information -->
+          <ng-container *ngIf="!isClass(item)">
+            <div class="info-item">
+              <i class="pi pi-user info-icon"></i>
+              <span class="info-label">{{ 'staff.table.name' | translate }}:</span>
+              <span class="info-value">{{ getDisplayName(item) }}</span>
+            </div>
+          </ng-container>
+
+          <!-- Linked Contact Type (for linked contacts) -->
+          <div *ngIf="item.contactType" class="info-item">
+            <i class="pi pi-tag info-icon"></i>
+            <span class="info-label">{{ 'students.linked_contacts.contact_type' | translate }}:</span>
+            <span class="info-value">{{ getContactTypeValue(item) }}</span>
           </div>
 
-          <div *ngIf="getRoleValue(item)" class="info-item">
+          <!-- Student Name (for linked contacts) -->
+          <div *ngIf="item.studentName" class="info-item">
+            <i class="pi pi-user-edit info-icon"></i>
+            <span class="info-label">{{ 'students.linked_contacts.student_name' | translate }}:</span>
+            <span class="info-value">{{ item.studentName }}</span>
+          </div>
+
+          <!-- Student Level (for linked contacts) -->
+          <div *ngIf="item.studentLevel" class="info-item">
+            <i class="pi pi-graduation-cap info-icon"></i>
+            <span class="info-label">{{ 'students.linked_contacts.student_level' | translate }}:</span>
+            <span class="info-value">{{ item.studentLevel }}</span>
+          </div>
+
+          <!-- Student Class (for linked contacts) -->
+          <div *ngIf="item.studentClass" class="info-item">
+            <i class="pi pi-users info-icon"></i>
+            <span class="info-label">{{ 'students.linked_contacts.student_class' | translate }}:</span>
+            <span class="info-value">{{ item.studentClass }}</span>
+          </div>
+
+          <!-- Role (for staff) -->
+          <div *ngIf="getRoleValue(item) && !item.contactType" class="info-item">
             <i class="pi pi-briefcase info-icon"></i>
             <span class="info-label">{{ 'staff.table.role' | translate }}:</span>
             <span class="info-value">{{ getRoleValue(item) }}</span>
           </div>
 
-          <div *ngIf="item.code" class="info-item">
+          <!-- Code (for staff/students) -->
+          <div *ngIf="item.code && !item.contactType" class="info-item">
             <i class="pi pi-id-card info-icon"></i>
             <span class="info-label">{{ 'staff.table.code' | translate }}:</span>
             <span class="info-value">{{ item.code }}</span>
           </div>
           
+          <!-- Phone -->
           <div *ngIf="item.phone" class="info-item">
             <i class="pi pi-phone info-icon"></i>
-            <span class="info-label">{{ 'staff.table.phone' | translate }}:</span>
+            <span class="info-label">{{ item.contactType ? ('students.linked_contacts.phone' | translate) : ('staff.table.phone' | translate) }}:</span>
             <span class="info-value">{{ item.phone }}</span>
           </div>
           
+          <!-- Email -->
           <div *ngIf="item.email" class="info-item">
             <i class="pi pi-envelope info-icon"></i>
-            <span class="info-label">{{ 'staff.table.email' | translate }}:</span>
+            <span class="info-label">{{ item.contactType ? ('students.linked_contacts.email' | translate) : ('staff.table.email' | translate) }}:</span>
             <span class="info-value">{{ item.email }}</span>
           </div>
 
-          <div *ngIf="getClassValue(item)" class="info-item">
+          <!-- Address (for linked contacts) -->
+          <div *ngIf="item.address" class="info-item">
+            <i class="pi pi-map-marker info-icon"></i>
+            <span class="info-label">{{ 'students.linked_contacts.address' | translate }}:</span>
+            <span class="info-value">{{ item.address }}</span>
+          </div>
+
+          <!-- Branch (for linked contacts) -->
+          <div *ngIf="item.branch && !isClass(item)" class="info-item">
+            <i class="pi pi-building info-icon"></i>
+            <span class="info-label">{{ 'students.linked_contacts.branch' | translate }}:</span>
+            <span class="info-value">{{ item.branch }}</span>
+          </div>
+
+          <!-- Class (for staff/students) -->
+          <div *ngIf="getClassValue(item) && !item.contactType && !isClass(item)" class="info-item">
             <i class="pi pi-users info-icon"></i>
             <span class="info-label">{{ 'staff.table.class' | translate }}:</span>
             <span class="info-value">{{ getClassValue(item) }}</span>
           </div>
 
-          <div *ngIf="getBranchesValue(item)" class="info-item">
+          <!-- Branches (for staff/students) -->
+          <div *ngIf="getBranchesValue(item) && !item.contactType && !isClass(item)" class="info-item">
             <i class="pi pi-building info-icon"></i>
             <span class="info-label">{{ 'branches' | translate }}:</span>
             <span class="info-value">{{ getBranchesValue(item) }}</span>
+          </div>
+
+          <!-- Permissions (for staff only) - Minimal display -->
+          <div *ngIf="getPermissionsCount(item) > 0 && !item.contactType && !isClass(item)" class="permissions-section">
+            <div class="permissions-chips">
+              <span class="permission-chip" *ngFor="let permission of getTopPermissions(item)">
+                {{ permission }}
+              </span>
+              <span class="permission-chip more-permissions" *ngIf="getPermissionsCount(item) > 3">
+                +{{ getPermissionsCount(item) - 3 }}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -223,9 +379,16 @@
             (onClick)="onEditClick(item); $event.stopPropagation()">
           </p-button>
           <p-button
+            *ngIf="!isArchived(item)"
             icon="pi pi-trash"
             styleClass="p-button-text p-button-danger p-button-sm"
             (onClick)="onDeleteClick(item); $event.stopPropagation()">
+          </p-button>
+          <p-button
+            *ngIf="isArchived(item)"
+            icon="pi pi-replay"
+            styleClass="p-button-text p-button-success p-button-sm"
+            (onClick)="onRestoreClick(item); $event.stopPropagation()">
           </p-button>
         </div>
       </div>

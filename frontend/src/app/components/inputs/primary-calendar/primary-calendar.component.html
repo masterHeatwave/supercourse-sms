@@ -1,5 +1,8 @@
-<div class="primary-calendar flex flex-column gap-2 {{ styleClass }} w-full">
-  <span class="p-input-icon-right relative w-full">
+<div class="primary-calendar flex gap-2 {{ labelPosition === 'left' ? 'flex-row align-items-center' : 'flex-column' }} {{ styleClass }} w-full">
+  <label *ngIf="label" [for]="field.id" class="{{ labelClass }}" [class.font-bold]="labelBold">
+    {{ label | translate }} <span *ngIf="required" style="color: #ef4444;">*</span>
+  </label>
+  <span class="p-input-icon-right relative" [class.flex-1]="labelPosition === 'left'" [class.w-full]="labelPosition === 'top'">
     <p-calendar
       [id]="field.id!"
       [formControl]="formControl"

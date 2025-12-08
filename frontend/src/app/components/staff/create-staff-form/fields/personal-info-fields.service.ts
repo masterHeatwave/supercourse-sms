@@ -72,13 +72,23 @@ export class PersonalInfoFieldsService {
       }
     }
 
-    // Set startDate value if in edit mode
-    if (isEditMode && staffData && staffData.startDate) {
+    // Set startDate value if in edit mode - check both registration_date and startDate
+    if (isEditMode && staffData) {
       const startDateField = this.findFieldByKey('startDate');
       if (startDateField && startDateField.formControl) {
-        // Convert the date string to a Date object for the calendar component
-        const dateValue = new Date(staffData.startDate);
-        startDateField.formControl.setValue(dateValue);
+        // Prefer registration_date, fallback to startDate, then createdAt
+        let dateValue: Date | null = null;
+        if (staffData.registration_date) {
+          dateValue = new Date(staffData.registration_date);
+        } else if (staffData.startDate) {
+          dateValue = new Date(staffData.startDate);
+        } else if (staffData.createdAt) {
+          dateValue = new Date(staffData.createdAt);
+        }
+        
+        if (dateValue && !isNaN(dateValue.getTime())) {
+          startDateField.formControl.setValue(dateValue);
+        }
       }
     }
 
@@ -353,12 +363,12 @@ export class PersonalInfoFieldsService {
                     template: '<h3 class="text-primary font-bold text-2xl mb-2">Branch</h3>'
                   },
                   {
-                    fieldGroupClassName: 'grid',
+                    fieldGroupClassName: 'flex flex-row gap-3 align-items-start',
                     fieldGroup: [
                       {
                         key: 'branch',
                         type: 'primary-input',
-                        className: 'col-12 md:col-6 lg:col-4',
+                        className: 'flex-1',
                         props: {
                           required: true,
                           placeholder: 'Current Branch',
@@ -368,9 +378,25 @@ export class PersonalInfoFieldsService {
                         defaultValue: ''
                       },
                       {
+                        key: 'startDate',
+                        type: 'primary-calendar',
+                        className: 'self-center',
+                        props: {
+                          label: 'Registration Date:',
+                          labelPosition: 'left',
+                          labelBold: true,
+                          required: false,
+                          placeholder: '21/12/2024',
+                          dateFormat: 'dd/mm/yy',
+                          showIcon: true,
+                          showClear: true
+                        },
+                        defaultValue: defaultValues.startDate
+                      },
+                      {
                         key: 'status',
                         type: 'primary-toggle',
-                        className: 'col-12 md:col-6 font-bold',
+                        className: 'flex-1 font-bold self-center mt-2',
                         props: {
                           label: 'Status:',
                           disabled: false,
@@ -388,19 +414,6 @@ export class PersonalInfoFieldsService {
                   {
                     fieldGroupClassName: 'grid',
                     fieldGroup: [
-                      {
-                        key: 'startDate',
-                        type: 'primary-calendar',
-                        className: 'col-12 md:col-3',
-                        props: {
-                          required: true,
-                          placeholder: '21/12/2024',
-                          dateFormat: 'dd/mm/yy',
-                          showIcon: true,
-                          showClear: true
-                        },
-                        defaultValue: defaultValues.startDate
-                      },
                       {
                         key: 'role',
                         type: 'primary-select',

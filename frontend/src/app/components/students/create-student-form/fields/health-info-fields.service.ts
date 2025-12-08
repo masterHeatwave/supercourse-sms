@@ -23,44 +23,34 @@ export class HealthInfoFieldsService {
 
         const isDev = environment.development;
         const defaultValues = {
-            hasAllergies: isDev ? faker.datatype.boolean() : false,
+            hasAllergies: false, // Default to false (off) for new students
             healthDetails: isDev ? faker.lorem.paragraph() : ''
         };
 
         return [
             {
-              fieldGroupClassName: '',
-              fieldGroup: [
-                {
-                  template: '<h3 class="text-primary font-bold text-2xl mb-2">Health Info</h3>',
-                },
-                {
-                  fieldGroupClassName: 'grid',
-                  fieldGroup: [
-                    {
-                      key: 'hasAllergies',
-                      type: 'primary-toggle',
-                      className: 'col-12 md:col-6',
-                      props: {
-                        label: 'Allergies - Medication',
-                        disabled: false,
-                        defaultValue: defaultValues.hasAllergies
-                      },
-                      defaultValue: defaultValues.hasAllergies
-                    }
-                  ]
-                },
-                {
-                  key: 'healthDetails',
-                  type: 'primary-textarea',
-                  className: 'col-12',
-                  props: {
-                    placeholder: 'Description, details',
-                    rows: 4,
-                    autoResize: false
-                  }
-                }
-              ]
+              template: '<h3 class="text-primary font-bold text-2xl mb-2">Health Info</h3>',
+            },
+            {
+              key: 'hasAllergies',
+              type: 'primary-toggle',
+              className: 'col-12 md:col-6',
+              props: {
+                label: 'Allergies - Medication',
+                disabled: false,
+                defaultValue: defaultValues.hasAllergies
+              },
+              defaultValue: defaultValues.hasAllergies
+            },
+            {
+              key: 'healthDetails',
+              type: 'primary-textarea',
+              className: 'col-12',
+              props: {
+                placeholder: 'Description, details',
+                rows: 4,
+                autoResize: false
+              }
             }
           ];
     }

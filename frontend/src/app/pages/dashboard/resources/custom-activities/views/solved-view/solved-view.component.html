@@ -1,0 +1,11 @@
+<div class="activity-div">
+  <label *ngIf="isLoading === true">{{ 'customActivities.loading_activity' | translate }}</label>
+  <label *ngIf="hasError === true">{{ 'customActivities.error_loading_activity' | translate }}</label>
+  <div *ngIf="isLoading === false && hasError === false">
+  <div *ngIf="isLoading === false" class="bevel">
+    <label
+      ><u>{{ 'customActivities.activity' | translate }}</u></label
+    >
+    <div id="activity-container"></div>
+  </div>
+</div>

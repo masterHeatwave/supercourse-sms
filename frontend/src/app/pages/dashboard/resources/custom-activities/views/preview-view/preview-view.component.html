@@ -1,45 +1,66 @@
 <div class="activity-div">
-  <label *ngIf="isLoading === true">{{ message }}</label>
-  <div *ngIf="isLoading === false">
+  <label *ngIf="isLoading === true">{{ 'customActivities.loading_activity' | translate }}</label>
+  <label *ngIf="hasError === true">{{ 'customActivities.error_loading_activity' | translate }}</label>
+  <div *ngIf="isLoading === false && hasError === false">
     <div class="bevel">
-      <label><u>Title</u>: </label>
+      <label
+        ><u>{{ 'customActivities.title' | translate }}</u
+        >:
+      </label>
       <i>
         <label>{{ activityData.title }}</label>
       </i>
     </div>
     <div class="bevel">
-      <label><u>Description</u>: </label>
+      <label
+        ><u>{{ 'customActivities.description' | translate }}</u
+        >:
+      </label>
       <i>
         <label>{{ activityData.description }}</label>
       </i>
     </div>
     <div class="bevel">
-      <label><u>CEFR</u>: </label>
+      <label
+        ><u>{{ 'customActivities.cefr' | translate }}</u
+        >:
+      </label>
       <i>
         <label>{{ formatCefr(activityData.cefr) }}</label>
       </i>
     </div>
     <div class="bevel">
-      <label><u>Tags</u>: </label>
+      <label
+        ><u>{{ 'customActivities.tags' | translate }}</u
+        >:
+      </label>
       <i>
         <label>{{ getFormattedTagValues() }}</label>
       </i>
     </div>
     <div class="bevel">
-      <label><u>Template</u>: </label>
+      <label
+        ><u>{{ 'customActivities.template' | translate }}</u
+        >:
+      </label>
       <i>
         <label>{{ activityData.template }}</label>
       </i>
       <img src="assets/images/custom-activities/templates/{{ activityData.template }}.png" width="98%" />
     </div>
     <div class="bevel">
-      <label><u>Activity type</u>: </label>
+      <label
+        ><u>{{ 'customActivities.activity_type' | translate }}</u
+        >:
+      </label>
       <i>
         <label>{{ activityTypeText }} </label>
       </i>
     </div>
     <div class="bevel">
-      <label><u>Settings</u></label>
+      <label
+        ><u>{{ 'customActivities.settings.label' | translate }}</u></label
+      >
       <div *ngFor="let setting of activityData.settings | keyvalue">
         <label>
           {{ setting.value ? '✓' : '✗' }}
@@ -49,7 +70,9 @@
     </div>
   </div>
   <div *ngIf="isLoading === false" class="bevel">
-    <label><u>Activity</u></label>
+    <label
+      ><u>{{ 'customActivities.activity' | translate }}</u></label
+    >
     <div id="activity-container"></div>
   </div>
 </div>

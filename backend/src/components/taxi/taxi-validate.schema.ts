@@ -32,7 +32,7 @@ const AcademicPeriodSchema = z.object({
   name: z.string(),
 });
 
-const SessionSchema = z.object({
+export const SessionSchema = z.object({
   id: z.string(),
   start_date: z.string(),
   end_date: z.string(),
@@ -51,6 +51,7 @@ export const TaxiSchema = z
   .object({
     id: z.string(),
     name: z.string(),
+    code: z.string(),
     color: z.string().optional(),
     branch: z.string().optional(),
     subject: z.string().optional(),
@@ -61,6 +62,8 @@ export const TaxiSchema = z
     cefr_level: z.enum(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']).optional(),
     users: z.array(z.union([z.string(), UserSchema])).optional(),
     scap_products: z.array(z.string()).optional(),
+    archived: z.boolean().optional(),
+    notes: z.string().optional(),
     sessions: z.array(SessionSchema).optional(),
     sessionStats: SessionStatsSchema.optional(),
     teachers: z.array(UserSchema).optional(),
@@ -78,6 +81,7 @@ export const TaxiSchema = z
 export const createTaxiSchema = z
   .object({
     name: z.string().min(1, { message: 'Name is required' }),
+    code: z.string().optional(),
     color: z.string().optional(),
     branch: z.string().optional(),
     subject: z.string().optional(),
@@ -88,6 +92,8 @@ export const createTaxiSchema = z
     cefr_level: z.enum(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']).optional(),
     users: z.array(z.string()).optional(),
     scap_products: z.array(z.string()).optional(),
+    archived: z.boolean().optional(),
+    notes: z.string().optional(),
   })
   .openapi({
     title: 'CreateTaxi',
@@ -98,6 +104,7 @@ export const updateTaxiSchema = z
   .object({
     id: z.string().min(1, { message: 'ID is required' }),
     name: z.string().min(1, { message: 'Name is required' }).optional(),
+    code: z.string().optional(),
     color: z.string().optional(),
     branch: z.string().optional(),
     subject: z.string().optional(),
@@ -108,6 +115,8 @@ export const updateTaxiSchema = z
     cefr_level: z.enum(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']).optional(),
     users: z.array(z.string()).optional(),
     scap_products: z.array(z.string()).optional(),
+    archived: z.boolean().optional(),
+    notes: z.string().optional(),
   })
   .openapi({
     title: 'UpdateTaxi',
@@ -121,7 +130,10 @@ export const queryTaxiSchema = z
     branch: z.string().optional(),
     subject: z.string().optional(),
     level: z.string().optional(),
+    code: z.string().optional(),
     search: z.string().optional(),
+    archived: z.string().optional(),
+    userId: z.string().optional(),
   })
   .openapi({
     title: 'QueryTaxi',

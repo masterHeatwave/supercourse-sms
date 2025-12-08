@@ -75,7 +75,6 @@ const seedTenantClassrooms = async (tenantId: string) => {
 
 const seedClassrooms = async () => {
   await seedTenantClassrooms('supercourse');
-  await seedTenantClassrooms('piedpiper');
 };
 
 export { seedTenantClassrooms };

@@ -24,6 +24,7 @@ export const updateAcademicPeriodSchema = z
     start_date: z.coerce.date().optional(),
     end_date: z.coerce.date().optional(),
     academic_year: z.string().min(1, { message: 'Academic year is required' }).optional(),
+    is_active: z.boolean().optional(),
   })
   .refine(
     (data) => {

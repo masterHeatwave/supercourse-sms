@@ -6,6 +6,7 @@ import AcademicYear from '@components/academic/academic-years.model';
 import AcademicPeriod from '@components/academic/academic-periods.model';
 import Customer from '@components/customers/customer.model';
 import { IUserType } from '@components/users/user.interface';
+import { AcademicYearService } from '@components/academic/academic-years.service';
 
 // Import signals to ensure they are initialized
 import './staff-academic-assignments.signals';
@@ -28,15 +29,9 @@ const syncStaffMemberAssignments = async (staffMemberId: string) => {
         return;
       }
 
-      // Get current academic year and active periods
-      let currentAcademicYear = await AcademicYear.findOne({
-        is_current: true,
-      });
-
-      // If no current academic year is marked, fall back to the most recent one
-      if (!currentAcademicYear) {
-        currentAcademicYear = await AcademicYear.findOne().sort({ start_date: -1 });
-      }
+      // Get current academic year using the dual-state logic
+      const academicYearService = new AcademicYearService();
+      let currentAcademicYear = await academicYearService.getCurrentAcademicYear();
 
       if (!currentAcademicYear) {
         logger.warn('No academic year found, cannot sync staff assignments');

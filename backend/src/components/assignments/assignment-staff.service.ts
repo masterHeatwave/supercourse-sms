@@ -1,11 +1,11 @@
-import { AssignmentForStaff } from './assignment-staff.model';
-import { IAssignmentForStaff } from './assignment-staff.interface';
-import { AssignmentForStudent } from './assignment-student.model';
-import { IAssignmentForStudent } from './assignment-student.interface';
+import { AssignmentForStaff } from '@components/assignments/assignment-staff.model';
+import { AssignmentForStudent } from '@components/assignments/assignment-student.model';
+
+import { IAssignmentForStaff } from '@components/assignments/assignment-staff.interface';
 
 export class AssignmentStaffService {
   //****************************************************************************
-  //* Controller method for: GET ALL ASSIGNMENTS
+  //* Controller method for: GET ALL ASSIGNMENTS ✅
   //* Route: GET /assignments/staff
   //****************************************************************************
 
@@ -13,10 +13,9 @@ export class AssignmentStaffService {
     filters: {
       branchID: string;
       staffRole: 'admin' | 'manager' | 'teacher';
-      staffID?: string; // Optional, only for teacher role to show assignments created by them
+      staffID?: string; // Optional, only for teacher role to show assignments created by them //! Probably needs to be removed
       classID?: string;
       classIDs?: string[]; // Optional, only for teacher role to show assignments for their classes
-      // studentID?: string;
       academicYearID?: string;
       academicPeriodID?: string;
       academicSubperiodID?: string;
@@ -33,7 +32,6 @@ export class AssignmentStaffService {
       staffID,
       classID,
       classIDs,
-      // studentID,
       academicYearID,
       academicPeriodID,
       academicSubperiodID,
@@ -43,36 +41,39 @@ export class AssignmentStaffService {
     } = filters;
     let filter: any = {};
 
-    try {
-      switch (staffRole) {
-        case 'admin':
-        case 'manager':
-          filter = { branchID };
-          if (classID) filter.classID = classID;
-          break;
-        case 'teacher':
-          filter = { branchID };
-          if (classIDs && classIDs.length > 0) {
-            filter.classID = { $in: classIDs };
-          }
-          break;
-        default:
-          filter = { branchID };
-          break;
+    switch (staffRole) {
+      case 'admin':
+      case 'manager':
+        filter = { branchID };
+        break;
+      case 'teacher':
+        filter = { branchID };
+        if (classIDs && classIDs.length > 0) {
+          filter.classID = { $in: classIDs };
+        }
+        break;
+      default:
+        filter = { branchID };
+        break;
+    }
+
+    if (classID && !classIDs) filter.classID = classID; // Only if classIDs is not provided, for admin/manager roles
+    if (academicYearID) filter['academicTimeframe.academicYear'] = academicYearID;
+    if (academicPeriodID) filter['academicTimeframe.academicPeriod'] = academicPeriodID;
+    if (academicSubperiodID) {
+      if (academicSubperiodID.includes(',')) {
+        const subperiodIDs = academicSubperiodID.split(',').map((id) => id.trim());
+        filter['academicTimeframe.academicTerm'] = { $in: subperiodIDs };
+      } else {
+        filter['academicTimeframe.academicTerm'] = academicSubperiodID;
       }
+    }
+    if (typeof isDrafted === 'boolean') filter.isDrafted = isDrafted;
+    if (typeof isDeletedForMe === 'boolean') filter.isDeletedForMe = isDeletedForMe;
+    if (typeof isDeletedForEveryone === 'boolean') filter.isDeletedForEveryone = isDeletedForEveryone;
 
-      // if (classID && !classIDs) filter.classID = classID;
-      // if (studentID) filter['studentsIDs'] = studentID;
-      if (academicYearID) filter['academicTimeframe.academicYear'] = academicYearID;
-      if (academicPeriodID) filter['academicTimeframe.academicPeriod'] = academicPeriodID;
-      if (academicSubperiodID) filter['academicTimeframe.academicTerm'] = academicSubperiodID;
-      if (typeof isDrafted === 'boolean') filter.isDrafted = isDrafted;
-      if (typeof isDeletedForMe === 'boolean') filter.isDeletedForMe = isDeletedForMe;
-      if (typeof isDeletedForEveryone === 'boolean') filter.isDeletedForEveryone = isDeletedForEveryone;
-
-      console.log('Filter applied:', filter);
-
-      const assignments = await AssignmentForStaff.find(filter)
+    try {
+      const assignments = await AssignmentForStaff.find(filter, projection, options)
         .populate({ path: 'schoolID', select: ['name'] })
         .populate({ path: 'branchID', select: ['name'] })
         .populate({ path: 'classID', select: ['name', 'subject', 'level', 'cefr'] })
@@ -90,60 +91,15 @@ export class AssignmentStaffService {
   }
 
   //****************************************************************************
-  //* Controller method for: CREATE ASSIGNMENT
+  //* Controller method for: CREATE ASSIGNMENT ✅
   //* Route: POST /assignments/staff
   //****************************************************************************
 
   async createAssignment(data: IAssignmentForStaff, isDrafted: boolean): Promise<IAssignmentForStaff> {
     try {
-      const assignmentData = {
-        ...data,
-        isDrafted,
-        ...(isDrafted && { draftDate: new Date() }),
-      };
+      const assignmentData = { ...data, isDrafted, ...(isDrafted && { draftDate: new Date() }) };
 
       const assignment: IAssignmentForStaff = await AssignmentForStaff.create(assignmentData);
-
-      // If not drafted, create individual assignments for each student
-      if (!isDrafted && data.studentsIDs && data.studentsIDs.length > 0) {
-        const studentAssignments = data.studentsIDs.map((studentID) => ({
-          schoolID: data.schoolID,
-          branchID: data.branchID,
-          staffID: data.staffID,
-          staffRole: data.staffRole,
-          staffAssignmentID: assignment._id,
-          classID: data.classID,
-          studentID: studentID,
-          title: data.title,
-          startDate: data.startDate,
-          endDate: data.endDate,
-          description: data.description,
-          tasks: data.tasks?.map((task) => ({
-            resourceType: task.resourceType,
-            ebookID: task.ebookID,
-            ebookActivityID: task.ebookActivityID,
-            customActivityID: task.customActivityID,
-            openTaskType: task.openTaskType,
-            openTaskTitle: task.openTaskTitle,
-            openTaskInstructions: task.openTaskInstructions,
-            assignedAs: task.assignedAs,
-            instructions: task.instructions,
-            attempts: 0,
-            duration: 0,
-            score: 0,
-            taskStatus: 'new' as const,
-            answers: {},
-            answersRevealed: false,
-          })),
-          assignmentStatus: 'new' as const,
-          academicTimeframe: data.academicTimeframe,
-          isDeletedForMe: false,
-          isDeletedForEveryone: false,
-          isPermanentlyDeleted: false,
-        }));
-
-        await AssignmentForStudent.insertMany(studentAssignments);
-      }
 
       return assignment;
     } catch (error) {
@@ -152,7 +108,7 @@ export class AssignmentStaffService {
   }
 
   //****************************************************************************
-  //* Controller method for: GET ASSIGNMENT BY ID
+  //* Controller method for: GET ASSIGNMENT BY ID ✅
   //* Route: GET /assignments/staff/{id}
   //****************************************************************************
 
@@ -176,13 +132,33 @@ export class AssignmentStaffService {
   }
 
   //****************************************************************************
-  //* Controller method for: UPDATE ASSIGNMENT
+  //* Controller method for: UPDATE ASSIGNMENT ✅
   //* Route: PUT /assignments/staff/{id}
   //****************************************************************************
 
   async updateAssignment(id: string, data: Partial<IAssignmentForStaff>): Promise<IAssignmentForStaff | null> {
     try {
-      const assignment = await AssignmentForStaff.findByIdAndUpdate(id, data, { new: true });
+      const assignment = await AssignmentForStaff.findByIdAndUpdate(
+        id,
+        {
+          ...data,
+          $inc: { __v: 1 },
+        },
+        {
+          new: true,
+        }
+      );
+
+      if (assignment) {
+        await AssignmentForStudent.updateMany(
+          { staffAssignmentID: id },
+          {
+            ...data,
+            $inc: { __v: 1 },
+          }
+        );
+      }
+
       return assignment;
     } catch (error) {
       throw error;
@@ -190,7 +166,7 @@ export class AssignmentStaffService {
   }
 
   //****************************************************************************
-  //* Controller method for: DRAFT ASSIGNMENT
+  //* Controller method for: DRAFT ASSIGNMENT ✅
   //* Route: PATCH /assignments/staff/draft/{id}
   //****************************************************************************
 
@@ -215,7 +191,7 @@ export class AssignmentStaffService {
   }
 
   //****************************************************************************
-  //* Controller method for: UNDRAFT ASSIGNMENT
+  //* Controller method for: UNDRAFT ASSIGNMENT ✅
   //* Route: PATCH /assignments/staff/undraft/{id}
   //****************************************************************************
 
@@ -240,7 +216,7 @@ export class AssignmentStaffService {
   }
 
   //****************************************************************************
-  //* Controller method for: DELETE ASSIGNMENT TEMPORARILY FOR ME
+  //* Controller method for: DELETE ASSIGNMENT TEMPORARILY FOR ME ✅
   //* Route: PATCH /assignments/staff/delete-for-me/{id}
   //****************************************************************************
 
@@ -265,7 +241,7 @@ export class AssignmentStaffService {
   }
 
   //****************************************************************************
-  //* Controller method for: DELETE ASSIGNMENT PERMANENTLY FOR ME
+  //* Controller method for: DELETE ASSIGNMENT PERMANENTLY FOR ME ✅
   //* Route: DELETE /assignments/staff/delete-for-me/{id}
   //****************************************************************************
 
@@ -280,7 +256,7 @@ export class AssignmentStaffService {
   }
 
   //****************************************************************************
-  //* Controller method for: RESTORE ASSIGNMENT FOR ME
+  //* Controller method for: RESTORE ASSIGNMENT FOR ME ✅
   //* Route: PATCH /assignments/staff/restore-for-me/{id}
   //****************************************************************************
 
@@ -297,6 +273,97 @@ export class AssignmentStaffService {
           new: true,
         }
       );
+
+      return assignment;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  //****************************************************************************
+  //* Controller method for: DELETE ASSIGNMENT TEMPORARILY FOR EVERYONE ✅
+  //* Route: PATCH /assignments/staff/delete-for-everyone/{id}
+  //****************************************************************************
+
+  async deleteAssignmentTemporarilyForEveryone(id: string): Promise<IAssignmentForStaff | null> {
+    try {
+      const assignment = await AssignmentForStaff.findByIdAndUpdate(
+        id,
+        {
+          isDeletedForEveryone: true,
+          deletedForEveryoneDate: new Date(),
+          $inc: { __v: 1 },
+        },
+        {
+          new: true,
+        }
+      );
+
+      if (assignment) {
+        await AssignmentForStudent.updateMany(
+          { staffAssignmentID: id },
+          {
+            isDeletedForEveryone: true,
+            deletedForEveryoneDate: new Date(),
+            $inc: { __v: 1 },
+          }
+        );
+      }
+
+      return assignment;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  //****************************************************************************
+  //* Controller method for: DELETE ASSIGNMENT PERMANENTLY FOR EVERYONE ✅
+  //* Route: DELETE /assignments/staff/delete-for-everyone/{id}
+  //****************************************************************************
+
+  async deleteAssignmentPermanentlyForEveryone(id: string): Promise<IAssignmentForStaff | null> {
+    try {
+      const assignment = await AssignmentForStaff.findByIdAndDelete(id);
+
+      if (assignment) {
+        await AssignmentForStudent.deleteMany({ staffAssignmentID: id });
+      }
+
+      return assignment;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  //****************************************************************************
+  //* Controller method for: RESTORE ASSIGNMENT FOR EVERYONE ✅
+  //* Route: PATCH /assignments/staff/restore-for-everyone/{id}
+  //****************************************************************************
+
+  async restoreAssignmentForEveryone(id: string): Promise<IAssignmentForStaff | null> {
+    try {
+      const assignment = await AssignmentForStaff.findByIdAndUpdate(
+        id,
+        {
+          isDeletedForEveryone: false,
+          deletedForEveryoneDate: new Date(),
+          $inc: { __v: 1 },
+        },
+        {
+          new: true,
+        }
+      );
+
+      if (assignment) {
+        await AssignmentForStudent.updateMany(
+          { staffAssignmentID: id },
+          {
+            isDeletedForEveryone: false,
+            deletedForEveryoneDate: new Date(),
+            $inc: { __v: 1 },
+          }
+        );
+      }
 
       return assignment;
     } catch (error) {

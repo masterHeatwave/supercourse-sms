@@ -6,21 +6,12 @@
       [imageURL]="imageURL"
     ></app-image-selector>
     <label class="separator">|</label>
-    <i
-      #lastSoundElementRef
-      class="pi pi-volume-up"
-      style="font-size: 1.5rem; margin-top: -3px"
-      (click)="soundClick($event)"
-    ></i>
+    <i #lastSoundElementRef class="pi pi-volume-up" style="font-size: 1.5rem; margin-top: -3px" (click)="soundClick($event)"></i>
   </div>
   <textarea
-    placeholder="Insert a sentence"
+    placeholder="{{ 'customActivities.matching_pairs.placeholder' | translate }}"
     [(ngModel)]="answerText"
     (ngModelChange)="onInputChange($event)"
   ></textarea>
 </div>
-<app-warning-dialog
-  [warningMessage]="warningMessage"
-  [isDialogVisible]="isWarningDialogVisible"
-  (onClose)="isWarningDialogVisible = false"
-/>
+<app-warning-dialog [warningMessage]="warningMessage" [isDialogVisible]="isWarningDialogVisible" (onClose)="isWarningDialogVisible = false" />

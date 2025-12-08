@@ -1,0 +1,31 @@
+<div class="account-layout">
+  <!-- Left Sidebar -->
+  <aside class="account-sidebar bg-transparent">
+    <div class="account-sidebar-header">
+      <h2>{{ 'account.title' | translate }}</h2>
+    </div>
+    
+    <nav class="account-sidebar-nav">
+      <ul class="account-menu">
+        @for (item of menuItems; track item.id) {
+          <li class="account-menu-item">
+            <a
+              [routerLink]="item.routerLink"
+              class="account-menu-link"
+              [class.active]="isMenuItemActive(item)"
+            >
+              <i class="{{ item.icon }}"></i>
+              <span>{{ item.label | translate }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Right Content Area -->
+  <main class="account-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>
+

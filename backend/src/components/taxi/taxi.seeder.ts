@@ -7,6 +7,7 @@ import AcademicPeriod from '@components/academic/academic-periods.model';
 import User from '@components/users/user.model';
 import Customer from '@components/customers/customer.model';
 import { markComponentComplete } from '@utils/seedingLogger';
+import { getSubjectValues, getLevelValues } from '@utils/subject-level-mapping';
 
 const chance = new Chance();
 
@@ -45,7 +46,15 @@ const seedTenantTaxis = async (tenantId: string) => {
 
       logger.debug(`[${tenantId}] Starting taxi seeding process...`);
 
-      const academicYear = await AcademicYear.findOne({ is_current: true });
+      // Get academic year using dual-state logic: prefer manually active, fall back to date-derived
+      let academicYear = await AcademicYear.findOne({ is_manual_active: true });
+      if (!academicYear) {
+        const currentDate = new Date();
+        academicYear = await AcademicYear.findOne({
+          start_date: { $lte: currentDate },
+          end_date: { $gte: currentDate },
+        });
+      }
       const academicPeriod = await AcademicPeriod.findOne({ is_active: true });
 
       // Also check what academic data exists
@@ -63,8 +72,8 @@ const seedTenantTaxis = async (tenantId: string) => {
         return;
       }
 
-      const teachers = await User.find({ user_type: 'teacher' }).limit(5);
-      const students = await User.find({ user_type: 'student' }).limit(20);
+      const teachers = await User.find({ user_type: 'teacher' });
+      const students = await User.find({ user_type: 'student' });
 
       if (teachers.length === 0 || students.length === 0) {
         logger.warn(
@@ -79,20 +88,89 @@ const seedTenantTaxis = async (tenantId: string) => {
         // Randomly select a branch for this taxi
         const randomBranch = branches[Math.floor(Math.random() * branches.length)];
 
-        await Taxi.create({
+        // Filter students that belong to the same branch as the taxi
+        const studentsInBranch = students.filter((student) => {
+          // Check if student has the branch in their branches array or customers array
+          const studentBranches = student.branches?.map((b: any) => b.toString()) || [];
+          const studentCustomers = student.customers?.map((c: any) => c.toString()) || [];
+
+          const branchId = randomBranch.id.toString();
+          return studentBranches.includes(branchId) || studentCustomers.includes(branchId);
+        });
+
+        // Filter teachers that belong to the same branch as the taxi
+        const teachersInBranch = teachers.filter((teacher) => {
+          // Check if teacher has the branch in their branches array or customers array
+          const teacherBranches = teacher.branches?.map((b: any) => b.toString()) || [];
+          const teacherCustomers = teacher.customers?.map((c: any) => c.toString()) || [];
+
+          const branchId = randomBranch.id.toString();
+          return teacherBranches.includes(branchId) || teacherCustomers.includes(branchId);
+        });
+
+        if (studentsInBranch.length === 0) {
+          logger.warn(
+            `[${tenantId}] No students found for branch ${randomBranch.name}, skipping taxi ${i + 1} creation.`
+          );
+          continue;
+        }
+
+        // Generate a unique code for the taxi (optional, will auto-generate if not provided)
+        const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        const generateCode = () =>
+          Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+
+        let taxiCode = generateCode();
+        let codeExists = await Taxi.exists({ code: taxiCode });
+        let attempts = 0;
+
+        // Ensure unique code
+        while (codeExists && attempts < 10) {
+          taxiCode = generateCode();
+          codeExists = await Taxi.exists({ code: taxiCode });
+          attempts++;
+        }
+
+        // Select random users from the branch-filtered lists
+        const selectedStudents = chance.pickset(
+          studentsInBranch.map((s) => s.id),
+          Math.min(studentsInBranch.length, chance.integer({ min: 5, max: 10 }))
+        );
+
+        // Optionally include teachers from the same branch
+        const selectedTeachers =
+          teachersInBranch.length > 0
+            ? chance.pickset(
+                teachersInBranch.map((t) => t.id),
+                Math.min(teachersInBranch.length, chance.integer({ min: 1, max: 3 }))
+              )
+            : [];
+
+        // Get available subjects and levels
+        const subjects = getSubjectValues();
+        const levels = getLevelValues();
+
+        const allUsers = [...selectedStudents, ...selectedTeachers];
+
+        const taxi = await Taxi.create({
           name: `Taxi ${i + 1}`,
-          color: chance.color({ format: 'name' }),
+          code: taxiCode, // Explicitly set the code
+          color: chance.color({ format: 'hex' }),
           branch: randomBranch.id, // Use branch ID instead of random text
-          subject: chance.pickone(['Math', 'Science', 'English', 'History']),
-          level: chance.pickone(['Beginner', 'Intermediate', 'Advanced']),
+          subject: chance.pickone(subjects),
+          level: chance.pickone(levels),
           academic_year: academicYear.id,
           academic_period: academicPeriod.id,
-          users: chance.pickset(
-            students.map((s) => s.id),
-            chance.integer({ min: 5, max: 10 })
-          ),
+          users: allUsers, // Only users from the same branch
           scap_products: chance.pickset(['Product A', 'Product B', 'Product C'], chance.integer({ min: 1, max: 3 })),
+          archived: false,
+          notes: chance.bool() ? chance.sentence({ words: chance.integer({ min: 5, max: 15 }) }) : undefined,
         });
+
+        // Update users' taxis arrays to include this taxi
+        if (allUsers.length > 0) {
+          await User.updateMany({ _id: { $in: allUsers } }, { $addToSet: { taxis: taxi._id } });
+        }
       }
 
       // Mark taxis as complete for this tenant
@@ -106,7 +184,6 @@ const seedTenantTaxis = async (tenantId: string) => {
 
 const seedTaxis = async () => {
   await seedTenantTaxis('supercourse');
-  await seedTenantTaxis('piedpiper');
 };
 
 export { seedTenantTaxis };

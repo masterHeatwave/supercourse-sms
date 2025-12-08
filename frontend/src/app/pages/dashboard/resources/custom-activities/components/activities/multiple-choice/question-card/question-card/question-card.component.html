@@ -15,7 +15,7 @@
       [TTSText]="TTSText"
       [imageURL]="imageURL"
     ></multiple-choice-question>
-    <label>Answers</label>
+    <label>{{ 'customActivities.answers' | translate }}</label>
     <div *ngFor="let answer of answers; let i = index" cdkDrag>
       <multiple-choice-answer
         [answerNumber]="answer.answerNumber ?? 0"
@@ -32,7 +32,7 @@
       ></multiple-choice-answer>
     </div>
     <div>
-      <label (click)="addAnswer()">+Add an answer</label>
+      <label (click)="addAnswer()">+{{ 'customActivities.add_an_answer' | translate }}</label>
     </div>
   </div>
 

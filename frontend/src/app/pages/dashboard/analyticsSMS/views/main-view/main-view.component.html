@@ -1,0 +1,51 @@
+<div *ngIf="(currentRoleTitle | lowercase) === 'admin'">
+  <div class="header-div">
+    <p-button
+      label="{{ 'analytics.school_button' | translate }}"
+      [ngClass]="selectedButton === 'school' ? 'selected' : ''"
+      (onClick)="select('school')"
+    ></p-button>
+    <p-button
+      label="{{ 'analytics.platform_use_button' | translate }}"
+      [ngClass]="selectedButton === 'platform' ? 'selected' : ''"
+      (onClick)="select('platform')"
+    ></p-button>
+    <p-button
+      label="{{ 'analytics.learning_button' | translate }}"
+      [ngClass]="selectedButton === 'learning' ? 'selected' : ''"
+      (onClick)="select('learning')"
+    ></p-button>
+  </div>
+
+  <div class="main-div">
+    <app-school-analytics [authHeader]="authHeader" [user]="user" *ngIf="selectedButton === 'school'" />
+    <app-platform-use-analytics [user]="user" [onlineCounts]="onlineCounts" *ngIf="selectedButton === 'platform'" />
+    <app-learning-analytics *ngIf="selectedButton === 'learning'" />
+  </div>
+</div>
+
+<div *ngIf="(currentRoleTitle | lowercase) === 'teacher'">
+  <div class="header-div">
+    <p-button
+      label="{{ 'analytics.classes_button' | translate }}"
+      [ngClass]="selectedButton === 'classes' ? 'selected' : ''"
+      (onClick)="select('classes')"
+    ></p-button>
+    <p-button
+      label="{{ 'analytics.engagement_button' | translate }}"
+      [ngClass]="selectedButton === 'engagement' ? 'selected' : ''"
+      (onClick)="select('engagement')"
+    ></p-button>
+    <p-button
+      label="{{ 'analytics.my_activity_button' | translate }}"
+      [ngClass]="selectedButton === 'myActivity' ? 'selected' : ''"
+      (onClick)="select('myActivity')"
+    ></p-button>
+  </div>
+
+  <div class="main-div">
+    <app-classes [user]="user" [authHeader]="authHeader" *ngIf="selectedButton === 'classes'" />
+    <app-engagement *ngIf="selectedButton === 'engagement'" />
+    <app-my-activity *ngIf="selectedButton === 'myActivity'" />
+  </div>
+</div>

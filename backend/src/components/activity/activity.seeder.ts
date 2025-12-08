@@ -123,7 +123,6 @@ const seedTenantActivities = async (tenantId: string) => {
 
 const seedActivities = async () => {
   await seedTenantActivities('supercourse');
-  await seedTenantActivities('piedpiper');
 };
 
 export default seedActivities;

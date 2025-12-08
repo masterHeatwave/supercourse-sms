@@ -1,0 +1,42 @@
+@defer (when assignmentsForStaff.data) {
+  <p-table [value]="assignmentsForStaff.data" styleClass="p-datatable-striped shadow-1 bg-white" [paginator]="true" [rows]="25" [rowsPerPageOptions]="[25, 50]">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>{{ 'assignments.table.columns.title' | translate }}</th>
+        <th>{{ 'assignments.table.columns.class' | translate }}</th>
+        <th>{{ 'assignments.table.columns.start_date' | translate }}</th>
+        <th>{{ 'assignments.table.columns.end_date' | translate }}</th>
+        <th>{{ 'assignments.table.columns.created_by' | translate }}</th>
+        <th>{{ 'assignments.table.columns.created_at' | translate }}</th>
+        <th>{{ 'assignments.table.columns.updated_at' | translate }}</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-assignment>
+      <tr>
+        <td>{{ assignment.title }}</td>
+        <td>{{ assignment.classID.name }}</td>
+        <td>{{ assignment.startDate | date : 'EEEE dd/MM/yyyy - HH:mm' }}</td>
+        <td>{{ assignment.endDate | date : 'EEEE dd/MM/yyyy - HH:mm' }}</td>
+        @if (assignment.staffID.id === '000') {
+          <td>{{ 'assignments.table.rows.me' | translate }}</td>
+        } @else {
+          <td>{{ assignment.staffID.firstname }} {{ assignment.staffID.lastname }}</td>
+        }
+        <td>{{ assignment.createdAt | date : 'EEEE dd/MM/yyyy - HH:mm' }}</td>
+        @if (assignment.createdAt === assignment.updatedAt) {
+          <td>{{ 'assignments.table.rows.not_updated_yet' | translate }}</td>
+        } @else {
+          <td>{{ assignment.updatedAt | date : 'EEEE dd/MM/yyyy - HH:mm' }}</td>
+        }
+      </tr>
+    </ng-template>
+  </p-table>
+} @loading (minimum 1000ms) {
+  <div class="flex flex-row flex-grow-1 justify-content-center">
+    <img src="assets/images/ripples.svg" alt="Loading..." class="w-3 h-3" />
+  </div>
+} @error {
+  <div class="flex flex-row flex-grow-1 justify-content-center">
+    <img src="assets/images/error-400.svg" alt="Error" class="w-3 h-3" />
+  </div>
+}

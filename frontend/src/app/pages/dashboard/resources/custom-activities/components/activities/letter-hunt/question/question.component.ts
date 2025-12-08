@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ImageSelectorComponent } from '../../../image-selector/image-selector.component';
 import { LoadingComponent } from '../../../loading/loading.component';
-import { WarningDialogComponent } from '../../../dialogs/warning-dialog/warning-dialog.component';
+import { WarningDialogComponent } from '@components/dialogs/warning-dialog/warning-dialog.component';
 
 @Component({
   selector: 'letter-hunt-question',

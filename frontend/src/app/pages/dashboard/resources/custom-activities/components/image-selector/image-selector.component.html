@@ -2,7 +2,7 @@
 <p-dialog header="Image upload" [modal]="true" [(visible)]="isDialogVisible" [style]="{ width: '25rem' }" [closable]="false">
   <div class="upload-dialog-content">
     <div style="display: flex; align-items: center; margin-bottom: 15px">
-      <span>Upload from this computer</span>
+      <span>{{ 'customActivities.upload_from_this_computer' | translate }}</span>
       <input
         type="file"
         accept="image/*"
@@ -17,7 +17,7 @@
     </div>
 
     <div class="search-groups">
-      <span>Generate using AI</span>
+      <span>{{ 'customActivities.generate_using_ai' | translate }}</span>
       <div style="display: flex; align-items: center; text-align: center; margin-bottom: 15px">
         <input pInputText id="generate" [(ngModel)]="AIQueryText" class="flex-auto" autocomplete="off" />
         <p-button label="Generate" (click)="generateWithAI()"></p-button>
@@ -25,7 +25,7 @@
     </div>
 
     <div class="search-groups">
-      <span>Search on pexels</span>
+      <span>{{ 'customActivities.search_on_pexels' | translate }}</span>
       <div style="display: flex; align-items: center; margin-bottom: 15px">
         <input pInputText id="search" [(ngModel)]="PexelsQueryText" class="flex-auto" autocomplete="off" />
         <p-button label="Search" (click)="searthWithPexels()"></p-button>
@@ -34,11 +34,13 @@
 
     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%">
       <p-image *ngIf="imageURL && imageURL.trim() !== ''" [src]="imageURL" alt="User uploaded image" width="250" [preview]="true" />
-      <label *ngIf="imageURL && imageURL.trim() !== ''" class="delete-label" (click)="deleteImage()">[delete]</label>
+      <label *ngIf="imageURL && imageURL.trim() !== ''" class="delete-label" (click)="deleteImage()"
+        >[{{ 'customActivities.delete' | translate }}]</label
+      >
 
-      <label class="note-class">Note: You should save the images generated from AI and upload through your computer.</label>
+      <!--<label class="note-class">Note: You should save the images generated from AI and upload through your computer.</label>-->
       <div style="display: flex; margin-top: 30px">
-        <p-button label="Cancel" severity="secondary" (click)="isDialogVisible = false" />
+        <!--<p-button label="Cancel" severity="secondary" (click)="isDialogVisible = false" />-->
         <p-button label="OK" (click)="isDialogVisible = false" />
       </div>
     </div>

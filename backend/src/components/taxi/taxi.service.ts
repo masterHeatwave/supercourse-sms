@@ -6,23 +6,13 @@ import AcademicYear from '@components/academic/academic-years.model';
 import AcademicPeriod from '@components/academic/academic-periods.model';
 import AcademicSubperiod from '@components/academic/academic-subperiods.model';
 import User from '@components/users/user.model';
-import Session, { SessionSchema } from '@components/sessions/session.model';
+import Session from '@components/sessions/session.model';
+import SessionRecurring from '@components/sessions/session-recurring.model';
 import Classroom from '@components/classrooms/classroom.model';
 import Absence from '@components/absences/absence.model';
 import { Types } from 'mongoose';
-import { requestContextLocalStorage } from '@config/asyncLocalStorage';
 
 export class TaxiService {
-
-  private getUsersCollectionName(): string {
-    const tenantId = requestContextLocalStorage.getStore();
-    if (!tenantId) {
-      throw new ErrorResponse('Tenant context not available', StatusCodes.INTERNAL_SERVER_ERROR);
-    }
-    return `${tenantId}_users`;
-  }
-
-
   async getAllTaxis(
     filters: {
       academic_year?: string;
@@ -30,7 +20,10 @@ export class TaxiService {
       branch?: string;
       subject?: string;
       level?: string;
+      code?: string;
       search?: string;
+      archived?: string;
+      userId?: string;
     } = {}
   ) {
     // Build base query without population to avoid tenant filtering issues
@@ -56,14 +49,30 @@ export class TaxiService {
       query = query.where('level', filters.level);
     }
 
+    if (filters.code) {
+      query = query.where('code', filters.code);
+    }
+
+    // Handle archived filter: only filter if explicitly provided
+    if (filters.archived !== undefined) {
+      const isArchived = filters.archived === 'true';
+      query = query.where('archived', isArchived);
+    }
+    // If archived filter is not provided, return all taxis (archived and non-archived)
+
     if (filters.search) {
       query = query.where({
         $or: [
           { name: { $regex: filters.search, $options: 'i' } },
+          { code: { $regex: filters.search, $options: 'i' } },
           { branch: { $regex: filters.search, $options: 'i' } },
           { subject: { $regex: filters.search, $options: 'i' } },
         ],
       });
+    }
+
+    if (filters.userId) {
+      query = query.where('students', filters.userId);
     }
 
     const taxis = await query.exec();
@@ -116,9 +125,24 @@ export class TaxiService {
         // Manually fetch sessions (bypass tenant filtering)
         let sessions: any[] = [];
         try {
-          sessions = await Session.find({ taxi: taxiObj._id })
-            .select('start_date end_date classroom teachers students mode')
+          // Fetch all main sessions
+          const mainSessions = await Session.find({ taxi: taxiObj._id })
+            .select(
+              'start_date end_date classroom teachers students mode day duration start_time frequency instance_number parent_session'
+            )
             .lean();
+
+          // Fetch all recurring session instances
+          const recurringSessions = await SessionRecurring.find({
+            taxi: taxiObj._id,
+          })
+            .select(
+              'start_date end_date classroom teachers students mode day duration start_time frequency instance_number parent_session'
+            )
+            .lean();
+
+          // Combine both collections
+          sessions = [...mainSessions, ...recurringSessions];
 
           // Manually populate classroom for each session
           for (const session of sessions) {
@@ -162,7 +186,7 @@ export class TaxiService {
         const sessionStats = this.calculateSessionStats(sessions);
 
         // Separate teachers and students from users array
-        const teachers: any[] = users.filter((user: any) => user.user_type === 'staff');
+        const teachers: any[] = users.filter((user: any) => user.user_type === 'teacher');
         const students: any[] = users.filter((user: any) => user.user_type === 'student');
 
         const result = {
@@ -197,19 +221,46 @@ export class TaxiService {
       };
     }
 
-    // Calculate total duration in minutes
+    // Separate parent sessions (main/recurring) from instance sessions
+    const parentSessions = sessions.filter((s) => !s.parent_session);
+    const instanceSessions = sessions.filter((s) => s.parent_session);
+
+    // Calculate total duration in minutes and unique days based on ONLY parent sessions
+    // Parent sessions represent the actual weekly commitment (recurring patterns)
     let totalMinutes = 0;
     const uniqueDays = new Set<string>();
 
-    sessions.forEach((session) => {
-      if (session.start_date && session.end_date) {
+    parentSessions.forEach((session) => {
+      // For recurring sessions, use duration field if available
+      if (session.duration && typeof session.duration === 'number') {
+        // Duration is in hours, convert to minutes
+        const sessionMinutes = session.duration * 60;
+        totalMinutes += sessionMinutes;
+      } else if (session.start_date && session.end_date) {
+        // Fallback to date difference for non-recurring sessions
         const start = new Date(session.start_date);
         const end = new Date(session.end_date);
         const diffMs = end.getTime() - start.getTime();
         const diffMinutes = Math.floor(diffMs / (1000 * 60));
         totalMinutes += diffMinutes;
+      }
 
-        // Get day of week
+      // Get day of week from day field or start_date
+      if (session.day) {
+        // Use the day field directly for recurring sessions
+        const dayMap: { [key: string]: string } = {
+          monday: 'Mon',
+          tuesday: 'Tue',
+          wednesday: 'Wed',
+          thursday: 'Thu',
+          friday: 'Fri',
+          saturday: 'Sat',
+          sunday: 'Sun',
+        };
+        uniqueDays.add(dayMap[session.day] || session.day);
+      } else if (session.start_date) {
+        // Fallback to start_date for non-recurring sessions
+        const start = new Date(session.start_date);
         const dayName = start.toLocaleDateString('en-US', { weekday: 'short' });
         uniqueDays.add(dayName);
       }
@@ -222,8 +273,13 @@ export class TaxiService {
     const days = Array.from(uniqueDays);
     const daysFormatted = days.length > 0 ? days.join(', ') : 'No sessions';
 
+    // Calculate sessions per week based on ONLY parent sessions
+    // Parent sessions represent the recurring pattern (e.g., "every Monday at 4pm")
+    // We count unique parent sessions to get the number of sessions per week
+    const sessionsPerWeek = parentSessions.length;
+
     return {
-      sessionsPerWeek: sessions.length, // Simplified - could be more sophisticated
+      sessionsPerWeek: sessionsPerWeek,
       totalDurationMinutes: totalMinutes,
       totalDurationFormatted: totalDurationFormatted,
       days: days,
@@ -285,9 +341,22 @@ export class TaxiService {
     // Manually fetch sessions (bypass tenant filtering)
     let sessions: any[] = [];
     try {
-      sessions = await Session.find({ taxi: taxiObj._id })
-        .select('start_date end_date classroom teachers students mode')
+      // Fetch all main sessions
+      const mainSessions = await Session.find({ taxi: taxiObj._id })
+        .select(
+          'start_date end_date classroom teachers students mode day duration start_time frequency instance_number parent_session'
+        )
         .lean();
+
+      // Fetch all recurring session instances
+      const recurringSessions = await SessionRecurring.find({ taxi: taxiObj._id })
+        .select(
+          'start_date end_date classroom teachers students mode day duration start_time frequency instance_number parent_session'
+        )
+        .lean();
+
+      // Combine both collections
+      sessions = [...mainSessions, ...recurringSessions];
 
       // Manually populate classroom for each session
       for (const session of sessions) {
@@ -331,7 +400,7 @@ export class TaxiService {
     const sessionStats = this.calculateSessionStats(sessions);
 
     // Separate teachers and students from users array
-    const teachers: any[] = users.filter((user: any) => user.user_type === 'staff');
+    const teachers: any[] = users.filter((user: any) => user.user_type === 'teacher');
     const students: any[] = users.filter((user: any) => user.user_type === 'student');
 
     const result = {
@@ -352,144 +421,231 @@ export class TaxiService {
   }
 
   async createTaxi(taxiData: ITaxiCreateDTO) {
-    // Validation
     const academicYear = await AcademicYear.findById(taxiData.academic_year);
     if (!academicYear) {
+      console.error('Academic year not found:', taxiData.academic_year);
       throw new ErrorResponse('Academic year not found', StatusCodes.NOT_FOUND);
     }
-  
+
     const academicPeriod = await AcademicPeriod.findById(taxiData.academic_period);
     if (!academicPeriod) {
+      console.error('Academic period not found:', taxiData.academic_period);
       throw new ErrorResponse('Academic period not found', StatusCodes.NOT_FOUND);
     }
-  
+
     if (taxiData.users && taxiData.users.length > 0) {
       const foundUsers = await User.find({ _id: { $in: taxiData.users } });
       if (foundUsers.length !== taxiData.users.length) {
+        console.error('User count mismatch. Expected:', taxiData.users.length, 'Found:', foundUsers.length);
         throw new ErrorResponse('One or more users not found', StatusCodes.NOT_FOUND);
       }
     }
-  
-    // Create taxi
+
     const taxi: ITaxi = await Taxi.create(taxiData);
-    console.log('✅ Taxi created:', taxi._id, taxi.name);
-  
-    // Update users
+
+    // Update users' taxis arrays if users were provided
     if (taxiData.users && taxiData.users.length > 0) {
-      await User.updateMany(
-        { _id: { $in: taxiData.users } },
-        { $addToSet: { taxis: taxi._id } }
-      );
-      console.log('✅ Updated users with taxi reference');
+      await User.updateMany({ _id: { $in: taxiData.users } }, { $addToSet: { taxis: taxi._id } });
     }
-  
+
     // ✅ Create group chat for this class
+
     try {
+
       const classChat = await this.createClassGroupChat(taxi, taxiData.users || []);
+
       if (classChat) {
+
         console.log('✅ Group chat created successfully for class:', {
           chatId: classChat._id,
           className: taxi.name,
           participantCount: (taxiData.users || []).length
         });
+
       }
+
     } catch (error) {
+
       // IMPORTANT: Log but don't throw - taxi creation succeeded
       console.error('⚠️ Warning: Group chat creation failed (non-critical):', error);
       // Could send notification to admin about failed chat creation
+
     }
-  
+
     const populatedTaxi = await this.getTaxiById(taxi.id);
     return populatedTaxi;
   }
 
   private async createClassGroupChat(taxi: any, userIds: string[]): Promise<any> {
+
     try {
+
       // Remove duplicates
+
       const participants = Array.from(new Set(userIds));
-  
+
       // Validation: Need at least 2 participants
+
       if (participants.length < 2) {
+
         console.warn(
+
           `⚠️ Class "${taxi.name}" has ${participants.length} participants. ` +
+
           `Skipping chat creation (minimum 2 required).`
+
         );
+
         return null;
+
       }
-  
+
+
+
       // Convert participant strings to ObjectId
+
       const participantObjectIds = participants.map(
+
         id => new Types.ObjectId(id)
+
       );
-  
+
+
       // Import Chat model
+
       const Chat = require('../messaging/models/chat.model').default;
-  
+
+
       // Prepare chat data
+
       const chatData: any = {
+
         participants: participantObjectIds,
+
         type: 'group', // This is always a group chat
+
         name: this.formatChatName(taxi), // e.g., "Biology 101 - Advanced"
+
         taxiId: taxi._id, // Link to this taxi
+
         sessions: [], // Will be populated as sessions are created
+
         classMetadata: {
+
           subject: taxi.subject || '',
+
           level: taxi.level || '',
+
           branch: taxi.branch || '',
+
         },
+
         lastMessageContent: this.getWelcomeMessage(taxi),
+
         lastMessagedAt: new Date(),
+
         unreadCount: new Map(),
-        
+
+
+
         // Global settings (not per-user)
+
         isStarred: false,
+
         isPinned: true, // Automatically pin class chats
+
         isMuted: false,
+
         isArchived: false,
+
       };
-  
+
+
+
       // Initialize unread count for all participants
+
       participantObjectIds.forEach(participantId => {
+
         chatData.unreadCount.set(participantId.toString(), 0);
+
       });
-  
+
+
+
       // Create the chat
+
       const classChat = await Chat.create(chatData);
-  
+
+
+
       console.log('✅ Class group chat created:', {
+
         chatId: classChat._id,
+
         name: classChat.name,
+
         participants: classChat.participants.length,
+
         taxiId: classChat.taxiId,
+
       });
-  
+
+
+
       return classChat;
+
     } catch (error: any) {
+
       console.error('❌ Error in createClassGroupChat:', {
+
         error: error.message,
+
         taxiName: taxi.name,
+
         stack: error.stack,
+
       });
+
       throw error;
+
     }
+
   }
+
+
 
   private formatChatName(taxi: any): string {
+
     let name = taxi.name || 'Class';
-    
+
+
+
     if (taxi.level) {
+
       name += ` - ${taxi.level}`;
+
     }
-    
+
+
+
     if (taxi.subject) {
+
       name += ` (${taxi.subject})`;
+
     }
-    
+
+
+
     return name;
+
   }
 
+
+
   private getWelcomeMessage(taxi: any): string {
+
     return `Welcome to ${taxi.name}! 📚 This is the class group chat. `;
+
   }
 
   async updateTaxi(id: string, taxiData: ITaxiUpdateDTO) {
@@ -556,13 +712,17 @@ export class TaxiService {
       throw new ErrorResponse('Taxi not found', StatusCodes.NOT_FOUND);
     }
 
-    // Remove taxi from all users' taxis arrays
-    if (taxi.users && taxi.users.length > 0) {
-      await User.updateMany({ _id: { $in: taxi.users } }, { $pull: { taxis: id } });
-    }
+    // Soft delete: Set archived to true instead of deleting the record
+    taxi.archived = true;
+    await taxi.save();
 
-    await taxi.deleteOne();
-    return null;
+    // Note: We keep users associated with the taxi for historical records
+    // If you need to remove the taxi from users' arrays, uncomment below:
+    // if (taxi.users && taxi.users.length > 0) {
+    //   await User.updateMany({ _id: { $in: taxi.users } }, { $pull: { taxis: id } });
+    // }
+
+    return await this.getTaxiById(id);
   }
 
   async addUser(taxiId: string, userId: string) {
@@ -629,7 +789,7 @@ export class TaxiService {
       throw new ErrorResponse('User not found', StatusCodes.NOT_FOUND);
     }
 
-    // Find all taxis where the user is a member
+    // Find all taxis where the user is a member (including archived taxis)
     const taxis = await Taxi.find({ users: userId }).sort({ name: 1 });
 
     // Enrich each taxi with the same data structure as getAllTaxis
@@ -682,9 +842,24 @@ export class TaxiService {
         // Manually fetch sessions (bypass tenant filtering)
         let sessions: any[] = [];
         try {
-          sessions = await Session.find({ taxi: taxiObj._id })
-            .select('start_date end_date classroom teachers students mode')
+          // Fetch all main sessions
+          const mainSessions = await Session.find({ taxi: taxiObj._id })
+            .select(
+              'start_date end_date classroom teachers students mode day duration start_time frequency instance_number parent_session'
+            )
             .lean();
+
+          // Fetch all recurring session instances
+          const recurringSessions = await SessionRecurring.find({
+            taxi: taxiObj._id,
+          })
+            .select(
+              'start_date end_date classroom teachers students mode day duration start_time frequency instance_number parent_session'
+            )
+            .lean();
+
+          // Combine both collections
+          sessions = [...mainSessions, ...recurringSessions];
 
           // Manually populate classroom for each session
           for (const session of sessions) {
@@ -728,7 +903,7 @@ export class TaxiService {
         const sessionStats = this.calculateSessionStats(sessions);
 
         // Separate teachers and students from users array
-        const teachers: any[] = users.filter((user: any) => user.user_type === 'staff');
+        const teachers: any[] = users.filter((user: any) => user.user_type === 'teacher');
         const students: any[] = users.filter((user: any) => user.user_type === 'student');
 
         const result = {
@@ -752,6 +927,65 @@ export class TaxiService {
     return enrichedTaxis;
   }
 
+  async getTaxiSessions(taxiId: string) {
+    // Validate taxi exists
+    const taxi = await Taxi.findById(taxiId).lean();
+    if (!taxi) {
+      throw new ErrorResponse('Taxi not found', StatusCodes.NOT_FOUND);
+    }
+
+    // Fetch only parent sessions (sessions without a parent_session field or where it's null)
+    const sessions = await Session.find({
+      taxi: taxiId,
+      $or: [{ parent_session: { $exists: false } }, { parent_session: null }],
+    })
+      .select(
+        'start_date end_date classroom teachers students mode day duration start_time frequency instance_number parent_session'
+      )
+      .lean();
+
+    // Manually populate classroom for each session
+    for (const session of sessions) {
+      if (session.classroom) {
+        try {
+          const classroom = await Classroom.findById(session.classroom).select('name location').lean();
+          session.classroom = classroom;
+        } catch (error) {
+          console.error('Error fetching classroom:', error);
+        }
+      }
+
+      // Manually populate teachers and students for each session
+      if (session.teachers && session.teachers.length > 0) {
+        try {
+          const teachers = await User.find({ _id: { $in: session.teachers } })
+            .select('firstname lastname')
+            .lean();
+          session.teachers = teachers;
+        } catch (error) {
+          console.error('Error fetching session teachers:', error);
+        }
+      }
+
+      if (session.students && session.students.length > 0) {
+        try {
+          const students = await User.find({ _id: { $in: session.students } })
+            .select('firstname lastname')
+            .lean();
+          session.students = students;
+        } catch (error) {
+          console.error('Error fetching session students:', error);
+        }
+      }
+    }
+
+    return {
+      taxi: { id: taxiId, name: (taxi as any).name },
+      sessions,
+      count: sessions.length,
+    };
+  }
+
   async getTaxiAttendance(taxiId: string, maxDates: number = 10) {
     // Validate taxi exists
     const taxi = await Taxi.findById(taxiId).lean();
@@ -766,7 +1000,12 @@ export class TaxiService {
     const studentUsers = students.filter((u: any) => u.user_type === 'student');
 
     // Fetch sessions for this taxi and determine recent session dates
-    const sessions = await Session.find({ taxi: taxiId }).select('start_date').sort({ start_date: -1 }).lean();
+    const mainSessions = await Session.find({ taxi: taxiId }).select('start_date').sort({ start_date: -1 }).lean();
+    const recurringSessions = await SessionRecurring.find({ taxi: taxiId })
+      .select('start_date')
+      .sort({ start_date: -1 })
+      .lean();
+    const sessions = [...mainSessions, ...recurringSessions];
 
     const toISODate = (d: Date | string) => {
       const date = new Date(d);
@@ -822,7 +1061,7 @@ export class TaxiService {
       const taxis = await Taxi.aggregate([
         {
           $lookup: {
-            from: this.getUsersCollectionName(),
+            from: 'supercourse_users',
             localField: 'users',
             foreignField: '_id',
             as: 'usersDetails',
@@ -918,10 +1157,7 @@ export class TaxiService {
       return taxis;
     } catch (error: any) {
       console.error('❌ Error fetching taxis with users:', error);
-      throw new ErrorResponse(
-        `Failed to fetch classes: ${error.message}`,
-        StatusCodes.INTERNAL_SERVER_ERROR
-      );
+      throw new ErrorResponse(`Failed to fetch classes: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -934,7 +1170,7 @@ export class TaxiService {
         { $match: { _id: new Types.ObjectId(taxiId) } },
         {
           $lookup: {
-            from: this.getUsersCollectionName(),
+            from: 'supercourse_users',
             localField: 'users',
             foreignField: '_id',
             as: 'usersDetails',
@@ -1035,10 +1271,10 @@ export class TaxiService {
 
   /**
    * ✅ GET TAXIS FOR MESSAGING - OPTIMIZED FOR TREE NODE STRUCTURE
-   * 
+   *
    * This endpoint is specifically designed for the new-chat-dialog component.
    * Returns classes with students and teachers separated for easy TreeNode building.
-   * 
+   *
    * Frontend Usage: new-chat-dialog.component.ts -> buildRecipientTree()
    * Route: GET /v1/taxis/messaging
    */
@@ -1049,7 +1285,7 @@ export class TaxiService {
       const taxis = await Taxi.aggregate([
         {
           $lookup: {
-            from: this.getUsersCollectionName(),
+            from: 'supercourse_users',
             localField: 'users',
             foreignField: '_id',
             as: 'usersDetails',
@@ -1082,11 +1318,8 @@ export class TaxiService {
                 },
                 as: 'u',
                 // ✅ Case-insensitive comparison
-                cond: { 
-                  $eq: [
-                    { $toLower: '$$u.userType' }, 
-                    'student'
-                  ] 
+                cond: {
+                  $eq: [{ $toLower: '$$u.userType' }, 'student'],
                 },
               },
             },
@@ -1111,11 +1344,8 @@ export class TaxiService {
                 },
                 as: 'u',
                 // ✅ Case-insensitive comparison
-                cond: { 
-                  $eq: [
-                    { $toLower: '$$u.userType' }, 
-                    'teacher'
-                  ] 
+                cond: {
+                  $eq: [{ $toLower: '$$u.userType' }, 'teacher'],
                 },
               },
             },
@@ -1127,7 +1357,7 @@ export class TaxiService {
       ]);
 
       console.log(`✅ Found ${taxis.length} taxis for messaging`);
-      
+
       // Log first taxi for debugging
       if (taxis.length > 0) {
         console.log(`📊 Sample taxi "${taxis[0].name}":`, {
@@ -1144,5 +1374,34 @@ export class TaxiService {
         StatusCodes.INTERNAL_SERVER_ERROR
       );
     }
+  }
+
+  async getTaxisByParentEmail(parentEmail: string, queryParams: any = {}) {
+    // Find students with this parent's email in contacts
+    const students = await User.find({
+      user_type: 'student',
+      'contacts.email': parentEmail,
+      is_active: true,
+    }).select('_id');
+
+    const studentIds = students.map((s) => s._id);
+
+    if (studentIds.length === 0) {
+      return [];
+    }
+
+    // Find taxis that these students are enrolled in
+    const taxis = await Taxi.find({
+      students: { $in: studentIds },
+      ...(queryParams.branch ? { branch: queryParams.branch } : {}),
+      ...(queryParams.archived !== undefined ? { archived: queryParams.archived === 'true' } : { archived: false }),
+    }).populate([
+      { path: 'branch', model: 'Customer', select: 'name slug' },
+      { path: 'academic_year', model: 'AcademicYear', select: 'name year' },
+      { path: 'academic_period', model: 'AcademicPeriod', select: 'name' },
+      { path: 'students', model: 'User', select: 'firstname lastname email' },
+    ]);
+
+    return taxis;
   }
 }

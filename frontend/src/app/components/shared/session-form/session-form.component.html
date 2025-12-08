@@ -91,7 +91,7 @@
           <div class="grid mt-2">
             <!-- Mode -->
             <div class="col-12 md:col-3">
-              <span class="font-medium">Mode</span>
+              <span class="font-medium">Mode <span class="text-red-500">*</span></span>
               <app-primary-dropdown
                 formControlName="mode"
                 [options]="sessionService.MODES"
@@ -100,9 +100,9 @@
               </app-primary-dropdown>
             </div>
 
-            <!-- Classroom -->
-            <div class="col-12 md:col-4">
-              <span class="font-medium">Classroom *</span>
+            <!-- Classroom (shown only when mode is hybrid or in_person, always optional) -->
+            <div class="col-12 md:col-4" *ngIf="isClassroomVisible(i)">
+              <span class="font-medium">Classroom</span>
               <app-primary-dropdown
                 formControlName="classroom"
                 [options]="classrooms"

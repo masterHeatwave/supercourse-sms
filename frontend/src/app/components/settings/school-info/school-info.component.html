@@ -1,0 +1,118 @@
+<div class="school-info-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state p-4 text-center">
+    <i class="pi pi-spin pi-spinner text-2xl text-primary mb-3"></i>
+    <p class="text-600">Loading school information...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state p-4 text-center">
+    <i class="pi pi-exclamation-triangle text-2xl text-orange-500 mb-3"></i>
+    <p class="text-600 mb-3">Unable to load school information</p>
+    <p-button 
+      label="Retry" 
+      icon="pi pi-refresh" 
+      styleClass="p-button-outlined"
+      (click)="onRetry()">
+    </p-button>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!loading && !error">
+    <!-- Hidden file input for logo upload -->
+    <input
+      #logoInput
+      type="file"
+      accept="image/*"
+      (change)="onLogoSelected($event)"
+      style="display: none;"
+    />
+
+    <!-- Header with School Name and Logo -->
+    <div class="flex align-items-center gap-3 mb-4">
+      <!-- Clickable Logo -->
+      <div class="school-logo-wrapper relative" (click)="triggerLogoInput()">
+        <div class="school-icon cursor-pointer">
+          <img *ngIf="schoolInfo.avatar; else iconFallback"
+               [src]="schoolInfo.avatar"
+               alt="School Logo"
+               class="school-avatar w-3rem h-3rem object-cover border-circle">
+          <ng-template #iconFallback>
+            <div class="avatar-fallback w-3rem h-3rem border-circle flex align-items-center justify-content-center bg-primary">
+              <i class="pi pi-building text-white text-2xl"></i>
+            </div>
+          </ng-template>
+        </div>
+
+        <!-- Upload overlay -->
+        <div class="logo-upload-overlay absolute top-0 left-0 w-full h-full border-circle flex align-items-center justify-content-center">
+          <i class="pi pi-camera text-white text-xl" *ngIf="!uploadingLogo"></i>
+          <i class="pi pi-spin pi-spinner text-white text-xl" *ngIf="uploadingLogo"></i>
+        </div>
+      </div>
+
+      <!-- School Name and Website -->
+      <div>
+        <h2 class="text-2xl font-semibold text-900 m-0">{{ schoolInfo.name }}</h2>
+        <p *ngIf="schoolInfo.website" class="text-sm text-600 m-0">
+          <i class="pi pi-globe mr-1"></i>
+          <a [href]="schoolInfo.website" target="_blank" class="text-600 no-underline hover:text-primary">
+            {{ schoolInfo.website }}
+          </a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="hero-section relative mb-4">
+      <div class="hero-image">
+        <img *ngIf="schoolInfo.heroImage && schoolInfo.heroImage !== 'assets/images/school-hero.jpg'; else heroFallback" 
+             [src]="schoolInfo.heroImage" 
+             alt="School Banner" 
+             class="hero-img w-full h-20rem object-cover">
+        <ng-template #heroFallback>
+          <div class="hero-bg w-full h-20rem"></div>
+        </ng-template>
+      </div>
+      <div class="hero-overlay absolute top-0 left-0 w-full h-full flex align-items-center justify-content-center" 
+           style="background: rgba(0,0,0,0.4);">
+        <h1 class="hero-title text-4xl font-bold text-white text-center">School Info</h1>
+      </div>
+    </div>
+
+    <!-- Content Section -->
+    <div class="content-section">
+      <h3 class="text-xl font-semibold text-900 mb-3">About {{ schoolInfo.name }}</h3>
+      <p class="line-height-3 text-600 mb-4">{{ schoolInfo.description }}</p>
+      
+      <!-- Contact Information -->
+      <div *ngIf="schoolInfo.email || schoolInfo.phone || schoolInfo.address" class="contact-info mt-4">
+        <h4 class="text-lg font-semibold text-900 mb-3">Contact Information</h4>
+        <div class="grid">
+          <div *ngIf="schoolInfo.email" class="col-12 md:col-6">
+            <div class="flex align-items-center gap-2 mb-2">
+              <i class="pi pi-envelope text-primary"></i>
+              <a [href]="'mailto:' + schoolInfo.email" class="text-600 no-underline hover:text-primary">
+                {{ schoolInfo.email }}
+              </a>
+            </div>
+          </div>
+          <div *ngIf="schoolInfo.phone" class="col-12 md:col-6">
+            <div class="flex align-items-center gap-2 mb-2">
+              <i class="pi pi-phone text-primary"></i>
+              <a [href]="'tel:' + schoolInfo.phone" class="text-600 no-underline hover:text-primary">
+                {{ schoolInfo.phone }}
+              </a>
+            </div>
+          </div>
+          <div *ngIf="schoolInfo.address" class="col-12">
+            <div class="flex align-items-start gap-2">
+              <i class="pi pi-map-marker text-primary mt-1"></i>
+              <span class="text-600">{{ schoolInfo.address }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

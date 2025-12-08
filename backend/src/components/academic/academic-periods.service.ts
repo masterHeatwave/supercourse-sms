@@ -6,7 +6,7 @@ import AcademicYearSchema from './academic-years.model';
 
 export class AcademicPeriodService {
   async getAllAcademicPeriods(filters: { academic_year?: string; current?: string } = {}) {
-    let query = AcademicPeriodSchema.find().populate('academic_year').sort({ start_date: 1 });
+    let query = AcademicPeriodSchema.find().sort({ start_date: 1 });
 
     if (filters.academic_year) {
       query = query.where('academic_year', filters.academic_year);
@@ -21,28 +21,71 @@ export class AcademicPeriodService {
         .gte(today as any);
     }
 
-    return await query.exec();
+    let results = await query.exec();
+    // Manually populate academic_year to work around tenant-aware plugin issues
+    // Populate academic years
+    results = await Promise.all(
+      results.map(async (period: any) => {
+        if (period.academic_year) {
+          try {
+            const year = await AcademicYearSchema.findById(period.academic_year);
+            period.academic_year = year;
+          } catch (error) {
+            console.warn('[AcademicPeriodService] Failed to populate academic year:', error);
+          }
+        }
+        return period;
+      })
+    );
+
+    return results;
   }
 
   async getAcademicPeriodById(id: string) {
-    const academicPeriod = await AcademicPeriodSchema.findById(id).populate('academic_year');
+    let academicPeriod = await AcademicPeriodSchema.findById(id);
 
     if (!academicPeriod) {
       throw new ErrorResponse('Academic period not found', StatusCodes.NOT_FOUND);
     }
+
+    // Manually populate academic_year to work around tenant-aware plugin issues
+    if (academicPeriod.academic_year) {
+      try {
+        const year = await AcademicYearSchema.findById(academicPeriod.academic_year);
+        academicPeriod.academic_year = year;
+      } catch (error) {
+        console.warn('[AcademicPeriodService] Failed to populate academic year:', error);
+      }
+    }
+
+    console.log('[AcademicPeriodService] getAcademicPeriodById:', {
+      id: academicPeriod._id,
+      name: academicPeriod.name,
+      academic_year: academicPeriod.academic_year ? 'POPULATED' : null,
+    });
 
     return academicPeriod;
   }
 
   async getCurrentAcademicPeriod() {
     const today = new Date();
-    const currentPeriod = await AcademicPeriodSchema.findOne({
+    let currentPeriod = await AcademicPeriodSchema.findOne({
       start_date: { $lte: today },
       end_date: { $gte: today },
-    }).populate('academic_year');
+    });
 
     if (!currentPeriod) {
       throw new ErrorResponse('No current academic period found', StatusCodes.NOT_FOUND);
+    }
+
+    // Manually populate academic_year to work around tenant-aware plugin issues
+    if (currentPeriod.academic_year) {
+      try {
+        const year = await AcademicYearSchema.findById(currentPeriod.academic_year);
+        currentPeriod.academic_year = year;
+      } catch (error) {
+        console.warn('[AcademicPeriodService] Failed to populate academic year:', error);
+      }
     }
 
     return currentPeriod;
@@ -66,7 +109,32 @@ export class AcademicPeriodService {
       );
     }
 
-    const academicPeriod = await AcademicPeriodSchema.create(academicPeriodData);
+    let academicPeriod = await AcademicPeriodSchema.create(academicPeriodData);
+
+    // Verify the academic_year reference was stored
+    console.log('[AcademicPeriodService] Created period:', {
+      id: academicPeriod._id,
+      name: academicPeriod.name,
+      academic_year_ref: academicPeriod.academic_year,
+      academic_year_type: typeof academicPeriod.academic_year,
+    });
+
+    // Manually populate academic_year to work around tenant-aware plugin issues
+    if (academicPeriod.academic_year) {
+      try {
+        const year = await AcademicYearSchema.findById(academicPeriod.academic_year);
+        academicPeriod.academic_year = year;
+      } catch (error) {
+        console.warn('[AcademicPeriodService] Failed to populate academic year:', error);
+      }
+    }
+
+    console.log('[AcademicPeriodService] Created and populated period:', {
+      id: academicPeriod._id,
+      name: academicPeriod.name,
+      academic_year: academicPeriod.academic_year ? 'POPULATED' : null,
+    });
+
     return academicPeriod;
   }
 
