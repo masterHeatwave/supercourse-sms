@@ -12,16 +12,22 @@ import {
 } from '../messaging.interface';
 import { Server as SocketIOServer } from 'socket.io';
 import { requestContextLocalStorage } from '@config/asyncLocalStorage';
+import { ChatNotificationService } from './chat-notification.service';
 
 export class ChatService {
   private io: SocketIOServer | null = null;
+  private notificationService: ChatNotificationService;
 
+  constructor() {
+    this.notificationService = new ChatNotificationService();
+  }
 
   /**
    * Set Socket.IO instance for real-time updates
    */
   setSocketIO(ioInstance: SocketIOServer): void {
     this.io = ioInstance;
+    this.notificationService.setSocketIO(ioInstance);
   }
 
   private getUsersCollectionName(): string {
@@ -84,7 +90,6 @@ export class ChatService {
             isPinned: 1,
             isMuted: 1,
             isArchived: 1,
-            userSettings: 1,
             participantsDetails: {
               $map: {
                 input: '$participantsDetails',
@@ -127,11 +132,15 @@ export class ChatService {
   }
 
   /**
-   * Get all chats for a user with populated participant details
+   * ✅ UPDATED: Get all chats for a user with mute status populated
    */
   async getUserChats(userId: string): Promise<any[]> {
     try {
-  
+      // ✅ STEP 1: Get muted chat IDs for this user
+      const mutedChatIds = await this.notificationService.getMutedChatsForUser(userId);
+      const mutedChatObjectIds = mutedChatIds.map(id => new Types.ObjectId(id));
+
+      // ✅ STEP 2: Aggregate chats with mute status
       const chats = await Chat.aggregate([
         { $match: { participants: new Types.ObjectId(userId) } },
         
@@ -169,8 +178,11 @@ export class ChatService {
             updatedAt: 1,
             isStarred: 1,
             isPinned: 1,
-            isMuted: 1,
             isArchived: 1,
+            // ✅ Add isMuted based on whether chatId is in mutedChatIds
+            isMuted: {
+              $in: ['$_id', mutedChatObjectIds]
+            },
             participantsDetails: {
               $map: {
                 input: '$participantsDetails',
@@ -201,9 +213,8 @@ export class ChatService {
         },
         { $sort: { lastMessagedAt: -1 } },
       ]);
-  
-      return chats;
 
+      return chats;
     } catch (error: any) {
       console.error('❌ Error in getUserChats:', error);
       throw new ErrorResponse(`Failed to get user chats: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR);
@@ -220,7 +231,6 @@ export class ChatService {
     forceNew: boolean = false
   ): Promise<any> {
     try {
-
       const participantObjectIds = participants.map((id) => new Types.ObjectId(id));
 
       if (!forceNew) {
@@ -372,10 +382,9 @@ export class ChatService {
    */
   async resetUnreadCount(chatId: string, userId: string): Promise<IChat> {
     try {
-
       const chat = await Chat.findById(chatId);
-        if (!chat) {
-          throw new ErrorResponse('Chat not found', StatusCodes.NOT_FOUND);
+      if (!chat) {
+        throw new ErrorResponse('Chat not found', StatusCodes.NOT_FOUND);
       }
 
       const userIdStr = userId.toString();
@@ -397,146 +406,157 @@ export class ChatService {
     }
   }
 
-    /**
-   * Update chat properties (including user-specific settings)
-   * ✅ FIXED: Properly handles Mongoose subdocuments
+  /**
+   * ✅ UPDATED: Update chat properties with mute handling
    */
-    async updateChat(chatId: string, updates: any, userId?: string): Promise<any> {
-      try {
-    
-        const chat = await Chat.findById(chatId);
-        if (!chat) {
-          throw new ErrorResponse('Chat not found', StatusCodes.NOT_FOUND);
+  async updateChat(chatId: string, updates: any, userId?: string): Promise<any> {
+    try {
+      const chat = await Chat.findById(chatId);
+      if (!chat) {
+        throw new ErrorResponse('Chat not found', StatusCodes.NOT_FOUND);
+      }
+
+      // ✅ HANDLE MUTE TOGGLE
+      if (updates.hasOwnProperty('isMuted') && userId) {
+        if (updates.isMuted) {
+          await this.notificationService.muteChat(userId, chatId);
+        } else {
+          await this.notificationService.unmuteChat(userId, chatId);
         }
-    
-        // Update the fields
-        Object.keys(updates).forEach((key) => {
-          if (key !== 'userId') {
-            (chat as any)[key] = updates[key];
-          }
-        });
-    
-        chat.updatedAt = new Date();
-        
-        await chat.save();
-  
-    
-        // ✅ FIX: Use aggregate to get full chat with participantsDetails
-        const populatedChats = await Chat.aggregate([
-          { $match: { _id: chat._id } },
-          {
-            $lookup: {
-              from: this.getUsersCollectionName(),
-              localField: 'participants',
-              foreignField: '_id',
-              as: 'participantsDetails',
-            },
+        console.log(`🔇 Mute status updated for user ${userId} in chat ${chatId}: ${updates.isMuted}`);
+      }
+
+      // ✅ Update other fields (excluding isMuted since it's stored in notifications)
+      Object.keys(updates).forEach((key) => {
+        if (key !== 'userId' && key !== 'isMuted') {
+          (chat as any)[key] = updates[key];
+        }
+      });
+
+      chat.updatedAt = new Date();
+      await chat.save();
+
+      // ✅ Get muted status for the requesting user (if userId provided)
+      let isMuted = false;
+      if (userId) {
+        isMuted = await this.notificationService.isChatMuted(userId, chatId);
+      }
+
+      // ✅ Use aggregate to get full chat with participantsDetails
+      const populatedChats = await Chat.aggregate([
+        { $match: { _id: chat._id } },
+        {
+          $lookup: {
+            from: this.getUsersCollectionName(),
+            localField: 'participants',
+            foreignField: '_id',
+            as: 'participantsDetails',
           },
-          {
-            $project: {
-              _id: 1,
-              participants: 1,
-              lastMessageId: 1,
-              lastMessageContent: 1,
-              lastMessagedAt: 1,
-              unreadCount: 1,
-              type: 1,
-              name: 1,
-              createdAt: 1,
-              updatedAt: 1,
-              isStarred: 1,
-              isPinned: 1,
-              isMuted: 1,
-              isArchived: 1,
-              participantsDetails: {
-                $map: {
-                  input: '$participantsDetails',
-                  as: 'user',
-                  in: {
-                    _id: '$$user._id',
-                    userId: '$$user._id',
-                    username: '$$user.username',
-                    email: '$$user.email',
-                    firstname: '$$user.firstname',
-                    lastname: '$$user.lastname',
-                    userType: '$$user.user_type',
-                    isOnline: '$$user.isOnline',
-                    lastSeen: '$$user.lastSeen',
-                    avatar: '$$user.avatar',
-                    displayName: {
-                      $let: {
-                        vars: {
-                          usernameParts: { $split: ['$$user.username', '@'] },
-                        },
-                        in: { $arrayElemAt: ['$$usernameParts', 0] },
+        },
+        {
+          $project: {
+            _id: 1,
+            participants: 1,
+            lastMessageId: 1,
+            lastMessageContent: 1,
+            lastMessagedAt: 1,
+            unreadCount: 1,
+            type: 1,
+            name: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            isStarred: 1,
+            isPinned: 1,
+            isArchived: 1,
+            participantsDetails: {
+              $map: {
+                input: '$participantsDetails',
+                as: 'user',
+                in: {
+                  _id: '$$user._id',
+                  userId: '$$user._id',
+                  username: '$$user.username',
+                  email: '$$user.email',
+                  firstname: '$$user.firstname',
+                  lastname: '$$user.lastname',
+                  userType: '$$user.user_type',
+                  isOnline: '$$user.isOnline',
+                  lastSeen: '$$user.lastSeen',
+                  avatar: '$$user.avatar',
+                  displayName: {
+                    $let: {
+                      vars: {
+                        usernameParts: { $split: ['$$user.username', '@'] },
                       },
+                      in: { $arrayElemAt: ['$$usernameParts', 0] },
                     },
                   },
                 },
               },
             },
           },
-        ]);
-    
-        if (!populatedChats || populatedChats.length === 0) {
-          throw new ErrorResponse('Failed to retrieve updated chat', StatusCodes.INTERNAL_SERVER_ERROR);
-        }
-    
-        const chatData = populatedChats[0];
-    
-        // Convert Map to plain object for unreadCount
-        const unreadCountObj: Record<string, number> = {};
-        if (chatData.unreadCount && typeof chatData.unreadCount === 'object') {
-          Object.assign(unreadCountObj, chatData.unreadCount);
-        }
-    
-        // Build response
-        const response = {
-          _id: chatData._id,
-          participants: chatData.participants,
-          participantsDetails: chatData.participantsDetails || [],
-          lastMessageId: chatData.lastMessageId,
-          lastMessageContent: chatData.lastMessageContent || '',
-          lastMessagedAt: chatData.lastMessagedAt,
-          unreadCount: unreadCountObj,
-          type: chatData.type,
-          name: chatData.name,
-          createdAt: chatData.createdAt,
-          updatedAt: chatData.updatedAt,
-          isStarred: chatData.isStarred,
-          isPinned: chatData.isPinned,
-          isMuted: chatData.isMuted,
-          isArchived: chatData.isArchived,
-        };
-    
-        // ✅ Emit the FULL updated chat to all participants via Socket.IO
-        if (this.io) {
-          chat.participants.forEach((participantId: Types.ObjectId) => {
-            const participantIdStr = participantId.toString();
-            this.io?.to(`user-${participantIdStr}`).emit('chatUpdated', {
-              chatId: response._id,
-              ...response  // Send the FULL chat object
-            });
-          });
-        }
-    
-        return response;
-      } catch (error: any) {
-        console.error('❌ Error updating chat:', error);
-        throw new ErrorResponse(`Failed to update chat: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR);
+        },
+      ]);
+
+      if (!populatedChats || populatedChats.length === 0) {
+        throw new ErrorResponse('Failed to retrieve updated chat', StatusCodes.INTERNAL_SERVER_ERROR);
       }
+
+      const chatData = populatedChats[0];
+
+      // Convert Map to plain object for unreadCount
+      const unreadCountObj: Record<string, number> = {};
+      if (chatData.unreadCount && typeof chatData.unreadCount === 'object') {
+        Object.assign(unreadCountObj, chatData.unreadCount);
+      }
+
+      // Build response
+      const response = {
+        _id: chatData._id,
+        participants: chatData.participants,
+        participantsDetails: chatData.participantsDetails || [],
+        lastMessageId: chatData.lastMessageId,
+        lastMessageContent: chatData.lastMessageContent || '',
+        lastMessagedAt: chatData.lastMessagedAt,
+        unreadCount: unreadCountObj,
+        type: chatData.type,
+        name: chatData.name,
+        createdAt: chatData.createdAt,
+        updatedAt: chatData.updatedAt,
+        isStarred: chatData.isStarred,
+        isPinned: chatData.isPinned,
+        isMuted: isMuted, // ✅ Use mute status from notifications
+        isArchived: chatData.isArchived,
+      };
+
+      // ✅ Emit the FULL updated chat to all participants via Socket.IO
+      if (this.io) {
+        chat.participants.forEach((participantId: Types.ObjectId) => {
+          const participantIdStr = participantId.toString();
+          this.io?.to(`user-${participantIdStr}`).emit('chatUpdated', {
+            chatId: response._id,
+            ...response
+          });
+        });
+      }
+
+      return response;
+    } catch (error: any) {
+      console.error('❌ Error updating chat:', error);
+      throw new ErrorResponse(`Failed to update chat: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR);
     }
+  }
 
   /**
    * Delete a chat and all its messages
    */
   async deleteChat(chatId: string): Promise<IChat> {
     try {
-
       const chat = await Chat.findById(chatId);
       if (!chat) {
         throw new ErrorResponse('Chat not found', StatusCodes.NOT_FOUND);
       }
+
       const deletedMessages = await Message.deleteMany({
         chatId: new Types.ObjectId(chatId),
       });
@@ -603,33 +623,30 @@ export class ChatService {
       throw error;
     }
   }
-  
 
   async getChatByTaxiId(taxiId: string): Promise<any> {
     try {
-  
       // Validate input
       if (!taxiId) {
         throw new ErrorResponse('Taxi ID is required', StatusCodes.BAD_REQUEST);
       }
-  
+
       if (!Types.ObjectId.isValid(taxiId)) {
         console.warn('⚠️ Invalid taxiId format:', taxiId);
         throw new ErrorResponse('Invalid taxi ID format', StatusCodes.BAD_REQUEST);
       }
-  
+
       // Use simple findOne first for efficiency
       const chat = await Chat.findOne({
         taxiId: new Types.ObjectId(taxiId),
         type: 'group',
       }).populate('participants', 'firstname lastname email avatar username isOnline lastSeen');
-  
+
       if (!chat) {
         console.warn('⚠️ No class chat found for taxi:', taxiId);
         throw new ErrorResponse('Class chat not found', StatusCodes.NOT_FOUND);
       }
 
-  
       // Now populate with aggregation for full details
       const fullChats = await Chat.aggregate([
         { $match: { _id: chat._id } },
@@ -688,11 +705,11 @@ export class ChatService {
           },
         },
       ]);
-  
+
       if (!fullChats || fullChats.length === 0) {
         throw new ErrorResponse('Failed to populate chat details', StatusCodes.INTERNAL_SERVER_ERROR);
       }
-  
+
       return fullChats[0];
     } catch (error: any) {
       console.error('❌ [ChatService] Error in getChatByTaxiId:', {

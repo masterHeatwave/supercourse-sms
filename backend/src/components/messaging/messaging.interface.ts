@@ -36,6 +36,7 @@ export enum NotificationType {
   CHAT_INVITE = 'chat_invite',
   USER_ONLINE = 'user_online',
   USER_OFFLINE = 'user_offline',
+  CHAT_MUTED = 'chat_muted',
 }
 
 export type FileCategory = 'image' | 'document' | 'audio' | 'video' | 'other';
@@ -47,6 +48,7 @@ export interface IUserChatSettings {
   isPinned: boolean;
   isMuted: boolean;
   isArchived: boolean;
+  chatSettings: any;
 }
 
 export interface IChat extends Document {
@@ -62,6 +64,7 @@ export interface IChat extends Document {
   isPinned: boolean;
   isMuted: boolean;
   isArchived: boolean;
+  chatSettings: any;
   createdAt: Date;
   updatedAt: Date;
   lastMessage: string;

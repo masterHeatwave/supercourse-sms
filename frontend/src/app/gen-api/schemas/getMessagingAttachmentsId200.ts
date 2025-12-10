@@ -9,6 +9,6 @@ import type { GetMessagingAttachmentsId200Attachment } from './getMessagingAttac
 
 export type GetMessagingAttachmentsId200 = {
   success: boolean;
-  /** Message attachment model */
+  /** Attachment reference in a message (references StorageFile) */
   attachment: GetMessagingAttachmentsId200Attachment;
 };

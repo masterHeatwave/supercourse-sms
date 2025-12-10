@@ -175,25 +175,37 @@ export class ChatController {
   updateChatSettings = asyncHandler(async (req: Request, res: Response) => {
     const { chatId } = req.params;
     const updates = req.body;
-
+  
     if (!mongoose.Types.ObjectId.isValid(chatId)) {
       throw new ErrorResponse('Invalid chat ID', StatusCodes.BAD_REQUEST);
     }
-
-    const chat = await this.chatService.updateChat(chatId, updates);
-
+  
+    // ✅ CRITICAL FIX: Extract userId from authenticated request
+    const userId = (req as any).user?._id?.toString() || (req as any).user?.id?.toString();
+  
+    if (!userId) {
+      throw new ErrorResponse('User not authenticated', StatusCodes.UNAUTHORIZED);
+    }
+  
+    console.log(`🔧 Updating chat ${chatId} for user ${userId} with updates:`, updates);
+  
+    // ✅ Pass userId to service for mute/unmute handling
+    const chat = await this.chatService.updateChat(chatId, updates, userId);
+  
     if (!chat) {
       throw new ErrorResponse('Chat not found', StatusCodes.NOT_FOUND);
     }
-
+  
+    // Convert unreadCount Map to object
     const unreadObj: Record<string, number> = {};
     if (chat.unreadCount instanceof Map) {
       for (const [key, value] of chat.unreadCount) unreadObj[key] = value;
     } else if (chat.unreadCount) {
       Object.assign(unreadObj, chat.unreadCount);
     }
-
-    res.json({
+  
+    // ✅ Return full chat data with correct isMuted status
+    const response = {
       _id: chat._id,
       participants: chat.participants,
       participantsDetails: chat.participantsDetails || [],
@@ -207,9 +219,13 @@ export class ChatController {
       updatedAt: chat.updatedAt,
       isStarred: chat.isStarred,
       isPinned: chat.isPinned,
-      isMuted: chat.isMuted,
+      isMuted: chat.isMuted, 
       isArchived: chat.isArchived,
-    });
+    };
+  
+    console.log(`✅ Chat updated successfully. isMuted: ${response.isMuted}`);
+  
+    res.json(response);
   });
 
   /**

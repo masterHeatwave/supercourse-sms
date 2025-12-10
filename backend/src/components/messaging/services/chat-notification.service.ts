@@ -15,14 +15,12 @@ import { requestContextLocalStorage } from '@config/asyncLocalStorage';
 
 export class ChatNotificationService {
   private io: SocketIOServer | null = null;
-
   private tenantId = requestContextLocalStorage.getStore();
 
   constructor() {
-
     this.tenantId = requestContextLocalStorage.getStore();
-
   }
+
   /**
    * Set Socket.IO instance for real-time updates
    */
@@ -33,7 +31,6 @@ export class ChatNotificationService {
   /**
    * Helper: Emit notification safely
    */
-  // In ChatNotificationService - improve the emitNotification method
   private emitNotification(userId: string, payload: any): void {
     if (!this.io) {
       console.error('❌ Socket.IO instance not available in notification service');
@@ -54,8 +51,102 @@ export class ChatNotificationService {
     }
   }
 
+  // ==================== MUTE FUNCTIONALITY ====================
+
   /**
-   * Create a new notification and return it
+   * ✅ Check if a chat is muted for a specific user
+   */
+  async isChatMuted(userId: string, chatId: string): Promise<boolean> {
+    try {
+      const muteNotification = await ChatNotification.findOne({
+        userId: new Types.ObjectId(userId),
+        relatedChatId: new Types.ObjectId(chatId),
+        type: NotificationType.CHAT_MUTED,
+        isDeleted: false
+      });
+
+      return !!muteNotification;
+    } catch (error) {
+      console.error('❌ Error checking mute status:', error);
+      return false;
+    }
+  }
+
+  /**
+   * ✅ Mute a chat for a user
+   */
+  async muteChat(userId: string, chatId: string): Promise<void> {
+    try {
+      // Check if already muted
+      const existing = await ChatNotification.findOne({
+        userId: new Types.ObjectId(userId),
+        relatedChatId: new Types.ObjectId(chatId),
+        type: NotificationType.CHAT_MUTED,
+        isDeleted: false
+      });
+
+      if (existing) {
+        return;
+      }
+
+      // Create mute notification (hidden from user's notification list)
+      await ChatNotification.create({
+        userId: new Types.ObjectId(userId),
+        relatedChatId: new Types.ObjectId(chatId),
+        type: NotificationType.CHAT_MUTED,
+        title: 'Chat Muted',
+        content: 'This chat has been muted',
+        isRead: true, // Mark as read so it doesn't show in notification list
+        isDeleted: false
+      });
+
+    } catch (error: any) {
+      console.error('❌ Error muting chat:', error);
+      throw new ErrorResponse(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * ✅ Unmute a chat for a user
+   */
+  async unmuteChat(userId: string, chatId: string): Promise<void> {
+    try {
+      await ChatNotification.deleteMany({
+        userId: new Types.ObjectId(userId),
+        relatedChatId: new Types.ObjectId(chatId),
+        type: NotificationType.CHAT_MUTED
+      });
+
+    } catch (error: any) {
+      console.error('❌ Error unmuting chat:', error);
+      throw new ErrorResponse(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * ✅ Get all muted chat IDs for a user
+   */
+  async getMutedChatsForUser(userId: string): Promise<string[]> {
+    try {
+      const muteNotifications = await ChatNotification.find({
+        userId: new Types.ObjectId(userId),
+        type: NotificationType.CHAT_MUTED,
+        isDeleted: false
+      }).select('relatedChatId');
+
+      return muteNotifications
+        .map(n => n.relatedChatId?.toString())
+        .filter((id): id is string => !!id);
+    } catch (error) {
+      console.error('❌ Error getting muted chats:', error);
+      return [];
+    }
+  }
+
+  // ==================== NOTIFICATION CRUD ====================
+
+  /**
+   * Create a notification
    */
   async createNotification(notificationData: IChatNotificationCreateDTO): Promise<IChatNotification> {
     try {
@@ -88,7 +179,7 @@ export class ChatNotificationService {
   }
 
   /**
-   * Create message notifications for all recipients (with mute check if added later)
+   * ✅ UPDATED: Create message notifications with mute check
    */
   async createMessageNotificationsWithMuteCheck(
     senderId: string,
@@ -98,13 +189,12 @@ export class ChatNotificationService {
     messageContent: string
   ): Promise<IChatNotification[]> {
     try {
-
       if (!mongoose.Types.ObjectId.isValid(senderId)) {
         throw new ErrorResponse(`Invalid senderId format: ${senderId}`, StatusCodes.BAD_REQUEST);
       }
 
       const sender = await User.findById(senderId)
-      .select('username firstname lastname') as { _id: Types.ObjectId; username?: string; firstname?: string; lastname?: string } | null;
+        .select('username firstname lastname') as { _id: Types.ObjectId; username?: string; firstname?: string; lastname?: string } | null;
 
       if (!sender) {
         throw new ErrorResponse(`Sender not found: ${senderId}`, StatusCodes.NOT_FOUND);
@@ -123,6 +213,14 @@ export class ChatNotificationService {
         const recipientExists = await User.exists({ _id: recipientId });
         if (!recipientExists) continue;
 
+        // ✅ CHECK IF CHAT IS MUTED FOR THIS RECIPIENT
+        const isMuted = await this.isChatMuted(recipientId, chatId);
+
+        if (isMuted) {
+          continue; // Skip notification creation
+        }
+
+        // ✅ CREATE NOTIFICATION ONLY IF NOT MUTED
         const notificationData: IChatNotificationCreateDTO = {
           userId: recipientId,
           type: NotificationType.MESSAGE,
@@ -176,16 +274,30 @@ export class ChatNotificationService {
       const skip = (page - 1) * limit;
       const userObjectId = new Types.ObjectId(userId);
 
+      // ✅ Exclude CHAT_MUTED notifications from user's notification list
       const [notifications, totalCount, unreadCount] = await Promise.all([
-        ChatNotification.find({ userId: userObjectId, isDeleted: false })
+        ChatNotification.find({ 
+          userId: userObjectId, 
+          isDeleted: false,
+          type: { $ne: NotificationType.CHAT_MUTED } // ✅ Exclude mute markers
+        })
           .populate('relatedUserId', 'username avatar firstname lastname')
           .populate('relatedChatId', 'name type')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit)
           .lean(),
-        ChatNotification.countDocuments({ userId: userObjectId, isDeleted: false }),
-        ChatNotification.countDocuments({ userId: userObjectId, isRead: false, isDeleted: false }),
+        ChatNotification.countDocuments({ 
+          userId: userObjectId, 
+          isDeleted: false,
+          type: { $ne: NotificationType.CHAT_MUTED }
+        }),
+        ChatNotification.countDocuments({ 
+          userId: userObjectId, 
+          isRead: false, 
+          isDeleted: false,
+          type: { $ne: NotificationType.CHAT_MUTED }
+        }),
       ]);
 
       return {
@@ -211,6 +323,7 @@ export class ChatNotificationService {
         userId: new Types.ObjectId(userId),
         isRead: false,
         isDeleted: false,
+        type: { $ne: NotificationType.CHAT_MUTED } // ✅ Exclude mute markers
       });
     } catch (error: any) {
       console.error('❌ Error getting unread count:', error);
@@ -247,7 +360,12 @@ export class ChatNotificationService {
   async markAllNotificationsAsRead(userId: string): Promise<{ modifiedCount: number; message: string }> {
     try {
       const result = await ChatNotification.updateMany(
-        { userId: new Types.ObjectId(userId), isRead: false, isDeleted: false },
+        { 
+          userId: new Types.ObjectId(userId), 
+          isRead: false, 
+          isDeleted: false,
+          type: { $ne: NotificationType.CHAT_MUTED } // ✅ Don't mark mute markers as read
+        },
         { isRead: true, readAt: new Date() }
       );
       return { modifiedCount: result.modifiedCount || 0, message: `${result.modifiedCount} marked as read` };
@@ -285,7 +403,11 @@ export class ChatNotificationService {
   async clearAllNotifications(userId: string): Promise<{ modifiedCount: number; message: string }> {
     try {
       const result = await ChatNotification.updateMany(
-        { userId: new Types.ObjectId(userId), isDeleted: false },
+        { 
+          userId: new Types.ObjectId(userId), 
+          isDeleted: false,
+          type: { $ne: NotificationType.CHAT_MUTED } // ✅ Don't delete mute markers
+        },
         { isDeleted: true, updatedAt: new Date() }
       );
       return { modifiedCount: result.modifiedCount || 0, message: `${result.modifiedCount} cleared` };

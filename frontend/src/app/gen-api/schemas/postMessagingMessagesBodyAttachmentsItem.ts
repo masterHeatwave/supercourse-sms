@@ -9,7 +9,7 @@
 /**
  * Attachment reference in a message (references StorageFile)
  */
-export type GetMessagingAttachmentsId200Attachment = {
+export type PostMessagingMessagesBodyAttachmentsItem = {
   /** @minLength 1 */
   fileId: string;
   /** @minLength 1 */

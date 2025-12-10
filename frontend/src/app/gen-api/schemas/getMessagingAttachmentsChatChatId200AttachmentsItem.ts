@@ -5,31 +5,18 @@
  * API documentation for the Super Course SMS services
  * OpenAPI spec version: 1.0.0
  */
-import type { GetMessagingAttachmentsChatChatId200AttachmentsItemFileCategory } from './getMessagingAttachmentsChatChatId200AttachmentsItemFileCategory';
-import type { GetMessagingAttachmentsChatChatId200AttachmentsItemStatus } from './getMessagingAttachmentsChatChatId200AttachmentsItemStatus';
-import type { GetMessagingAttachmentsChatChatId200AttachmentsItemVirusScanStatus } from './getMessagingAttachmentsChatChatId200AttachmentsItemVirusScanStatus';
-import type { GetMessagingAttachmentsChatChatId200AttachmentsItemMetadata } from './getMessagingAttachmentsChatChatId200AttachmentsItemMetadata';
 
 /**
- * Message attachment model
+ * Attachment reference in a message (references StorageFile)
  */
 export type GetMessagingAttachmentsChatChatId200AttachmentsItem = {
-  id: string;
+  /** @minLength 1 */
+  fileId: string;
+  /** @minLength 1 */
   filename: string;
-  originalName: string;
-  mimeType: string;
-  fileExtension?: string;
-  fileSize: number;
-  fileSizeFormatted?: string;
-  fileCategory?: GetMessagingAttachmentsChatChatId200AttachmentsItemFileCategory;
-  url?: string;
-  uploadedBy: string;
-  uploadedAt: string;
-  chatId: string;
-  messageId?: string;
-  status: GetMessagingAttachmentsChatChatId200AttachmentsItemStatus;
-  virusScanStatus: GetMessagingAttachmentsChatChatId200AttachmentsItemVirusScanStatus;
-  metadata?: GetMessagingAttachmentsChatChatId200AttachmentsItemMetadata;
-  createdAt: string;
-  updatedAt: string;
+  /** @minLength 1 */
+  key: string;
+  /** @minimum 0 */
+  size: number;
+  contentType?: string;
 };

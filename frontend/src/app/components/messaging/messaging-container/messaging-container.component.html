@@ -11,11 +11,12 @@
 
 <!-- Messaging Panel -->
 <div class="messaging-panel" [class.visible]="isVisible" [style.width]="panelWidth">
+  <!-- <div class="header-spacer"></div> -->
   <!-- ✅ FIXED: Header with title, tabs, and notifications all in one line -->
   <div class="messaging-header">
     <!-- Left: Title and Close Button -->
     <div class="header-left">
-      <h3>{{ 'messages.title' | translate }}</h3>
+      <h3 class="mega open-sans bold uppercase" id="messaging-header-title">{{ 'messages.title' | translate }}</h3>
       <button 
         pButton 
         icon="pi pi-times" 
@@ -23,7 +24,7 @@
         (click)="hide()">
       </button>
     </div>
-
+    
     <!-- Center: Tabs (Chats, Files) -->
     <div class="header-center">
       <p-tabMenu 

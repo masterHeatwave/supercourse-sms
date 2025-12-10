@@ -5,31 +5,18 @@
  * API documentation for the Super Course SMS services
  * OpenAPI spec version: 1.0.0
  */
-import type { GetMessagingAttachmentsMessageMessageId200AttachmentsItemFileCategory } from './getMessagingAttachmentsMessageMessageId200AttachmentsItemFileCategory';
-import type { GetMessagingAttachmentsMessageMessageId200AttachmentsItemStatus } from './getMessagingAttachmentsMessageMessageId200AttachmentsItemStatus';
-import type { GetMessagingAttachmentsMessageMessageId200AttachmentsItemVirusScanStatus } from './getMessagingAttachmentsMessageMessageId200AttachmentsItemVirusScanStatus';
-import type { GetMessagingAttachmentsMessageMessageId200AttachmentsItemMetadata } from './getMessagingAttachmentsMessageMessageId200AttachmentsItemMetadata';
 
 /**
- * Message attachment model
+ * Attachment reference in a message (references StorageFile)
  */
 export type GetMessagingAttachmentsMessageMessageId200AttachmentsItem = {
-  id: string;
+  /** @minLength 1 */
+  fileId: string;
+  /** @minLength 1 */
   filename: string;
-  originalName: string;
-  mimeType: string;
-  fileExtension?: string;
-  fileSize: number;
-  fileSizeFormatted?: string;
-  fileCategory?: GetMessagingAttachmentsMessageMessageId200AttachmentsItemFileCategory;
-  url?: string;
-  uploadedBy: string;
-  uploadedAt: string;
-  chatId: string;
-  messageId?: string;
-  status: GetMessagingAttachmentsMessageMessageId200AttachmentsItemStatus;
-  virusScanStatus: GetMessagingAttachmentsMessageMessageId200AttachmentsItemVirusScanStatus;
-  metadata?: GetMessagingAttachmentsMessageMessageId200AttachmentsItemMetadata;
-  createdAt: string;
-  updatedAt: string;
+  /** @minLength 1 */
+  key: string;
+  /** @minimum 0 */
+  size: number;
+  contentType?: string;
 };

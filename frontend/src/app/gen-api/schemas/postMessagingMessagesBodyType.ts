@@ -16,4 +16,5 @@ export const PostMessagingMessagesBodyType = {
   file: 'file',
   voice: 'voice',
   system: 'system',
+  ATTACHMENT: 'ATTACHMENT',
 } as const;

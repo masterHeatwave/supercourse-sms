@@ -1,4 +1,32 @@
-/* messaging-container.component.css - REFACTORED */
+/* messaging-container.component.css */
+
+@font-face {
+  font-family: 'Varietykiller';
+  src: url('../../../../assets/fonts/Varietykiller.otf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'AvenueX-Regular';
+  src: url('../../../../assets/fonts/AvenueX-Regular.otf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'DejavuSans-Mono';
+  src: url('../../../../assets/fonts/DejaVuSansMono.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'plexifont';
+  src: url('../../../../assets/fonts/plexifont.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
 
 .messaging-overlay {
   position: fixed;
@@ -36,6 +64,16 @@
 }
 
 /* ==================== HEADER ==================== */
+
+#messaging-header-title {
+  font-family: 'Roboto', sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  /* text-transform: uppercase; */
+  line-height: 1;
+  color: #3c404b;
+}
+
 .messaging-header {
   display: flex;
   justify-content: space-between;

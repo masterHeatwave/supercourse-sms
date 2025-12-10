@@ -26,6 +26,13 @@
     margin-left: 0.5rem;
   }
 
-.p-menuitem-header + .p-menuitem-radio-group {
-  margin-top: 0.25rem;
-}
+  .p-menuitem-header + .p-menuitem-radio-group {
+    margin-top: 0.25rem;
+  }
+
+  .header-spacer { 
+    position: relative;
+    height: 10px;
+    margin-top: -5px;
+    background: linear-gradient(141deg, cyan 0%, rgb(61, 28, 250) 40%, rgb(255, 50, 50) 90%)
+  };
