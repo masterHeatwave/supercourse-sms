@@ -6,10 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { PostMessagingMessagesBodyType } from './postMessagingMessagesBodyType';
+import type { PostMessagingMessagesBodyTimestamp } from './postMessagingMessagesBodyTimestamp';
+import type { PostMessagingMessagesBodyAttachmentsItem } from './postMessagingMessagesBodyAttachmentsItem';
 
-/**
- * Send a message
- */
 export type PostMessagingMessagesBody = {
   /** @minLength 1 */
   senderId: string;
@@ -18,4 +17,6 @@ export type PostMessagingMessagesBody = {
   content?: string;
   type?: PostMessagingMessagesBodyType;
   replyToMessageId?: string;
+  timestamp?: PostMessagingMessagesBodyTimestamp;
+  attachments?: PostMessagingMessagesBodyAttachmentsItem[];
 };

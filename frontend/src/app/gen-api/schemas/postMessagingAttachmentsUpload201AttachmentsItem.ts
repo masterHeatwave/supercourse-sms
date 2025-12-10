@@ -5,31 +5,18 @@
  * API documentation for the Super Course SMS services
  * OpenAPI spec version: 1.0.0
  */
-import type { PostMessagingAttachmentsUpload201AttachmentsItemFileCategory } from './postMessagingAttachmentsUpload201AttachmentsItemFileCategory';
-import type { PostMessagingAttachmentsUpload201AttachmentsItemStatus } from './postMessagingAttachmentsUpload201AttachmentsItemStatus';
-import type { PostMessagingAttachmentsUpload201AttachmentsItemVirusScanStatus } from './postMessagingAttachmentsUpload201AttachmentsItemVirusScanStatus';
-import type { PostMessagingAttachmentsUpload201AttachmentsItemMetadata } from './postMessagingAttachmentsUpload201AttachmentsItemMetadata';
 
 /**
- * Message attachment model
+ * Attachment reference in a message (references StorageFile)
  */
 export type PostMessagingAttachmentsUpload201AttachmentsItem = {
-  id: string;
+  /** @minLength 1 */
+  fileId: string;
+  /** @minLength 1 */
   filename: string;
-  originalName: string;
-  mimeType: string;
-  fileExtension?: string;
-  fileSize: number;
-  fileSizeFormatted?: string;
-  fileCategory?: PostMessagingAttachmentsUpload201AttachmentsItemFileCategory;
-  url?: string;
-  uploadedBy: string;
-  uploadedAt: string;
-  chatId: string;
-  messageId?: string;
-  status: PostMessagingAttachmentsUpload201AttachmentsItemStatus;
-  virusScanStatus: PostMessagingAttachmentsUpload201AttachmentsItemVirusScanStatus;
-  metadata?: PostMessagingAttachmentsUpload201AttachmentsItemMetadata;
-  createdAt: string;
-  updatedAt: string;
+  /** @minLength 1 */
+  key: string;
+  /** @minimum 0 */
+  size: number;
+  contentType?: string;
 };

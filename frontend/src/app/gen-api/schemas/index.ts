@@ -738,6 +738,8 @@ export * from './postMessagingChatsChatIdResetUnread200Data';
 export * from './postMessagingChatsChatIdResetUnreadBody';
 export * from './postMessagingMessages201';
 export * from './postMessagingMessagesBody';
+export * from './postMessagingMessagesBodyAttachmentsItem';
+export * from './postMessagingMessagesBodyTimestamp';
 export * from './postMessagingMessagesBodyType';
 export * from './postMessagingMessagesIdReactions201';
 export * from './postMessagingMessagesIdReactionsBody';
